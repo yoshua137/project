@@ -4422,11 +4422,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Usuario\\Documents\\TALLER-EXT\\Angular-and-Asp.Net.Core-API-Authorization-with-Role-Claim-and-Policy\\AuthECAPI\\AuthECAPI\\AuthECAPI.csproj",
+      "projectUniqueName": "C:\\Users\\Usuario\\Documents\\TALLER-EXT\\project\\AuthECAPI\\AuthECAPI\\AuthECAPI.csproj",
       "projectName": "AuthECAPI",
-      "projectPath": "C:\\Users\\Usuario\\Documents\\TALLER-EXT\\Angular-and-Asp.Net.Core-API-Authorization-with-Role-Claim-and-Policy\\AuthECAPI\\AuthECAPI\\AuthECAPI.csproj",
+      "projectPath": "C:\\Users\\Usuario\\Documents\\TALLER-EXT\\project\\AuthECAPI\\AuthECAPI\\AuthECAPI.csproj",
       "packagesPath": "C:\\Users\\Usuario\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Usuario\\Documents\\TALLER-EXT\\Angular-and-Asp.Net.Core-API-Authorization-with-Role-Claim-and-Policy\\AuthECAPI\\AuthECAPI\\obj\\",
+      "outputPath": "C:\\Users\\Usuario\\Documents\\TALLER-EXT\\project\\AuthECAPI\\AuthECAPI\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
