@@ -23,6 +23,34 @@ body {
   left: 0px;
 }
 
+.btn-yellow {
+  background-color: #FFD400;
+  color           : #004AAD;
+  border          : 2px solid transparent;
+  transition      : all 0.3s ease;
+}
+
+.btn-yellow:hover {
+  color           : #004AAD;         /* Letras se vuelven azul UCB */
+  border-color    : #004AAD;         /* Solo el borde se vuelve azul UCB */
+  background-color: #FFD400;
+}
+
+
+.ucb-blue {
+  background-color: #004AAD;
+  color           : white;
+  /* blanco para contraste */
+}
+
+.text-blue-ucb {
+  color: #004AAD !important;
+}
+
+.bg-crema {
+  background-color: #FFF8E1 !important;
+}
+
 #sidebar li.nav-item a {
   color: #637381;
   font-size: 0.9rem;

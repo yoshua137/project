@@ -1,9 +1,9 @@
 <div class="mb-4">
-  <h2 class="text-success">
-    Registrarse
+  <h2 class="text-blue-ucb">
+    Crear cuenta
   </h2>
   <div>¿Ya tienes una cuenta?
-    <a routerLink="/signin" class="text-decoration-none fw-medium text-success d-inlin-block">Inicia sesión</a>
+    <a routerLink="/signin" class="text-decoration-none fw-medium text-blue-ucb d-inlin-block">Inicia sesión</a>
   </div>
 </div>
 <form [formGroup]="form" (ngSubmit)="onSubmit()">
@@ -49,8 +49,9 @@
     </div>
   </div>
   <div class="mt-4">
-    <button type="submit" class="btn btn-success w-100 rounded-3">
-      Registrarse
+    <button type="submit" class="btn btn-yellow w-100 rounded-3" [disabled]="isSubmitted">
+      <span *ngIf="!isSubmitted">Registrarse</span>
+      <span *ngIf="isSubmitted" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
     </button>
   </div>
 </form>
