@@ -48,6 +48,17 @@
       Las contraseñas no coinciden.
     </div>
   </div>
+  <div class="mb-3">
+    <select class="form-select bg-body-secondary" formControlName="role">
+      <option value="" disabled selected>Selecciona un rol</option>
+      <option value="Student">Estudiante</option>
+      <option value="Teacher">Docente</option>
+      <option value="Admin">Organización</option>
+    </select>
+    <div class="error-feedback" *ngIf="hasDisplayableError('role')">
+      Por favor selecciona un rol.
+    </div>
+  </div>
   <div class="mt-4">
     <button type="submit" class="btn btn-yellow w-100 rounded-3" [disabled]="isSubmitted">
       <span *ngIf="!isSubmitted">Registrarse</span>

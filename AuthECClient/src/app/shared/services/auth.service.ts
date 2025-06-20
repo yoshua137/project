@@ -14,7 +14,7 @@ export class AuthService {
     //default value for Role, Gender, Age, LibraryID?
     //instead of registration form, there should some other
     //form to update these details of the user
-    formData.role = "Teacher"
+    //formData.role = "Teacher"
     formData.gender = "Female"
     formData.age = 35
     return this.http.post(environment.apiBaseUrl + '/signup', formData);

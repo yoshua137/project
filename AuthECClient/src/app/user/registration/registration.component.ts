@@ -46,6 +46,7 @@ export class RegistrationComponent implements OnInit {
       Validators.minLength(6),
       Validators.pattern(/(?=.*[^a-zA-Z0-9 ])/)]],
     confirmPassword: [''],
+    role: ['', Validators.required],
   }, { validators: this.passwordMatchValidator })
 
 
