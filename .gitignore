@@ -98,3 +98,9 @@ Migrations/
 **/package-lock.json
 package-lock.json
 PASFrontend/package-lock.json
+
+# Cursor IDE
+.cursor/
+# Cursor IDE rules
+.cursorrules
+**/.cursorrules

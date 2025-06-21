@@ -1,20 +1,20 @@
 <div class="mb-4">
-  <h2 class="text-blue-ucb">
+  <h2 class="font-bold text-blue-ucb" style="font-size: 1.5rem;">
     Crear cuenta
   </h2>
   <div>¿Ya tienes una cuenta?
-    <a routerLink="/signin" class="text-decoration-none fw-medium text-blue-ucb d-inlin-block">Inicia sesión</a>
+    <a routerLink="/signin" class="font-medium no-underline text-blue-ucb">Inicia sesión</a>
   </div>
 </div>
 <form [formGroup]="form" (ngSubmit)="onSubmit()">
   <div class="mb-3">
-    <input class="form-control bg-body-secondary" placeholder="Nombre completo" formControlName="fullName">
+    <input class="w-full px-3 py-2 leading-tight text-gray-700 bg-gray-200 border rounded shadow-inner appearance-none focus:outline-none focus:shadow-outline" placeholder="Nombre completo" formControlName="fullName">
     <div class="error-feedback" *ngIf="hasDisplayableError('fullName') && form.controls.fullName.hasError('required')">
       Por favor ingresa tu nombre completo.
     </div>
   </div>
   <div class="mb-3">
-    <input class="form-control bg-body-secondary" placeholder="Correo electrónico" formControlName="email">
+    <input class="w-full px-3 py-2 leading-tight text-gray-700 bg-gray-200 border rounded shadow-inner appearance-none focus:outline-none focus:shadow-outline" placeholder="Correo electrónico" formControlName="email">
     <div class="error-feedback" *ngIf="hasDisplayableError('email')">
       <div *ngIf="form.controls.email.hasError('required')">
         Por favor ingresa tu correo electrónico.
@@ -25,7 +25,7 @@
     </div>
   </div>
   <div class="mb-3">
-    <input class="form-control bg-body-secondary" placeholder="Contraseña" formControlName="password">
+    <input type="password" class="w-full px-3 py-2 leading-tight text-gray-700 bg-gray-200 border rounded shadow-inner appearance-none focus:outline-none focus:shadow-outline" placeholder="Contraseña" formControlName="password">
     <div class="error-feedback" *ngIf="hasDisplayableError('password')">
       <ng-container [ngSwitch]="form.controls.password.errors | firstKey">
         <div *ngSwitchCase="'required'">
@@ -38,18 +38,19 @@
           Se requiere al menos un carácter especial.
         </div>
       </ng-container>
-      
+
     </div>
   </div>
   <div class="mb-3">
-    <input class="form-control bg-body-secondary" placeholder="Confirmar contraseña" formControlName="confirmPassword">
-    <div class="error-feedback" 
-    *ngIf="hasDisplayableError('confirmPassword') && form.controls.confirmPassword.hasError('passwordMismatch')">
+    <input type="password" class="w-full px-3 py-2 leading-tight text-gray-700 bg-gray-200 border rounded shadow-inner appearance-none focus:outline-none focus:shadow-outline" placeholder="Confirmar contraseña"
+      formControlName="confirmPassword">
+    <div class="error-feedback"
+      *ngIf="hasDisplayableError('confirmPassword') && form.controls.confirmPassword.hasError('passwordMismatch')">
       Las contraseñas no coinciden.
     </div>
   </div>
   <div class="mb-3">
-    <select class="form-select bg-body-secondary" formControlName="role">
+    <select class="w-full px-3 py-2 leading-tight text-gray-700 bg-gray-200 border rounded shadow-inner appearance-none focus:outline-none focus:shadow-outline" formControlName="role">
       <option value="" disabled selected>Selecciona un rol</option>
       <option value="Student">Estudiante</option>
       <option value="Teacher">Docente</option>
@@ -60,7 +61,8 @@
     </div>
   </div>
   <div class="mt-4">
-    <button type="submit" class="btn btn-yellow w-100 rounded-3" [disabled]="isSubmitted">
+    <button type="submit" class="w-full font-bold text-blue-ucb bg-yellow-ucb rounded-lg py-2 px-4 border-2 border-transparent hover:border-blue-ucb transition-all duration-300 ease-in-out"
+      [disabled]="isSubmitted">
       <span *ngIf="!isSubmitted">Registrarse</span>
       <span *ngIf="isSubmitted" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
     </button>

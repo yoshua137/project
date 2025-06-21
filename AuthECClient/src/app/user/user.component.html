@@ -1,20 +1,19 @@
-<div class="container">
-  <div class="row vh-100 align-items-center">
-    <div class="col-xxl-6 offset-xxl-3 col-lg-8 offset-lg-2 col-10 offset-1">
-      <div class="row rounded-4 border-0 shadow-lg bg-crema" style="min-height:450px;">
-        <div class="col-md-5 d-md-flex d-none ucb-blue rounded-start-4 align-items-center justify-content-center">
-          <div class="text-center text-white">
-            <img src="authec-logo.png" class="w-50 mb-3">
-            <h2 class="fw-bolder">Portal de Usuario</h2>
+<div class="container mx-auto">
+  <div class="flex items-center justify-center min-h-screen">
+    <div class="w-full max-w-4xl lg:w-10/12 xl:w-8/12">
+      <div class="flex bg-crema rounded-3xl shadow-lg" style="min-height:450px;">
+        <div class="hidden md:flex flex-col items-center justify-center w-5/12 p-5 text-white bg-blue-ucb rounded-l-3xl">
+          <div class="text-center">
+            <img src="authec-logo.png" class="w-1/2 mx-auto mb-3">
+            <h2 class="text-3xl font-bold">Portal de Usuario</h2>
           </div>
         </div>
-        <div class="col-md-7 col-12 d-flex justify-content-start align-items-center">
-          <div class="p-5 w-100" [@routerFadeIn]="getRouteUrl()">
-            <router-outlet />
+        <div class="flex items-center justify-center w-full p-5 md:w-7/12">
+          <div class="w-full">
+            <router-outlet></router-outlet>
           </div>
         </div>
       </div>
     </div>
-
   </div>
 </div>
