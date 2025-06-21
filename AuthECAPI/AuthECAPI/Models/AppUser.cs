@@ -19,5 +19,13 @@ namespace AuthECAPI.Models
         [PersonalData]
         public int? LibraryID { get; set; }
 
-  }
+        [PersonalData]
+        [Column(TypeName = "nvarchar(150)")]
+        public string? Career { get; set; }
+
+        public virtual Student Student { get; set; }
+        public virtual Teacher Teacher { get; set; }
+        public virtual Director Director { get; set; }
+        public virtual Organization Organization { get; set; }
+    }
 }

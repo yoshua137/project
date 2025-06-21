@@ -47,6 +47,7 @@ export class RegistrationComponent implements OnInit {
       Validators.pattern(/(?=.*[^a-zA-Z0-9 ])/)]],
     confirmPassword: [''],
     role: ['', Validators.required],
+    career: ['', Validators.required]
   }, { validators: this.passwordMatchValidator })
 
 

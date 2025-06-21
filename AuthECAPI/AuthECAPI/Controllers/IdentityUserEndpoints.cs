@@ -19,7 +19,8 @@ namespace AuthECAPI.Controllers
     public string Gender { get; set; }
     public int Age { get; set; }
     public int? LibraryID { get; set; }
-  }
+    public string? Career { get; set; }
+    }
 
   public class LoginModel
   {
@@ -49,6 +50,7 @@ namespace AuthECAPI.Controllers
         Gender = userRegistrationModel.Gender,
         DOB = DateOnly.FromDateTime(DateTime.Now.AddYears(-userRegistrationModel.Age)),
         LibraryID = userRegistrationModel.LibraryID,
+        Career = userRegistrationModel.Career
       };
       var result = await userManager.CreateAsync(
           user,
