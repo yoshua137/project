@@ -70,7 +70,6 @@ namespace AuthECAPI.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Career")
-                        .IsRequired()
                         .HasColumnType("nvarchar(150)");
 
                     b.Property<string>("ConcurrencyStamp")
@@ -150,7 +149,6 @@ namespace AuthECAPI.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Department")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
@@ -201,7 +199,6 @@ namespace AuthECAPI.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Area")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
@@ -215,7 +212,6 @@ namespace AuthECAPI.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("CV")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");

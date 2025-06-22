@@ -9,19 +9,19 @@ namespace AuthECAPI.Controllers
     // Registration Models
     public class StudentRegistrationModel : UserRegistrationModel
     {
-        public string CV { get; set; }
+        public string? CV { get; set; }
     }
 
     public class TeacherRegistrationModel : UserRegistrationModel { }
 
     public class DirectorRegistrationModel : UserRegistrationModel
     {
-        public string Department { get; set; }
+        public string? Department { get; set; }
     }
 
     public class OrganizationRegistrationModel : UserRegistrationModel
     {
-        public string Area { get; set; }
+        public string? Area { get; set; }
     }
 
     public static class RoleEndpoints

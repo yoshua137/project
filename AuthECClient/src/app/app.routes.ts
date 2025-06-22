@@ -12,14 +12,16 @@ import { Under10AndFemaleComponent } from './authorizeDemo/under10-and-female/un
 import { MainLayoutComponent } from './layouts/main-layout/main-layout.component';
 import { ForbiddenComponent } from './forbidden/forbidden.component';
 import { claimReq } from './shared/utils/claimReq-utils';
+import { RoleSelectionComponent } from './user/role-selection/role-selection.component';
 
 export const routes: Routes = [
-  { path: '', redirectTo: '/signin', pathMatch: 'full' },
+  { path: '', redirectTo: '/user/login', pathMatch: 'full' },
   {
-    path: '', component: UserComponent,
+    path: 'user', component: UserComponent,
     children: [
-      { path: 'signup', component: RegistrationComponent },
-      { path: 'signin', component: LoginComponent },
+      { path: 'registration', component: RegistrationComponent },
+      { path: 'login', component: LoginComponent },
+      { path: 'select-role', component: RoleSelectionComponent },
     ]
   },
   {

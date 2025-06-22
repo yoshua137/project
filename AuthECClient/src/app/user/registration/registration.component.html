@@ -1,76 +1,86 @@
 <div class="mb-4">
-  <h2 class="font-bold text-blue-ucb" style="font-size: 1.5rem;">
-    Crear cuenta
+  <h2 class="font-bold text-blue-ucb" style="font-size: 2rem;">
+    Crear cuenta de {{ registrationForm.get('role')?.value === 'Student' ? 'Estudiante' : 'Organización' }}
   </h2>
-  <div>¿Ya tienes una cuenta?
-    <a routerLink="/signin" class="font-medium no-underline text-blue-ucb">Inicia sesión</a>
+  <div>
+    ¿Ya tienes una cuenta? <a routerLink="/user/login" class="font-medium no-underline text-blue-ucb">Inicia sesión aquí</a>
   </div>
 </div>
-<form [formGroup]="form" (ngSubmit)="onSubmit()">
+<form [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
   <div class="mb-3">
-    <input class="w-full px-3 py-2 leading-tight text-gray-700 bg-gray-200 border rounded shadow-inner appearance-none focus:outline-none focus:shadow-outline" placeholder="Nombre completo" formControlName="fullName">
-    <div class="error-feedback" *ngIf="hasDisplayableError('fullName') && form.controls.fullName.hasError('required')">
-      Por favor ingresa tu nombre completo.
-    </div>
-  </div>
-  <div class="mb-3">
-    <input class="w-full px-3 py-2 leading-tight text-gray-700 bg-gray-200 border rounded shadow-inner appearance-none focus:outline-none focus:shadow-outline" placeholder="Correo electrónico" formControlName="email">
+    <input type="email" placeholder="Correo Electrónico" formControlName="email"
+      class="w-full px-3 py-2 leading-tight text-gray-700 bg-gray-200 border rounded shadow-inner appearance-none focus:outline-none focus:shadow-outline">
     <div class="error-feedback" *ngIf="hasDisplayableError('email')">
-      <div *ngIf="form.controls.email.hasError('required')">
-        Por favor ingresa tu correo electrónico.
+      <div *ngIf="email.hasError('required')">
+        El correo electrónico es requerido.
       </div>
-      <div *ngIf="form.controls.email.hasError('email')">
-        Por favor ingresa un correo electrónico válido.
+      <div *ngIf="!email.hasError('required') && email.hasError('email')">
+        Por favor, introduce un correo electrónico válido.
       </div>
     </div>
   </div>
   <div class="mb-3">
-    <input class="w-full px-3 py-2 leading-tight text-gray-700 bg-gray-200 border rounded shadow-inner appearance-none focus:outline-none focus:shadow-outline" placeholder="Carrera" formControlName="career">
-    <div class="error-feedback" *ngIf="hasDisplayableError('career') && form.controls.career.hasError('required')">
-      Por favor ingresa tu carrera.
-    </div>
-  </div>
-  <div class="mb-3">
-    <input type="password" class="w-full px-3 py-2 leading-tight text-gray-700 bg-gray-200 border rounded shadow-inner appearance-none focus:outline-none focus:shadow-outline" placeholder="Contraseña" formControlName="password">
+    <input type="password" placeholder="Contraseña" formControlName="password"
+      class="w-full px-3 py-2 leading-tight text-gray-700 bg-gray-200 border rounded shadow-inner appearance-none focus:outline-none focus:shadow-outline">
     <div class="error-feedback" *ngIf="hasDisplayableError('password')">
-      <ng-container [ngSwitch]="form.controls.password.errors | firstKey">
-        <div *ngSwitchCase="'required'">
-          Por favor ingresa tu contraseña.
-        </div>
-        <div *ngSwitchCase="'minlength'">
-          Se requieren al menos 6 caracteres.
-        </div>
-        <div *ngSwitchCase="'pattern'">
-          Se requiere al menos un carácter especial.
-        </div>
-      </ng-container>
+      <div *ngIf="password.hasError('required')">
+        La contraseña es requerida.
+      </div>
+      <div *ngIf="!password.hasError('required') && password.hasError('minlength')">
+        La contraseña debe tener al menos 6 caracteres.
+      </div>
+      <div *ngIf="!password.hasError('required') && !password.hasError('minlength') && password.hasError('pattern')">
+        La contraseña debe contener al menos un carácter especial.
+      </div>
+    </div>
+  </div>
+  <div class="mb-3">
+    <input type="password" placeholder="Confirmar contraseña"
+      formControlName="confirmPassword"
+      class="w-full px-3 py-2 leading-tight text-gray-700 bg-gray-200 border rounded shadow-inner appearance-none focus:outline-none focus:shadow-outline">
+    <div class="error-feedback" *ngIf="hasDisplayableError('confirmPassword') && confirmPassword.errors?.['passwordMismatch']">
+      Las contraseñas deben coincidir.
+    </div>
+  </div>
 
+  <!-- Campos condicionales -->
+  <div *ngIf="role.value === 'Student'">
+    <div class="mb-3">
+      <input type="text" placeholder="Nombre Completo" formControlName="fullName"
+        class="w-full px-3 py-2 leading-tight text-gray-700 bg-gray-200 border rounded shadow-inner appearance-none focus:outline-none focus:shadow-outline">
+      <div class="error-feedback" *ngIf="hasDisplayableError('fullName')">
+        <div *ngIf="fullName.errors?.['required']">
+          El nombre completo es requerido.
+        </div>
+      </div>
+    </div>
+    <div class="mb-3">
+      <input type="text" placeholder="Carrera" formControlName="career"
+        class="w-full px-3 py-2 leading-tight text-gray-700 bg-gray-200 border rounded shadow-inner appearance-none focus:outline-none focus:shadow-outline">
+      <div class="error-feedback" *ngIf="hasDisplayableError('career')">
+        <div *ngIf="career.errors?.['required']">
+          La carrera es requerida para estudiantes.
+        </div>
+      </div>
     </div>
   </div>
-  <div class="mb-3">
-    <input type="password" class="w-full px-3 py-2 leading-tight text-gray-700 bg-gray-200 border rounded shadow-inner appearance-none focus:outline-none focus:shadow-outline" placeholder="Confirmar contraseña"
-      formControlName="confirmPassword">
-    <div class="error-feedback"
-      *ngIf="hasDisplayableError('confirmPassword') && form.controls.confirmPassword.hasError('passwordMismatch')">
-      Las contraseñas no coinciden.
+
+  <div *ngIf="role.value === 'Organization'">
+    <div class="mb-3">
+      <input type="text" placeholder="Nombre de la Organización" formControlName="fullName"
+        class="w-full px-3 py-2 leading-tight text-gray-700 bg-gray-200 border rounded shadow-inner appearance-none focus:outline-none focus:shadow-outline">
+      <div class="error-feedback" *ngIf="hasDisplayableError('fullName')">
+        <div *ngIf="fullName.errors?.['required']">
+          El nombre de la organización es requerido.
+        </div>
+      </div>
     </div>
   </div>
-  <div class="mb-3">
-    <select class="w-full px-3 py-2 leading-tight text-gray-700 bg-gray-200 border rounded shadow-inner appearance-none focus:outline-none focus:shadow-outline" formControlName="role">
-      <option value="" disabled selected>Selecciona un rol</option>
-      <option value="Student">Estudiante</option>
-      <option value="Teacher">Docente</option>
-      <option value="Organization">Organización</option>
-    </select>
-    <div class="error-feedback" *ngIf="hasDisplayableError('role')">
-      Por favor selecciona un rol.
-    </div>
-  </div>
+
   <div class="mt-4">
-    <button type="submit" class="w-full font-bold text-blue-ucb bg-yellow-ucb rounded-lg py-2 px-4 border-2 border-transparent hover:border-blue-ucb transition-all duration-300 ease-in-out"
-      [disabled]="isSubmitted">
-      <span *ngIf="!isSubmitted">Registrarse</span>
-      <span *ngIf="isSubmitted" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+    <button type="submit"
+      class="w-full font-bold text-blue-ucb bg-yellow-ucb rounded-lg py-2 px-4 border-2 border-transparent hover:border-blue-ucb transition-all duration-300 ease-in-out">
+      Crear una cuenta
     </button>
   </div>
 </form>

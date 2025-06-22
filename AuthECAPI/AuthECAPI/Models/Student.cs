@@ -6,7 +6,7 @@ namespace AuthECAPI.Models
     {
         [ForeignKey("AppUser")]
         public string Id { get; set; }
-        public string CV { get; set; }
+        public string? CV { get; set; }
         public virtual AppUser AppUser { get; set; }
     }
 } 

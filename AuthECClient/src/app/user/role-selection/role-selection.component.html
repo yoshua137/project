@@ -1,0 +1,18 @@
+<div class="mb-4">
+  <h2 class="font-bold text-blue-ucb" style="font-size: 2rem;">
+    Unirse como Estudiante u Organización
+  </h2>
+  <div>
+    ¿Ya tienes una cuenta? <a routerLink="/user/login" class="font-medium no-underline text-blue-ucb">Inicia sesión aquí</a>
+  </div>
+</div>
+<div class="flex flex-col space-y-4 items-center">
+  <a routerLink="/user/registration" [queryParams]="{ role: 'Student' }"
+    class="w-3/4 max-w-sm font-bold text-blue-ucb bg-yellow-ucb rounded-lg py-4 px-4 border-2 border-transparent hover:border-blue-ucb transition-all duration-300 ease-in-out text-center">
+    Registrarse como<br>Estudiante
+  </a>
+  <a routerLink="/user/registration" [queryParams]="{ role: 'Organization' }"
+    class="w-3/4 max-w-sm font-bold text-yellow-ucb bg-blue-ucb rounded-lg py-4 px-4 border-2 border-transparent hover:border-yellow-ucb transition-all duration-300 ease-in-out text-center">
+    Registrarse como Organización
+  </a>
+</div> 

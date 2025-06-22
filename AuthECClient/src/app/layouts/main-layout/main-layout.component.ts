@@ -19,6 +19,6 @@ export class MainLayoutComponent {
 
   onLogout() {
     this.authService.deleteToken();
-    this.router.navigateByUrl('/signin');
+    this.router.navigateByUrl('/user/login');
   }
 }
