@@ -21,7 +21,7 @@ namespace AuthECAPI.Controllers
         // POST: api/InternshipOffer
         [HttpPost]
         [Authorize(Roles = "Organization")]
-        public async Task<ActionResult<InternshipOffer>> CreateInternshipOffer(CreateInternshipOfferRequest offerRequest)
+        public async Task<ActionResult<InternshipOfferResponse>> CreateInternshipOffer(CreateInternshipOfferRequest offerRequest)
         {
             try
             {
@@ -30,6 +30,7 @@ namespace AuthECAPI.Controllers
 
                 // Verificar que la organización existe y pertenece al usuario actual
                 var organization = await _context.Organizations
+                    .Include(o => o.AppUser) // Cargar AppUser para obtener el nombre
                     .FirstOrDefaultAsync(o => o.Id == userId);
 
                 if (organization == null)
@@ -61,7 +62,19 @@ namespace AuthECAPI.Controllers
                 _context.InternshipOffers.Add(internshipOffer);
                 await _context.SaveChangesAsync();
 
-                return CreatedAtAction(nameof(CreateInternshipOffer), new { id = internshipOffer.Id }, internshipOffer);
+                var offerResponse = new InternshipOfferResponse
+                {
+                    Id = internshipOffer.Id,
+                    Title = internshipOffer.Title,
+                    Description = internshipOffer.Description,
+                    Requirements = internshipOffer.Requirements,
+                    StartDate = internshipOffer.StartDate,
+                    EndDate = internshipOffer.EndDate,
+                    OrganizationId = internshipOffer.OrganizationId,
+                    OrganizationName = organization.AppUser?.FullName
+                };
+
+                return CreatedAtAction(nameof(CreateInternshipOffer), new { id = offerResponse.Id }, offerResponse);
             }
             catch (InvalidOperationException)
             {
