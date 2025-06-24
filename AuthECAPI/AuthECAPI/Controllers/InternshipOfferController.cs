@@ -20,7 +20,7 @@ namespace AuthECAPI.Controllers
 
         // POST: api/InternshipOffer
         [HttpPost]
-        [Authorize(Roles = "Organization")]
+        [Authorize(Roles = "Organization", Policy = "HasAcceptedAgreement")]
         public async Task<ActionResult<InternshipOfferResponse>> CreateInternshipOffer(CreateInternshipOfferRequest offerRequest)
         {
             try

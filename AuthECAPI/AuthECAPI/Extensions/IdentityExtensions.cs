@@ -61,7 +61,17 @@ namespace AuthECAPI.Extensions
         options.AddPolicy("HasLibraryID", policy => policy.RequireClaim("libraryID"));
         options.AddPolicy("FemalesOnly", policy => policy.RequireClaim("gender", "Female"));
         options.AddPolicy("Under10", policy => policy.RequireAssertion(context =>
-        Int32.Parse(context.User.Claims.First(x => x.Type== "age").Value)<10));
+            Int32.Parse(context.User.Claims.First(x => x.Type== "age").Value)<10));
+        options.AddPolicy("HasAcceptedAgreement", policy =>
+            policy.RequireAssertion(context =>
+            {
+                var httpContext = context.Resource as Microsoft.AspNetCore.Http.HttpContext;
+                if (httpContext == null) return false;
+                var db = httpContext.RequestServices.GetService(typeof(AppDbContext)) as AppDbContext;
+                var userId = context.User.Claims.FirstOrDefault(c => c.Type == "userID")?.Value;
+                if (string.IsNullOrEmpty(userId) || db == null) return false;
+                return db.AgreementRequests.Any(a => a.OrganizationId == userId && a.Status == "Accepted");
+            }));
 
       });
 
