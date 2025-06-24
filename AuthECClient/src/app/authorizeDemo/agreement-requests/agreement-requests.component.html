@@ -1,3 +1,28 @@
+<div *ngIf="!selectedDepartment">
+  <h2>Selecciona el Departamento de Interés</h2>
+  <div style="display: flex; flex-wrap: wrap; gap: 2rem; justify-content: center; margin-top: 2rem;">
+    <button *ngFor="let dep of departments" (click)="selectDepartment(dep.value)" style="border: none; background: none; cursor: pointer; text-align: center;">
+      <img [src]="dep.image" [alt]="dep.name" style="width: 120px; height: 120px; object-fit: contain; display: block; margin: 0 auto 1rem;" />
+      <span style="font-size: 1.2rem; font-weight: bold;">{{ dep.name }}</span>
+    </button>
+  </div>
+</div>
+
+<div *ngIf="selectedDepartment">
+  <button (click)="backToDepartments()" style="margin-bottom: 1rem;">&larr; Volver a departamentos</button>
+  <h2>Directores de {{ selectedDepartment }}</h2>
+  <div *ngIf="loadingDirectors">Cargando directores...</div>
+  <div *ngIf="!loadingDirectors && directors.length === 0">No hay directores registrados en este departamento.</div>
+  <ul *ngIf="!loadingDirectors && directors.length > 0" style="list-style: none; padding: 0;">
+    <li *ngFor="let director of directors" style="margin-bottom: 1.5rem; border: 1px solid #ddd; border-radius: 8px; padding: 1rem;">
+      <strong>{{ director.fullName }}</strong><br>
+      <span>Género: {{ director.gender }}</span><br>
+      <span>Fecha de nacimiento: {{ director.dob }}</span><br>
+      <span>Departamento: {{ director.department }}</span>
+    </li>
+  </ul>
+</div>
+
 <h2>Solicitudes de Convenio</h2>
 <p>Aquí se mostrarán las solicitudes de convenio realizadas por la organización.</p>
 <!-- Próximamente: tabla/lista de solicitudes --> 
