@@ -58,7 +58,7 @@ export class AgreementRequestsComponent {
     this.loadingDirectors = true;
     this.http.get<Director[]>(`${environment.apiBaseUrl}/Director`).subscribe({
       next: (directors) => {
-        this.directors = directors.filter(d => d.department === department);
+        this.directors = directors;
         this.loadingDirectors = false;
       },
       error: () => {
