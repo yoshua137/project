@@ -20,6 +20,9 @@
     <li class="nav-item" [appHideIfClaimsNotMet]="claimReq.femaleAndBelow10">
       <a class="nav-link" routerLink="/under-10-and-female">Under 10 Girls Only</a>
     </li>
+    <li class="nav-item" [appHideIfClaimsNotMet]="claimReq.organizationOnly">
+      <a class="nav-link" routerLink="/agreement-requests">Solicitudes de Convenio</a>
+    </li>
   </ul>
 </nav>
 <div id="main">

@@ -13,6 +13,7 @@ import { MainLayoutComponent } from './layouts/main-layout/main-layout.component
 import { ForbiddenComponent } from './forbidden/forbidden.component';
 import { claimReq } from './shared/utils/claimReq-utils';
 import { RoleSelectionComponent } from './user/role-selection/role-selection.component';
+import { AgreementRequestsComponent } from './authorizeDemo/agreement-requests/agreement-requests.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/user/login', pathMatch: 'full' },
@@ -53,7 +54,11 @@ export const routes: Routes = [
       },
       {
         path: 'forbidden', component: ForbiddenComponent
-      }
+      },
+      {
+        path: 'agreement-requests', component: AgreementRequestsComponent,
+        data: { claimReq: claimReq.organizationOnly }
+      },
     ]
   },
 
