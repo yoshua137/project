@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace AuthECAPI.Controllers
 {
@@ -12,11 +13,15 @@ namespace AuthECAPI.Controllers
         public string? CV { get; set; }
     }
 
-    public class TeacherRegistrationModel : UserRegistrationModel { }
+    public class TeacherRegistrationModel : UserRegistrationModel
+    {
+        public string InvitationToken { get; set; } = string.Empty;
+    }
 
     public class DirectorRegistrationModel : UserRegistrationModel
     {
         public string? Department { get; set; }
+        public string InvitationToken { get; set; } = string.Empty;
     }
 
     public class OrganizationRegistrationModel : UserRegistrationModel
@@ -73,6 +78,25 @@ namespace AuthECAPI.Controllers
             AppDbContext dbContext,
             [FromBody] TeacherRegistrationModel model)
         {
+            // Validar token de invitación
+            var invitation = await dbContext.RegistrationInvitations
+                .FirstOrDefaultAsync(i => i.Token == model.InvitationToken && i.Role == "Teacher");
+
+            if (invitation == null)
+            {
+                return Results.BadRequest("Token de invitación inválido");
+            }
+
+            if (invitation.IsUsed)
+            {
+                return Results.BadRequest("Este token ya ha sido utilizado");
+            }
+
+            if (DateTime.UtcNow > invitation.ExpiresAt)
+            {
+                return Results.BadRequest("Este token ha expirado");
+            }
+
             var user = new AppUser
             {
                 UserName = model.Email,
@@ -91,6 +115,12 @@ namespace AuthECAPI.Controllers
 
             var teacher = new Teacher { Id = user.Id };
             dbContext.Teachers.Add(teacher);
+
+            // Marcar invitación como usada
+            invitation.IsUsed = true;
+            invitation.UsedAt = DateTime.UtcNow;
+            invitation.UsedByUserId = user.Id;
+
             await dbContext.SaveChangesAsync();
 
             return Results.Ok(result);
@@ -102,6 +132,25 @@ namespace AuthECAPI.Controllers
             AppDbContext dbContext,
             [FromBody] DirectorRegistrationModel model)
         {
+            // Validar token de invitación
+            var invitation = await dbContext.RegistrationInvitations
+                .FirstOrDefaultAsync(i => i.Token == model.InvitationToken && i.Role == "Director");
+
+            if (invitation == null)
+            {
+                return Results.BadRequest("Token de invitación inválido");
+            }
+
+            if (invitation.IsUsed)
+            {
+                return Results.BadRequest("Este token ya ha sido utilizado");
+            }
+
+            if (DateTime.UtcNow > invitation.ExpiresAt)
+            {
+                return Results.BadRequest("Este token ha expirado");
+            }
+
             var user = new AppUser
             {
                 UserName = model.Email,
@@ -120,6 +169,12 @@ namespace AuthECAPI.Controllers
 
             var director = new Director { Id = user.Id, Department = model.Department };
             dbContext.Directors.Add(director);
+
+            // Marcar invitación como usada
+            invitation.IsUsed = true;
+            invitation.UsedAt = DateTime.UtcNow;
+            invitation.UsedByUserId = user.Id;
+
             await dbContext.SaveChangesAsync();
 
             return Results.Ok(result);

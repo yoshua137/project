@@ -15,6 +15,7 @@ namespace AuthECAPI.Models
         public DbSet<Organization> Organizations { get; set; }
         public DbSet<AgreementRequest> AgreementRequests { get; set; }
         public DbSet<InternshipOffer> InternshipOffers { get; set; }
+        public DbSet<RegistrationInvitation> RegistrationInvitations { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
