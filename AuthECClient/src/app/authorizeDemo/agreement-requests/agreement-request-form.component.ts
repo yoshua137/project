@@ -4,6 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { environment } from '../../../environments/environment';
+import { ToastrService } from 'ngx-toastr';
 
 interface Director {
   id: string;
@@ -30,7 +31,8 @@ export class AgreementRequestFormComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private http: HttpClient
+    private http: HttpClient,
+    private toastr: ToastrService
   ) {}
 
   ngOnInit() {
@@ -57,15 +59,15 @@ export class AgreementRequestFormComponent implements OnInit {
 
   submitAgreementRequest() {
     if (!this.director || !this.requestDescription || this.requestDescription.length < 20 || !this.requestPdfFile) {
-      alert('Debe completar todos los campos y la descripción debe tener al menos 20 caracteres.');
+      this.toastr.error('Debe completar todos los campos y la descripción debe tener al menos 20 caracteres.', 'Error de Validación');
       return;
     }
     if (this.requestPdfFile.type !== 'application/pdf') {
-      alert('Solo se permiten archivos PDF.');
+      this.toastr.error('Solo se permiten archivos PDF.', 'Error de Validación');
       return;
     }
     if (this.requestPdfFile.size > 10 * 1024 * 1024) {
-      alert('El archivo PDF no puede ser mayor a 10MB.');
+      this.toastr.error('El archivo PDF no puede ser mayor a 10MB.', 'Error de Validación');
       return;
     }
     const formData = new FormData();
@@ -74,11 +76,11 @@ export class AgreementRequestFormComponent implements OnInit {
     formData.append('PdfFile', this.requestPdfFile);
     this.http.post(`${environment.apiBaseUrl}/AgreementRequest`, formData).subscribe({
       next: () => {
-        alert('Solicitud de convenio enviada correctamente.');
+        this.toastr.success('Solicitud de convenio enviada correctamente.', 'Solicitud Enviada');
         this.router.navigate(['/agreement-requests']);
       },
       error: (err) => {
-        alert('Error al enviar la solicitud: ' + (err.error?.message || err.statusText));
+        this.toastr.error('Error al enviar la solicitud: ' + (err.error?.message || err.statusText), 'Error');
       }
     });
   }
