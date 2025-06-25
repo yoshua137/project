@@ -21,13 +21,16 @@
       <a class="nav-link" routerLink="/under-10-and-female">Under 10 Girls Only</a>
     </li>
     <li class="nav-item" [appHideIfClaimsNotMet]="claimReq.organizationOnly">
-      <a class="nav-link" routerLink="/agreement-requests">Solicitudes de Convenio</a>
+      <a class="nav-link" routerLink="/agreement-requests">Solicitar Convenio</a>
     </li>
     <li class="nav-item" [appHideIfClaimsNotMet]="claimReq.adminInvitationManager">
       <a class="nav-link" routerLink="/registration-invitations">Invitaciones de Registro</a>
     </li>
     <li class="nav-item" [appHideIfClaimsNotMet]="claimReq.directorAgreementReviewer">
       <a class="nav-link" routerLink="/agreement-review">Revisar Convenios</a>
+    </li>
+    <li class="nav-item" [appHideIfClaimsNotMet]="claimReq.organizationAgreementList">
+      <a class="nav-link" routerLink="/mis-convenios">Mis convenios</a>
     </li>
   </ul>
 </nav>

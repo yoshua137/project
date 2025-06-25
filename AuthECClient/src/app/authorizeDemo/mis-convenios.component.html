@@ -1,0 +1,32 @@
+<div class="container" style="background: #e6f0ff; padding: 2rem; border-radius: 1rem;">
+  <h2 class="mb-4">Mis Convenios</h2>
+  <div *ngIf="loading">Cargando convenios...</div>
+  <div *ngIf="!loading && agreementRequests.length === 0">No tienes convenios registrados.</div>
+  <div *ngIf="!loading && agreementRequests.length > 0">
+    <div class="card">
+      <div class="card-header fw-bold">Convenios de mi organización</div>
+      <div class="card-body p-0">
+        <table class="table mb-0">
+          <thead>
+            <tr>
+              <th>Director</th>
+              <th>Fecha Solicitud</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let req of agreementRequests">
+              <td>{{ req.directorName }}</td>
+              <td>{{ req.requestDate | date:'short' }}</td>
+              <td><span [ngClass]="getStatusColor(req.status)">{{ req.status === 'Accepted' ? 'Aceptado' : req.status === 'Rejected' ? 'Rechazado' : req.status }}</span></td>
+              <td>
+                <a *ngIf="req.pdfFilePath" class="btn btn-primary btn-sm" [href]="environment.apiBaseUrl + '/AgreementRequest/pdf/' + req.pdfFilePath" target="_blank">Ver PDF</a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div> 

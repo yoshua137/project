@@ -388,5 +388,47 @@ namespace AuthECAPI.Controllers
                 return StatusCode(500, $"Error al obtener el archivo: {ex.Message}");
             }
         }
+
+        // GET: api/AgreementRequest/organization/mine
+        [HttpGet("organization/mine")]
+        [Authorize(Roles = "Organization")]
+        public async Task<ActionResult<IEnumerable<AgreementRequestResponse>>> GetAgreementRequestsForOrganization()
+        {
+            try
+            {
+                var currentUserId = User.Claims.First(c => c.Type == "userID").Value;
+                var agreementRequests = await _context.AgreementRequests
+                    .Include(ar => ar.Organization)
+                    .ThenInclude(o => o.AppUser)
+                    .Include(ar => ar.Director)
+                    .ThenInclude(d => d.AppUser)
+                    .Where(ar => ar.OrganizationId == currentUserId)
+                    .OrderByDescending(ar => ar.RequestDate)
+                    .Select(ar => new AgreementRequestResponse
+                    {
+                        Id = ar.Id,
+                        OrganizationId = ar.OrganizationId,
+                        OrganizationName = ar.Organization.AppUser != null ? ar.Organization.AppUser.FullName : null,
+                        DirectorId = ar.DirectorId,
+                        DirectorName = ar.Director.AppUser != null ? ar.Director.AppUser.FullName : null,
+                        RequestDate = ar.RequestDate,
+                        ReviewDate = ar.ReviewDate,
+                        Status = ar.Status,
+                        Description = ar.Description,
+                        PdfFilePath = ar.PdfFilePath
+                    })
+                    .ToListAsync();
+
+                return Ok(agreementRequests);
+            }
+            catch (InvalidOperationException)
+            {
+                return Unauthorized("Token inválido o malformado. No se encontró el claim 'userID'.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error interno del servidor: {ex.Message}");
+            }
+        }
     }
 } 

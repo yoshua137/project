@@ -17,6 +17,7 @@ import { AgreementRequestsComponent } from './authorizeDemo/agreement-requests/a
 import { AgreementRequestFormComponent } from './authorizeDemo/agreement-requests/agreement-request-form.component';
 import { RegistrationInvitationsComponent } from './authorizeDemo/registration-invitations/registration-invitations.component';
 import { AgreementReviewComponent } from './authorizeDemo/agreement-review/agreement-review.component';
+import { MisConveniosComponent } from './authorizeDemo/mis-convenios.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/user/login', pathMatch: 'full' },
@@ -73,6 +74,10 @@ export const routes: Routes = [
       {
         path: 'agreement-review', component: AgreementReviewComponent,
         data: { claimReq: claimReq.directorAgreementReviewer }
+      },
+      {
+        path: 'mis-convenios', component: MisConveniosComponent,
+        data: { claimReq: claimReq.organizationAgreementList }
       },
     ]
   },
