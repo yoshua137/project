@@ -7,5 +7,6 @@ export const claimReq = {
   organizationOnly: (c: any) => Array.isArray(c.role) ? c.role.includes("Organization") : c.role == "Organization",
   adminInvitationManager: (c: any) => Array.isArray(c.role) ? c.role.includes("Admin") : c.role == "Admin",
   directorAgreementReviewer: (c: any) => Array.isArray(c.role) ? c.role.includes("Director") : c.role == "Director",
-  organizationAgreementList: (c: any) => Array.isArray(c.role) ? c.role.includes("Organization") : c.role == "Organization"
+  organizationAgreementList: (c: any) => Array.isArray(c.role) ? c.role.includes("Organization") : c.role == "Organization",
+  organizationInternshipOffer: (c: any) => Array.isArray(c.role) ? c.role.includes("Organization") : c.role == "Organization"
 }
