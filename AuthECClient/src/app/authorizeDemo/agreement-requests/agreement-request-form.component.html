@@ -1,0 +1,21 @@
+<div *ngIf="loading" style="margin-top: 2rem; text-align: center;">Cargando datos del director...</div>
+<div *ngIf="!loading && director" style="display: flex; flex-direction: column; align-items: center; margin-top: 2rem;">
+  <div style="background: #fff; border: 2px solid #1976d2; border-radius: 12px; padding: 2rem; min-width: 320px; box-shadow: 0 2px 8px #0001;">
+    <button (click)="backToDirectors()" style="margin-bottom: 1rem; background: none; border: none; color: #1976d2; cursor: pointer;">&larr; Volver a directores</button>
+    <h3 style="margin-bottom: 1rem;">Solicitar convenio a <b>{{ director.fullName }}</b></h3>
+    <form (ngSubmit)="$event.preventDefault(); submitAgreementRequest();" style="display: flex; flex-direction: column; gap: 1rem;">
+      <label>
+        Descripción (mínimo 20 caracteres):
+        <textarea [(ngModel)]="requestDescription" name="description" required minlength="20" rows="4" style="width: 100%; margin-top: 0.5rem;"></textarea>
+      </label>
+      <label>
+        Seleccione carta PDF:
+        <input type="file" accept="application/pdf" (change)="onPdfFileChange($event)" required />
+      </label>
+      <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+        <button type="submit" style="background: #1976d2; color: #fff; border: none; padding: 0.5rem 1.2rem; border-radius: 6px; cursor: pointer;">Enviar solicitud</button>
+      </div>
+    </form>
+  </div>
+</div>
+<div *ngIf="!loading && !director" style="margin-top: 2rem; text-align: center; color: red;">No se encontró el director.</div> 

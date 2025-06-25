@@ -25,12 +25,14 @@ namespace AuthECAPI.Controllers
         {
             var directors = await _context.Directors
                 .Include(d => d.AppUser)
+                .Where(d => d.AppUser != null)
                 .Select(d => new {
-                    Id = d.Id,
-                    FullName = d.AppUser.FullName,
-                    Gender = d.AppUser.Gender,
-                    DOB = d.AppUser.DOB,
-                    Department = d.Department
+                    id = d.Id,
+                    fullName = d.AppUser.FullName,
+                    gender = d.AppUser.Gender,
+                    dob = d.AppUser.DOB.ToString(),
+                    department = d.Department,
+                    career = d.AppUser.Career
                 })
                 .ToListAsync();
 

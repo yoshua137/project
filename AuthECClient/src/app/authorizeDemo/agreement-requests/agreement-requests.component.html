@@ -13,14 +13,36 @@
   <h2>Directores de {{ selectedDepartment }}</h2>
   <div *ngIf="loadingDirectors">Cargando directores...</div>
   <div *ngIf="!loadingDirectors && directors.length === 0">No hay directores registrados en este departamento.</div>
-  <ul *ngIf="!loadingDirectors && directors.length > 0" style="list-style: none; padding: 0;">
-    <li *ngFor="let director of directors" style="margin-bottom: 1.5rem; border: 1px solid #ddd; border-radius: 8px; padding: 1rem;">
-      <strong>{{ director.fullName }}</strong><br>
-      <span>Género: {{ director.gender }}</span><br>
-      <span>Fecha de nacimiento: {{ director.dob }}</span><br>
-      <span>Departamento: {{ director.department }}</span>
+  <ul *ngIf="!loadingDirectors && directors.length > 0" style="list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 2rem; justify-content: center;">
+    <li *ngFor="let director of directors" style="margin-bottom: 1.5rem;">
+      <button style="width: 220px; height: 180px; border: 2px solid #1976d2; border-radius: 12px; background: #fff; box-shadow: 0 2px 8px #0001; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer;" (click)="selectDirector(director)">
+        <span style="font-size: 1.1rem; font-weight: bold; margin-bottom: 0.5rem;">{{ director.fullName }}</span>
+        <span style="margin-bottom: 0.3rem;">Carrera: {{ director.career ? director.career : '(sin especificar)' }}</span>
+        
+        
+      </button>
     </li>
   </ul>
+</div>
+
+<div *ngIf="showRequestForm && selectedDirector" style="display: flex; flex-direction: column; align-items: center; margin-top: 2rem;">
+  <div style="background: #fff; border: 2px solid #1976d2; border-radius: 12px; padding: 2rem; min-width: 320px; box-shadow: 0 2px 8px #0001;">
+    <h3 style="margin-bottom: 1rem;">Solicitar convenio a <b>{{ selectedDirector.fullName }}</b></h3>
+    <form (ngSubmit)="$event.preventDefault(); submitAgreementRequest();" style="display: flex; flex-direction: column; gap: 1rem;">
+      <label>
+        Descripción (mínimo 20 caracteres):
+        <textarea [(ngModel)]="requestDescription" name="description" required minlength="20" rows="4" style="width: 100%; margin-top: 0.5rem;"></textarea>
+      </label>
+      <label>
+        Seleccione carta PDF:
+        <input type="file" accept="application/pdf" (change)="onPdfFileChange($event)" required />
+      </label>
+      <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+        <button type="button" (click)="cancelAgreementRequest()" style="background: #eee; border: none; padding: 0.5rem 1.2rem; border-radius: 6px; cursor: pointer;">Cancelar</button>
+        <button type="submit" style="background: #1976d2; color: #fff; border: none; padding: 0.5rem 1.2rem; border-radius: 6px; cursor: pointer;">Enviar solicitud</button>
+      </div>
+    </form>
+  </div>
 </div>
 
 <!-- Próximamente: tabla/lista de solicitudes --> 

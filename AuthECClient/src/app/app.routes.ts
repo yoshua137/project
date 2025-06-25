@@ -14,6 +14,7 @@ import { ForbiddenComponent } from './forbidden/forbidden.component';
 import { claimReq } from './shared/utils/claimReq-utils';
 import { RoleSelectionComponent } from './user/role-selection/role-selection.component';
 import { AgreementRequestsComponent } from './authorizeDemo/agreement-requests/agreement-requests.component';
+import { AgreementRequestFormComponent } from './authorizeDemo/agreement-requests/agreement-request-form.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/user/login', pathMatch: 'full' },
@@ -57,6 +58,10 @@ export const routes: Routes = [
       },
       {
         path: 'agreement-requests', component: AgreementRequestsComponent,
+        data: { claimReq: claimReq.organizationOnly }
+      },
+      {
+        path: 'agreement-requests/new/:directorId', component: AgreementRequestFormComponent,
         data: { claimReq: claimReq.organizationOnly }
       },
     ]
