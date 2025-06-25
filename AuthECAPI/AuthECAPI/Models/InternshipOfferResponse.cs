@@ -12,5 +12,6 @@ namespace AuthECAPI.Models
         public DateTime EndDate { get; set; }
         public string OrganizationId { get; set; }
         public string OrganizationName { get; set; }
+        public string Mode { get; set; }
     }
 } 

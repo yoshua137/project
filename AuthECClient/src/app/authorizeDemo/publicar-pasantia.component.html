@@ -24,6 +24,14 @@
       <label class="form-label">Fecha de Fin</label>
       <input type="date" class="form-control" formControlName="endDate" required />
     </div>
+    <div class="mb-3">
+      <label class="form-label">Modalidad</label>
+      <select class="form-control" formControlName="mode" required>
+        <option value="" disabled selected>Selecciona modalidad</option>
+        <option *ngFor="let m of modalidades" [value]="m.value">{{ m.label }}</option>
+      </select>
+      <div *ngIf="form.get('mode')?.invalid && form.get('mode')?.touched" class="text-danger small">La modalidad es requerida.</div>
+    </div>
     <button class="btn btn-primary w-100" type="submit" [disabled]="form.invalid || loading">{{ loading ? 'Publicando...' : 'Publicar Oferta' }}</button>
   </form>
   <div *ngIf="successMsg" class="alert alert-success mt-3">{{ successMsg }}</div>

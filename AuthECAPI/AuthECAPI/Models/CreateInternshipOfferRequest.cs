@@ -22,5 +22,8 @@ namespace AuthECAPI.Models
 
         [Required(ErrorMessage = "La fecha de fin es requerida")]
         public DateTime EndDate { get; set; }
+
+        [Required(ErrorMessage = "La modalidad es requerida")]
+        public string Mode { get; set; }
     }
 } 

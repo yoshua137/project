@@ -18,5 +18,6 @@ namespace AuthECAPI.Models
         public string Requirements { get; set; }
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
+        public string Mode { get; set; }
     }
 } 

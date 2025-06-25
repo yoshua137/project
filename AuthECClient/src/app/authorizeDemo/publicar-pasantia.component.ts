@@ -16,6 +16,11 @@ export class PublicarPasantiaComponent {
   loading = false;
   successMsg = '';
   errorMsg = '';
+  modalidades = [
+    { value: 'Virtual', label: 'Virtual' },
+    { value: 'Presencial', label: 'Presencial' },
+    { value: 'Mixto', label: 'Mixto' }
+  ];
 
   constructor(private fb: FormBuilder, private http: HttpClient) {
     this.form = this.fb.group({
@@ -23,7 +28,8 @@ export class PublicarPasantiaComponent {
       description: ['', [Validators.required, Validators.minLength(20)]],
       requirements: ['', [Validators.required, Validators.minLength(10)]],
       startDate: ['', Validators.required],
-      endDate: ['', Validators.required]
+      endDate: ['', Validators.required],
+      mode: ['', Validators.required]
     });
   }
 

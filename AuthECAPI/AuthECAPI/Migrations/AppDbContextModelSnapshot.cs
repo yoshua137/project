@@ -175,6 +175,10 @@ namespace AuthECAPI.Migrations
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("Mode")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("OrganizationId")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
