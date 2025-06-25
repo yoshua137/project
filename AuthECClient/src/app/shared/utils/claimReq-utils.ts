@@ -5,5 +5,6 @@ export const claimReq = {
   femaleAndTeacher: (c: any) => c.gender == "Female" && c.role == "Teacher",
   femaleAndBelow10 : (c: any) => c.gender == "Female" && parseInt(c.age) > 10,
   organizationOnly: (c: any) => c.role == "Organization",
-  adminInvitationManager: (c: any) => c.role == "Admin"
+  adminInvitationManager: (c: any) => c.role == "Admin",
+  directorAgreementReviewer: (c: any) => c.role == "Director"
 }

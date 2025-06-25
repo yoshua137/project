@@ -101,9 +101,9 @@ namespace AuthECAPI.Controllers
                 {
                     Id = agreementRequest.Id,
                     OrganizationId = agreementRequest.OrganizationId,
-                    OrganizationName = organization.AppUser?.FullName,
+                    OrganizationName = organization.AppUser != null ? organization.AppUser.FullName : null,
                     DirectorId = agreementRequest.DirectorId,
-                    DirectorName = director.AppUser?.FullName,
+                    DirectorName = director.AppUser != null ? director.AppUser.FullName : null,
                     RequestDate = agreementRequest.RequestDate,
                     ReviewDate = agreementRequest.ReviewDate,
                     Status = agreementRequest.Status,
@@ -121,6 +121,271 @@ namespace AuthECAPI.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, $"Error interno del servidor: {ex.Message}");
+            }
+        }
+
+        // GET: api/AgreementRequest/director/{directorId}
+        [HttpGet("director/{directorId}")]
+        [Authorize(Roles = "Director")]
+        public async Task<ActionResult<IEnumerable<AgreementRequestResponse>>> GetAgreementRequestsForDirector(string directorId)
+        {
+            try
+            {
+                // Verificar que el director actual es el propietario de las solicitudes
+                var currentUserId = User.Claims.First(c => c.Type == "userID").Value;
+                if (currentUserId != directorId)
+                {
+                    return Forbid("Solo puede ver las solicitudes asignadas a su cuenta");
+                }
+
+                var agreementRequests = await _context.AgreementRequests
+                    .Include(ar => ar.Organization)
+                    .ThenInclude(o => o.AppUser)
+                    .Include(ar => ar.Director)
+                    .ThenInclude(d => d.AppUser)
+                    .Where(ar => ar.DirectorId == directorId)
+                    .OrderByDescending(ar => ar.RequestDate)
+                    .Select(ar => new AgreementRequestResponse
+                    {
+                        Id = ar.Id,
+                        OrganizationId = ar.OrganizationId,
+                        OrganizationName = ar.Organization.AppUser != null ? ar.Organization.AppUser.FullName : null,
+                        DirectorId = ar.DirectorId,
+                        DirectorName = ar.Director.AppUser != null ? ar.Director.AppUser.FullName : null,
+                        RequestDate = ar.RequestDate,
+                        ReviewDate = ar.ReviewDate,
+                        Status = ar.Status,
+                        Description = ar.Description,
+                        PdfFilePath = ar.PdfFilePath
+                    })
+                    .ToListAsync();
+
+                return Ok(agreementRequests);
+            }
+            catch (InvalidOperationException)
+            {
+                return Unauthorized("Token inválido o malformado. No se encontró el claim 'userID'.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error interno del servidor: {ex.Message}");
+            }
+        }
+
+        // PUT: api/AgreementRequest/review
+        [HttpPut("review")]
+        [Authorize(Roles = "Director")]
+        public async Task<ActionResult<AgreementRequestResponse>> ReviewAgreementRequest([FromBody] ReviewAgreementRequest request)
+        {
+            try
+            {
+                // Validar la decisión
+                if (request.Decision != "Accepted" && request.Decision != "Rejected")
+                {
+                    return BadRequest("La decisión debe ser 'Accepted' o 'Rejected'");
+                }
+
+                // Obtener el ID del director actual
+                var currentUserId = User.Claims.First(c => c.Type == "userID").Value;
+
+                // Buscar la solicitud de convenio
+                var agreementRequest = await _context.AgreementRequests
+                    .Include(ar => ar.Organization)
+                    .ThenInclude(o => o.AppUser)
+                    .Include(ar => ar.Director)
+                    .ThenInclude(d => d.AppUser)
+                    .FirstOrDefaultAsync(ar => ar.Id == request.AgreementRequestId);
+
+                if (agreementRequest == null)
+                {
+                    return NotFound("Solicitud de convenio no encontrada");
+                }
+
+                // Verificar que el director actual es el asignado a esta solicitud
+                if (agreementRequest.DirectorId != currentUserId)
+                {
+                    return Forbid("Solo puede revisar las solicitudes asignadas a su cuenta");
+                }
+
+                // Verificar que la solicitud está pendiente
+                if (agreementRequest.Status != "Pending")
+                {
+                    return BadRequest("Solo se pueden revisar solicitudes con estado 'Pending'");
+                }
+
+                // Actualizar la solicitud
+                agreementRequest.Status = request.Decision;
+                agreementRequest.ReviewDate = DateTime.UtcNow;
+
+                // Si se acepta, actualizar el estado a "Accepted"
+                // Si se rechaza, actualizar el estado a "Rejected"
+                await _context.SaveChangesAsync();
+
+                var response = new AgreementRequestResponse
+                {
+                    Id = agreementRequest.Id,
+                    OrganizationId = agreementRequest.OrganizationId,
+                    OrganizationName = agreementRequest.Organization.AppUser != null ? agreementRequest.Organization.AppUser.FullName : null,
+                    DirectorId = agreementRequest.DirectorId,
+                    DirectorName = agreementRequest.Director.AppUser != null ? agreementRequest.Director.AppUser.FullName : null,
+                    RequestDate = agreementRequest.RequestDate,
+                    ReviewDate = agreementRequest.ReviewDate,
+                    Status = agreementRequest.Status,
+                    Description = agreementRequest.Description,
+                    PdfFilePath = agreementRequest.PdfFilePath
+                };
+
+                return Ok(response);
+            }
+            catch (InvalidOperationException)
+            {
+                return Unauthorized("Token inválido o malformado. No se encontró el claim 'userID'.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error interno del servidor: {ex.Message}");
+            }
+        }
+
+        // GET: api/AgreementRequest/{id}
+        [HttpGet("{id}")]
+        [Authorize(Roles = "Director,Organization")]
+        public async Task<ActionResult<AgreementRequestResponse>> GetAgreementRequest(int id)
+        {
+            try
+            {
+                var currentUserId = User.Claims.First(c => c.Type == "userID").Value;
+
+                var agreementRequest = await _context.AgreementRequests
+                    .Include(ar => ar.Organization)
+                    .ThenInclude(o => o.AppUser)
+                    .Include(ar => ar.Director)
+                    .ThenInclude(d => d.AppUser)
+                    .FirstOrDefaultAsync(ar => ar.Id == id);
+
+                if (agreementRequest == null)
+                {
+                    return NotFound("Solicitud de convenio no encontrada");
+                }
+
+                // Verificar que el usuario actual tiene acceso a esta solicitud
+                var userRole = User.Claims.First(c => c.Type == "role").Value;
+                if (userRole == "Director" && agreementRequest.DirectorId != currentUserId)
+                {
+                    return Forbid("No tiene acceso a esta solicitud");
+                }
+                else if (userRole == "Organization" && agreementRequest.OrganizationId != currentUserId)
+                {
+                    return Forbid("No tiene acceso a esta solicitud");
+                }
+
+                var response = new AgreementRequestResponse
+                {
+                    Id = agreementRequest.Id,
+                    OrganizationId = agreementRequest.OrganizationId,
+                    OrganizationName = agreementRequest.Organization.AppUser != null ? agreementRequest.Organization.AppUser.FullName : null,
+                    DirectorId = agreementRequest.DirectorId,
+                    DirectorName = agreementRequest.Director.AppUser != null ? agreementRequest.Director.AppUser.FullName : null,
+                    RequestDate = agreementRequest.RequestDate,
+                    ReviewDate = agreementRequest.ReviewDate,
+                    Status = agreementRequest.Status,
+                    Description = agreementRequest.Description,
+                    PdfFilePath = agreementRequest.PdfFilePath
+                };
+
+                return Ok(response);
+            }
+            catch (InvalidOperationException)
+            {
+                return Unauthorized("Token inválido o malformado. No se encontró el claim 'userID'.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error interno del servidor: {ex.Message}");
+            }
+        }
+
+        // GET: api/AgreementRequest/pdf/{fileName}
+        [HttpGet("pdf/{fileName}")]
+        [Authorize(Roles = "Director,Organization")]
+        public async Task<IActionResult> GetPdfFile(string fileName)
+        {
+            try
+            {
+                // LOG: Imprimir todos los claims del usuario
+                Console.WriteLine("[PDF] Claims del usuario:");
+                foreach (var claim in User.Claims)
+                {
+                    Console.WriteLine($"[PDF] Claim: {claim.Type} = {claim.Value}");
+                }
+
+                // Obtener el ID del usuario actual y el rol de forma segura
+                var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "userID");
+                var roleClaim = User.Claims.FirstOrDefault(c =>
+                    c.Type == "role" ||
+                    c.Type == ClaimTypes.Role ||
+                    c.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+                );
+
+                if (userIdClaim == null || roleClaim == null)
+                {
+                    Console.WriteLine("[PDF] Claim 'userID' o 'role' no encontrado en el token.");
+                    return Unauthorized("Token inválido o malformado. No se encontró el claim 'userID' o 'role'.");
+                }
+
+                var currentUserId = userIdClaim.Value;
+                var userRole = roleClaim.Value;
+
+                // Buscar la solicitud que contiene este archivo
+                var agreementRequest = await _context.AgreementRequests
+                    .FirstOrDefaultAsync(ar => ar.PdfFilePath == fileName);
+
+                if (agreementRequest == null)
+                {
+                    Console.WriteLine($"[PDF] Solicitud no encontrada para archivo: {fileName}");
+                    return NotFound("Solicitud no encontrada");
+                }
+
+                // Validar el nombre del archivo para evitar path traversal
+                if (string.IsNullOrEmpty(fileName) || fileName.Contains("..") || fileName.Contains("/") || fileName.Contains("\\"))
+                {
+                    Console.WriteLine($"[PDF] Nombre de archivo inválido: {fileName}");
+                    return BadRequest("Nombre de archivo inválido");
+                }
+
+                var filePath = Path.Combine(_environment.ContentRootPath, "Uploads", "AgreementRequests", fileName);
+                Console.WriteLine($"[PDF] Buscando archivo en: {filePath}");
+                
+                if (!System.IO.File.Exists(filePath))
+                {
+                    Console.WriteLine($"[PDF] Archivo NO encontrado: {filePath}");
+                    return NotFound("Archivo no encontrado");
+                }
+                else
+                {
+                    Console.WriteLine($"[PDF] Archivo encontrado: {filePath}");
+                }
+
+                // Verificar que el usuario tiene acceso a este archivo
+                if (userRole == "Director" && agreementRequest.DirectorId != currentUserId)
+                {
+                    Console.WriteLine($"[PDF] Permiso denegado: Director {currentUserId} no es dueño de la solicitud");
+                    return Forbid("No tiene acceso a este archivo");
+                }
+                else if (userRole == "Organization" && agreementRequest.OrganizationId != currentUserId)
+                {
+                    Console.WriteLine($"[PDF] Permiso denegado: Organización {currentUserId} no es dueña de la solicitud");
+                    return Forbid("No tiene acceso a este archivo");
+                }
+
+                var fileBytes = await System.IO.File.ReadAllBytesAsync(filePath);
+                Console.WriteLine($"[PDF] Archivo enviado correctamente: {fileName}");
+                return File(fileBytes, "application/pdf", fileName);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[PDF] Error al obtener el archivo: {ex.Message}");
+                return StatusCode(500, $"Error al obtener el archivo: {ex.Message}");
             }
         }
     }

@@ -26,6 +26,9 @@
     <li class="nav-item" [appHideIfClaimsNotMet]="claimReq.adminInvitationManager">
       <a class="nav-link" routerLink="/registration-invitations">Invitaciones de Registro</a>
     </li>
+    <li class="nav-item" [appHideIfClaimsNotMet]="claimReq.directorAgreementReviewer">
+      <a class="nav-link" routerLink="/agreement-review">Revisar Convenios</a>
+    </li>
   </ul>
 </nav>
 <div id="main">

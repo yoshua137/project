@@ -16,6 +16,7 @@ import { RoleSelectionComponent } from './user/role-selection/role-selection.com
 import { AgreementRequestsComponent } from './authorizeDemo/agreement-requests/agreement-requests.component';
 import { AgreementRequestFormComponent } from './authorizeDemo/agreement-requests/agreement-request-form.component';
 import { RegistrationInvitationsComponent } from './authorizeDemo/registration-invitations/registration-invitations.component';
+import { AgreementReviewComponent } from './authorizeDemo/agreement-review/agreement-review.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/user/login', pathMatch: 'full' },
@@ -68,6 +69,10 @@ export const routes: Routes = [
       {
         path: 'registration-invitations', component: RegistrationInvitationsComponent,
         data: { claimReq: claimReq.adminInvitationManager }
+      },
+      {
+        path: 'agreement-review', component: AgreementReviewComponent,
+        data: { claimReq: claimReq.directorAgreementReviewer }
       },
     ]
   },

@@ -1,0 +1,138 @@
+<div class="container">
+  <h2 class="mb-4">Revisión de Solicitudes de Convenio</h2>
+  
+  <div class="row">
+    <!-- Lista de solicitudes -->
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header">
+          <h5>Solicitudes Asignadas</h5>
+        </div>
+        <div class="card-body">
+          <div *ngIf="loading" class="text-center">
+            <div class="spinner-border" role="status">
+              <span class="visually-hidden">Cargando...</span>
+            </div>
+          </div>
+          
+          <div *ngIf="!loading && agreementRequests.length === 0" class="text-center text-muted">
+            No hay solicitudes de convenio asignadas.
+          </div>
+          
+          <div *ngIf="!loading && agreementRequests.length > 0" class="table-responsive">
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>Organización</th>
+                  <th>Fecha Solicitud</th>
+                  <th>Estado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let request of agreementRequests" 
+                    [class.table-active]="selectedRequest?.id === request.id"
+                    style="cursor: pointer;">
+                  <td>
+                    <strong>{{ request.organizationName }}</strong>
+                    <br>
+                    <small class="text-muted">{{ request.description.substring(0, 50) }}...</small>
+                  </td>
+                  <td>{{ request.requestDate | date:'short' }}</td>
+                  <td>
+                    <span class="badge" [class]="getStatusClass(request.status)">
+                      {{ getStatusText(request.status) }}
+                    </span>
+                  </td>
+                  <td>
+                    <button class="btn btn-sm btn-outline-primary me-2" 
+                            (click)="selectRequest(request)">
+                      <i class="bi bi-eye"></i> Ver
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" 
+                            (click)="downloadPdf(request.pdfFilePath)">
+                      <i class="bi bi-download"></i> PDF
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel de revisión -->
+    <div class="col-md-4">
+      <div class="card" *ngIf="selectedRequest">
+        <div class="card-header">
+          <h5>Revisar Solicitud</h5>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <strong>Organización:</strong>
+            <p>{{ selectedRequest.organizationName }}</p>
+          </div>
+          
+          <div class="mb-3">
+            <strong>Descripción:</strong>
+            <p>{{ selectedRequest.description }}</p>
+          </div>
+          
+          <div class="mb-3">
+            <strong>Fecha de Solicitud:</strong>
+            <p>{{ selectedRequest.requestDate | date:'full' }}</p>
+          </div>
+          
+          <div class="mb-3">
+            <strong>Estado Actual:</strong>
+            <p>
+              <span class="badge" [class]="getStatusClass(selectedRequest.status)">
+                {{ getStatusText(selectedRequest.status) }}
+              </span>
+            </p>
+          </div>
+
+          <div *ngIf="canReview(selectedRequest)" class="mb-3">
+            <label for="reviewComments" class="form-label">Comentarios (opcional):</label>
+            <textarea 
+              id="reviewComments"
+              class="form-control" 
+              rows="3" 
+              [(ngModel)]="reviewComments"
+              placeholder="Agregue comentarios sobre su decisión...">
+            </textarea>
+          </div>
+
+          <div *ngIf="canReview(selectedRequest)" class="d-grid gap-2">
+            <button 
+              class="btn btn-success" 
+              (click)="reviewAgreement('Accepted')"
+              [disabled]="reviewing">
+              <span *ngIf="reviewing" class="spinner-border spinner-border-sm me-2"></span>
+              {{ reviewing ? 'Procesando...' : 'Aceptar Convenio' }}
+            </button>
+            <button 
+              class="btn btn-danger" 
+              (click)="reviewAgreement('Rejected')"
+              [disabled]="reviewing">
+              <span *ngIf="reviewing" class="spinner-border spinner-border-sm me-2"></span>
+              {{ reviewing ? 'Procesando...' : 'Rechazar Convenio' }}
+            </button>
+          </div>
+
+          <div *ngIf="!canReview(selectedRequest)" class="alert alert-info">
+            <strong>Ya revisada:</strong> Esta solicitud ya fue procesada el {{ selectedRequest.reviewDate | date:'short' }}
+          </div>
+        </div>
+      </div>
+
+      <div class="card" *ngIf="!selectedRequest">
+        <div class="card-body text-center text-muted">
+          <i class="bi bi-info-circle" style="font-size: 2rem;"></i>
+          <p class="mt-2">Seleccione una solicitud para revisar</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 

@@ -82,6 +82,7 @@ namespace AuthECAPI.Controllers
           new Claim("gender",user.Gender.ToString()),
           new Claim("age",(DateTime.Now.Year - user.DOB.Year).ToString()),
           new Claim(ClaimTypes.Role,roles.First()),
+          new Claim("role", roles.First()),
         });
         if (user.LibraryID != null)
           claims.AddClaim(new Claim("libraryID", user.LibraryID.ToString()!));
