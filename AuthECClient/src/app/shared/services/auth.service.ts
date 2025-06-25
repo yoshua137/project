@@ -21,6 +21,18 @@ export class AuthService {
     return this.http.post(environment.apiBaseUrl + '/signup/organization', formData);
   }
 
+  registerTeacher(formData: any) {
+    formData.gender = "Female";
+    formData.age = 35;
+    return this.http.post(environment.apiBaseUrl + '/signup/teacher', formData);
+  }
+
+  registerDirector(formData: any) {
+    formData.gender = "Female";
+    formData.age = 35;
+    return this.http.post(environment.apiBaseUrl + '/signup/director', formData);
+  }
+
   signin(formData: any) {
     return this.http.post(environment.apiBaseUrl + '/signin', formData);
   }

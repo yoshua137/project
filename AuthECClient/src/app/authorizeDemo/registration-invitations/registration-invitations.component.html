@@ -1,0 +1,103 @@
+<div class="container">
+  <h2 class="mb-4">Gestión de Invitaciones de Registro</h2>
+  
+  <!-- Formulario para generar nueva invitación -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h5>Generar Nueva Invitación</h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-4">
+          <label for="roleSelect" class="form-label">Rol:</label>
+          <select id="roleSelect" class="form-select" [(ngModel)]="selectedRole">
+            <option value="Teacher">Profesor</option>
+            <option value="Director">Director</option>
+          </select>
+        </div>
+        <div class="col-md-4 d-flex align-items-end">
+          <button 
+            class="btn btn-primary" 
+            (click)="generateInvitation()" 
+            [disabled]="generating">
+            <span *ngIf="generating" class="spinner-border spinner-border-sm me-2"></span>
+            {{ generating ? 'Generando...' : 'Generar Invitación' }}
+          </button>
+        </div>
+      </div>
+      
+      <!-- URL generada -->
+      <div *ngIf="generatedUrl" class="mt-3">
+        <label class="form-label">URL de Registro:</label>
+        <div class="input-group">
+          <input type="text" class="form-control" [value]="generatedUrl" readonly>
+          <button class="btn btn-outline-secondary" (click)="copyToClipboard(generatedUrl)">
+            <i class="bi bi-clipboard"></i> Copiar
+          </button>
+          <button *ngIf="selectedInvitation" class="btn btn-outline-danger" (click)="clearSelection()">
+            <i class="bi bi-x"></i> Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lista de invitaciones -->
+  <div class="card">
+    <div class="card-header">
+      <h5>Invitaciones Existentes</h5>
+    </div>
+    <div class="card-body">
+      <div *ngIf="loading" class="text-center">
+        <div class="spinner-border" role="status">
+          <span class="visually-hidden">Cargando...</span>
+        </div>
+      </div>
+      
+      <div *ngIf="!loading && invitations.length === 0" class="text-center text-muted">
+        No hay invitaciones generadas.
+      </div>
+      
+      <div *ngIf="!loading && invitations.length > 0" class="table-responsive">
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>Token</th>
+              <th>Rol</th>
+              <th>Creada</th>
+              <th>Expira</th>
+              <th>Estado</th>
+              <th>Usada</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let invitation of invitations" 
+                (click)="selectInvitation(invitation)"
+                [class.table-active]="selectedInvitation?.token === invitation.token"
+                style="cursor: pointer;">
+              <td>
+                <code>{{ invitation.token.substring(0, 8) }}...</code>
+              </td>
+              <td>
+                <span class="badge" [class]="invitation.role === 'Teacher' ? 'bg-info' : 'bg-warning'">
+                  {{ invitation.role }}
+                </span>
+              </td>
+              <td>{{ invitation.createdAt | date:'short' }}</td>
+              <td>{{ invitation.expiresAt | date:'short' }}</td>
+              <td>
+                <span class="badge" [class]="getStatusClass(invitation)">
+                  {{ getStatusText(invitation) }}
+                </span>
+              </td>
+              <td>
+                <span *ngIf="invitation.usedAt">{{ invitation.usedAt | date:'short' }}</span>
+                <span *ngIf="!invitation.usedAt" class="text-muted">-</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div> 

@@ -4,6 +4,8 @@ import { AuthService } from '../../shared/services/auth.service';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ToastrService } from 'ngx-toastr';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-registration',
@@ -20,7 +22,8 @@ export class RegistrationComponent implements OnInit {
     private authService: AuthService,
     private router: Router,
     private route: ActivatedRoute,
-    private toastr: ToastrService
+    private toastr: ToastrService,
+    private http: HttpClient
   ) { }
 
   passwordMatchValidator: ValidatorFn = (control: AbstractControl): { [key: string]: any } | null => {
@@ -50,16 +53,39 @@ export class RegistrationComponent implements OnInit {
     role: new FormControl({ value: '', disabled: true }, [Validators.required]),
     career: new FormControl(""),
     fullName: new FormControl(""),
+    department: new FormControl(""),
+    invitationToken: new FormControl("", [Validators.required]),
   }, { validators: this.passwordMatchValidator });
 
   ngOnInit(): void {
     this.route.queryParams.subscribe(params => {
       const role = params['role'];
-      if (role && (role === 'Student' || role === 'Organization')) {
+      const token = params['token'];
+      
+      if (token) {
+        this.registrationForm.get('invitationToken')?.setValue(token);
+        this.validateInvitationToken(token);
+      }
+      
+      if (role && (role === 'Student' || role === 'Organization' || role === 'Teacher' || role === 'Director')) {
         this.registrationForm.get('role')?.setValue(role);
         this.updateValidators(role);
-      } else {
-        // Si no hay rol o el rol no es válido, redirigir a la selección de rol
+      } else if (!token) {
+        // Si no hay token ni rol válido, redirigir a la selección de rol
+        this.router.navigate(['/user/select-role']);
+      }
+    });
+  }
+
+  validateInvitationToken(token: string) {
+    this.http.get(`${environment.apiBaseUrl}/RegistrationInvitation/validate/${token}`).subscribe({
+      next: (response: any) => {
+        this.registrationForm.get('role')?.setValue(response.role);
+        this.updateValidators(response.role);
+        this.toastr.success('Token de invitación válido', 'Validación Exitosa');
+      },
+      error: (err) => {
+        this.toastr.error('Token de invitación inválido o expirado', 'Error de Validación');
         this.router.navigate(['/user/select-role']);
       }
     });
@@ -68,21 +94,30 @@ export class RegistrationComponent implements OnInit {
   updateValidators(role: string | null): void {
     const careerControl = this.registrationForm.get('career');
     const fullNameControl = this.registrationForm.get('fullName');
+    const departmentControl = this.registrationForm.get('department');
 
     // Limpiar validadores existentes
     careerControl?.clearValidators();
     fullNameControl?.clearValidators();
+    departmentControl?.clearValidators();
 
     if (role === 'Student') {
       careerControl?.setValidators([Validators.required]);
       fullNameControl?.setValidators([Validators.required]);
     } else if (role === 'Organization') {
       fullNameControl?.setValidators([Validators.required]);
+    } else if (role === 'Teacher') {
+      fullNameControl?.setValidators([Validators.required]);
+      careerControl?.setValidators([Validators.required]);
+    } else if (role === 'Director') {
+      fullNameControl?.setValidators([Validators.required]);
+      departmentControl?.setValidators([Validators.required]);
     }
 
     // Actualizar el estado de validación
     careerControl?.updateValueAndValidity();
     fullNameControl?.updateValueAndValidity();
+    departmentControl?.updateValueAndValidity();
   }
 
   hasDisplayableError(controlName: string): boolean {
@@ -114,6 +149,14 @@ export class RegistrationComponent implements OnInit {
     return this.registrationForm.get('fullName')!;
   }
 
+  get department(): AbstractControl {
+    return this.registrationForm.get('department')!;
+  }
+
+  get invitationToken(): AbstractControl {
+    return this.registrationForm.get('invitationToken')!;
+  }
+
   onSubmit() {
     this.isSubmitted = true;
 
@@ -142,6 +185,18 @@ export class RegistrationComponent implements OnInit {
       case 'Organization':
         payload.fullName = registrationData.fullName;
         apiCall = this.authService.registerOrganization(payload);
+        break;
+      case 'Teacher':
+        payload.career = registrationData.career;
+        payload.fullName = registrationData.fullName;
+        payload.invitationToken = registrationData.invitationToken;
+        apiCall = this.authService.registerTeacher(payload);
+        break;
+      case 'Director':
+        payload.fullName = registrationData.fullName;
+        payload.department = registrationData.department;
+        payload.invitationToken = registrationData.invitationToken;
+        apiCall = this.authService.registerDirector(payload);
         break;
       default:
         this.toastr.error('Rol no válido detectado.');

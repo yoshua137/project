@@ -4,5 +4,6 @@ export const claimReq = {
   hasLibraryId: (c: any) => 'libraryID' in c,
   femaleAndTeacher: (c: any) => c.gender == "Female" && c.role == "Teacher",
   femaleAndBelow10 : (c: any) => c.gender == "Female" && parseInt(c.age) > 10,
-  organizationOnly: (c: any) => c.role == "Organization"
+  organizationOnly: (c: any) => c.role == "Organization",
+  adminInvitationManager: (c: any) => c.role == "Admin"
 }

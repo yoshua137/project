@@ -1,6 +1,11 @@
 <div class="mb-4">
   <h2 class="font-bold text-blue-ucb" style="font-size: 2rem;">
-    Crear cuenta de {{ registrationForm.get('role')?.value === 'Student' ? 'Estudiante' : 'Organización' }}
+    Crear cuenta de {{ 
+      registrationForm.get('role')?.value === 'Student' ? 'Estudiante' : 
+      registrationForm.get('role')?.value === 'Organization' ? 'Organización' :
+      registrationForm.get('role')?.value === 'Teacher' ? 'Profesor' :
+      registrationForm.get('role')?.value === 'Director' ? 'Director' : 'Usuario'
+    }}
   </h2>
   <div>
     ¿Ya tienes una cuenta? <a routerLink="/user/login" class="font-medium no-underline text-blue-ucb">Inicia sesión aquí</a>
@@ -72,6 +77,54 @@
       <div class="error-feedback" *ngIf="hasDisplayableError('fullName')">
         <div *ngIf="fullName.errors?.['required']">
           El nombre de la organización es requerido.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="role.value === 'Teacher'">
+    <div class="mb-3">
+      <input type="text" placeholder="Nombre Completo" formControlName="fullName"
+        class="w-full px-3 py-2 leading-tight text-gray-700 bg-gray-200 border rounded shadow-inner appearance-none focus:outline-none focus:shadow-outline">
+      <div class="error-feedback" *ngIf="hasDisplayableError('fullName')">
+        <div *ngIf="fullName.errors?.['required']">
+          El nombre completo es requerido.
+        </div>
+      </div>
+    </div>
+    <div class="mb-3">
+      <input type="text" placeholder="Carrera/Especialidad" formControlName="career"
+        class="w-full px-3 py-2 leading-tight text-gray-700 bg-gray-200 border rounded shadow-inner appearance-none focus:outline-none focus:shadow-outline">
+      <div class="error-feedback" *ngIf="hasDisplayableError('career')">
+        <div *ngIf="career.errors?.['required']">
+          La carrera/especialidad es requerida para profesores.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="role.value === 'Director'">
+    <div class="mb-3">
+      <input type="text" placeholder="Nombre Completo" formControlName="fullName"
+        class="w-full px-3 py-2 leading-tight text-gray-700 bg-gray-200 border rounded shadow-inner appearance-none focus:outline-none focus:shadow-outline">
+      <div class="error-feedback" *ngIf="hasDisplayableError('fullName')">
+        <div *ngIf="fullName.errors?.['required']">
+          El nombre completo es requerido.
+        </div>
+      </div>
+    </div>
+    <div class="mb-3">
+      <select formControlName="department" 
+        class="w-full px-3 py-2 leading-tight text-gray-700 bg-gray-200 border rounded shadow-inner appearance-none focus:outline-none focus:shadow-outline">
+        <option value="">Seleccionar Departamento</option>
+        <option value="Ciencias de la Salud">Ciencias de la Salud</option>
+        <option value="Ingenieria y Ciencias Exactas">Ingeniería y Ciencias Exactas</option>
+        <option value="Ciencias Sociales y Humanas">Ciencias Sociales y Humanas</option>
+        <option value="Administracion y Economia">Administración y Economía</option>
+      </select>
+      <div class="error-feedback" *ngIf="hasDisplayableError('department')">
+        <div *ngIf="department.errors?.['required']">
+          El departamento es requerido para directores.
         </div>
       </div>
     </div>
