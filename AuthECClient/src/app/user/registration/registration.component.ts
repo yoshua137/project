@@ -54,7 +54,7 @@ export class RegistrationComponent implements OnInit {
     career: new FormControl(""),
     fullName: new FormControl(""),
     department: new FormControl(""),
-    invitationToken: new FormControl("", [Validators.required]),
+    invitationToken: new FormControl("")
   }, { validators: this.passwordMatchValidator });
 
   ngOnInit(): void {
@@ -95,11 +95,13 @@ export class RegistrationComponent implements OnInit {
     const careerControl = this.registrationForm.get('career');
     const fullNameControl = this.registrationForm.get('fullName');
     const departmentControl = this.registrationForm.get('department');
+    const invitationTokenControl = this.registrationForm.get('invitationToken');
 
     // Limpiar validadores existentes
     careerControl?.clearValidators();
     fullNameControl?.clearValidators();
     departmentControl?.clearValidators();
+    invitationTokenControl?.clearValidators();
 
     if (role === 'Student') {
       careerControl?.setValidators([Validators.required]);
@@ -109,15 +111,18 @@ export class RegistrationComponent implements OnInit {
     } else if (role === 'Teacher') {
       fullNameControl?.setValidators([Validators.required]);
       careerControl?.setValidators([Validators.required]);
+      invitationTokenControl?.setValidators([Validators.required]);
     } else if (role === 'Director') {
       fullNameControl?.setValidators([Validators.required]);
       departmentControl?.setValidators([Validators.required]);
+      invitationTokenControl?.setValidators([Validators.required]);
     }
 
     // Actualizar el estado de validación
     careerControl?.updateValueAndValidity();
     fullNameControl?.updateValueAndValidity();
     departmentControl?.updateValueAndValidity();
+    invitationTokenControl?.updateValueAndValidity();
   }
 
   hasDisplayableError(controlName: string): boolean {

@@ -73,6 +73,7 @@ namespace AuthECAPI.Controllers
       if (user != null && await userManager.CheckPasswordAsync(user, loginModel.Password))
       {
         var roles = await userManager.GetRolesAsync(user);
+        var mainRole = roles.FirstOrDefault() ?? "";
         var signInKey = new SymmetricSecurityKey(
                         Encoding.UTF8.GetBytes(appSettings.Value.JWTSecret)
                         );
@@ -81,8 +82,8 @@ namespace AuthECAPI.Controllers
           new Claim("userID",user.Id.ToString()),
           new Claim("gender",user.Gender.ToString()),
           new Claim("age",(DateTime.Now.Year - user.DOB.Year).ToString()),
-          new Claim(ClaimTypes.Role,roles.First()),
-          new Claim("role", roles.First()),
+          new Claim(ClaimTypes.Role, mainRole),
+          new Claim("role", mainRole),
         });
         if (user.LibraryID != null)
           claims.AddClaim(new Claim("libraryID", user.LibraryID.ToString()!));
