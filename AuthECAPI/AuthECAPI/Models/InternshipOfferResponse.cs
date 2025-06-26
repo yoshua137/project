@@ -13,5 +13,6 @@ namespace AuthECAPI.Models
         public string OrganizationId { get; set; }
         public string OrganizationName { get; set; }
         public string Mode { get; set; }
+        public string Career { get; set; }
     }
 } 

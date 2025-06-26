@@ -57,7 +57,8 @@ namespace AuthECAPI.Controllers
                     StartDate = offerRequest.StartDate,
                     EndDate = offerRequest.EndDate,
                     OrganizationId = userId,
-                    Mode = offerRequest.Mode
+                    Mode = offerRequest.Mode,
+                    Career = offerRequest.Career
                 };
 
                 _context.InternshipOffers.Add(internshipOffer);
@@ -73,7 +74,8 @@ namespace AuthECAPI.Controllers
                     EndDate = internshipOffer.EndDate,
                     OrganizationId = internshipOffer.OrganizationId,
                     OrganizationName = organization.AppUser?.FullName,
-                    Mode = internshipOffer.Mode
+                    Mode = internshipOffer.Mode,
+                    Career = internshipOffer.Career
                 };
 
                 return CreatedAtAction(nameof(CreateInternshipOffer), new { id = offerResponse.Id }, offerResponse);

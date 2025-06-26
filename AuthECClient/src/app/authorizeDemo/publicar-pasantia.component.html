@@ -1,4 +1,43 @@
 <div class="container" style="background: #e6f0ff; padding: 2rem; border-radius: 1rem; max-width: 600px; margin: 0 auto;">
+  <style>
+    .form-control.is-invalid {
+      border-color: #dc3545;
+      box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+    }
+    .form-control.is-valid {
+      border-color: #28a745;
+      box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+    }
+    .hover-bg-light:hover {
+      background-color: #f8f9fa;
+    }
+    .text-success {
+      color: #28a745 !important;
+    }
+    .text-danger {
+      color: #dc3545 !important;
+    }
+    .input-group .form-control {
+      border-right: none;
+    }
+    .input-group .btn {
+      border-left: 1px solid #ced4da;
+    }
+    .input-group .form-control:focus {
+      border-right: none;
+      box-shadow: none;
+    }
+    .input-group .form-control:focus + .btn {
+      border-color: #80bdff;
+    }
+    .input-group .form-control.is-invalid {
+      border-right: none;
+    }
+    .input-group .form-control.is-valid {
+      border-right: none;
+    }
+  </style>
+  
   <h2 class="mb-4">Publicar Oferta de Pasantía</h2>
   
   <!-- Estado de carga -->
@@ -19,13 +58,21 @@
   <div *ngIf="!loadingDepartments && hasApprovedAgreements && !selectedDepartment">
     <p class="mb-4">Selecciona el departamento para el cual quieres publicar la pasantía:</p>
     <div style="display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center;">
-      <button 
-        *ngFor="let dept of approvedDepartments" 
-        (click)="selectDepartment(dept)"
-        class="btn btn-outline-primary"
-        style="min-width: 200px; padding: 1rem;">
-        {{ dept }}
-      </button>
+      <div 
+        *ngFor="let dept of availableDepartments" 
+        class="card"
+        style="min-width: 250px; cursor: pointer;"
+        (click)="selectDepartment(dept.value)">
+        <div class="card-body">
+          <h5 class="card-title">{{ dept.name }}</h5>
+          <p class="card-text small">
+            <strong>Carreras:</strong><br>
+            <span *ngFor="let career of dept.careers; let last = last">
+              • {{ career }}<br *ngIf="!last">
+            </span>
+          </p>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -47,6 +94,51 @@
         <label class="form-label">Departamento</label>
         <input class="form-control" [value]="selectedDepartment" readonly style="background-color: #f8f9fa;" />
         <small class="text-muted">Departamento seleccionado con convenio aprobado</small>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Carrera</label>
+        <div class="position-relative">
+          <div class="input-group">
+            <input 
+              class="form-control" 
+              [class.is-invalid]="(form.get('career')?.hasError('invalidCareer') && searchTerm.trim() !== '') || (form.get('career')?.hasError('required') && form.get('career')?.touched)"
+              [class.is-valid]="isCareerValid() && searchTerm.trim() !== ''"
+              [value]="searchTerm"
+              (input)="onCareerSearch($event)"
+              (focus)="onCareerInputFocus()"
+              (blur)="onCareerInputBlur()"
+              placeholder="Escribe para buscar carrera..."
+              required />
+            <button 
+              type="button" 
+              class="btn btn-outline-secondary"
+              (click)="toggleCareerDropdown()"
+              style="border-left: none;">
+              <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/>
+              </svg>
+            </button>
+          </div>
+          <div *ngIf="showCareerDropdown && filteredCareers.length > 0" class="position-absolute w-100 bg-white border rounded-bottom" style="z-index: 1000; max-height: 200px; overflow-y: auto; top: 100%;">
+            <div 
+              *ngFor="let career of filteredCareers" 
+              class="p-2 cursor-pointer hover-bg-light"
+              style="cursor: pointer;"
+              (click)="selectCareer(career)">
+              {{ career }}
+            </div>
+          </div>
+        </div>
+        <div *ngIf="form.get('career')?.hasError('invalidCareer') && searchTerm.trim() !== ''" class="text-danger small">
+          {{ getCareerErrorMessage() }}
+        </div>
+        <div *ngIf="form.get('career')?.hasError('required') && form.get('career')?.touched" class="text-danger small">
+          La carrera es requerida.
+        </div>
+        <div *ngIf="isCareerValid() && searchTerm.trim() !== ''" class="text-success small">
+          ✓ Carrera válida
+        </div>
+        <small class="text-muted">Carreras disponibles en {{ selectedDepartment }}</small>
       </div>
       <div class="mb-3">
         <label class="form-label">Descripción</label>

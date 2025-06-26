@@ -25,5 +25,8 @@ namespace AuthECAPI.Models
 
         [Required(ErrorMessage = "La modalidad es requerida")]
         public string Mode { get; set; }
+
+        [Required(ErrorMessage = "La carrera es requerida")]
+        public string Career { get; set; }
     }
 } 
