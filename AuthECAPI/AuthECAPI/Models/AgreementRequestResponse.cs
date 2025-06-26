@@ -9,6 +9,7 @@ namespace AuthECAPI.Models
         public string OrganizationName { get; set; }
         public string DirectorId { get; set; }
         public string DirectorName { get; set; }
+        public string DirectorDepartment { get; set; }
         public DateTime RequestDate { get; set; }
         public DateTime? ReviewDate { get; set; }
         public string Status { get; set; }

@@ -7,6 +7,7 @@ interface AgreementRequest {
   id: number;
   organizationName: string;
   directorName: string;
+  directorDepartment: string;
   requestDate: string;
   reviewDate: string | null;
   status: string;

@@ -10,6 +10,7 @@
           <thead>
             <tr>
               <th>Director</th>
+              <th>Departamento</th>
               <th>Fecha Solicitud</th>
               <th>Estado</th>
               <th>Acciones</th>
@@ -18,6 +19,7 @@
           <tbody>
             <tr *ngFor="let req of agreementRequests">
               <td>{{ req.directorName }}</td>
+              <td>{{ req.directorDepartment }}</td>
               <td>{{ req.requestDate | date:'short' }}</td>
               <td><span [ngClass]="getStatusColor(req.status)">{{ req.status === 'Accepted' ? 'Aceptado' : req.status === 'Rejected' ? 'Rechazado' : req.status }}</span></td>
               <td>
