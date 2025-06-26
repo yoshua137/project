@@ -1,5 +1,5 @@
-<div class="text-center">
-  <h1 class="display-6">¡Bienvenido(a) a bordo!</h1>
-  <h1 class="display-6 fw-bolder text-dark">{{fullName}}</h1>
-  <button [appHideIfClaimsNotMet]="claimReq.adminOnly" class="btn btn-danger">Operación de Administrador</button>
+<div class="flex flex-col items-center justify-center text-center mt-10">
+  <h1 class="text-3xl font-semibold mb-2">¡Bienvenido(a) a bordo!</h1>
+  <h1 class="text-3xl font-bold text-gray-800 mb-6">{{fullName}}</h1>
+  <button [appHideIfClaimsNotMet]="claimReq.adminOnly" class="px-6 py-2 bg-red-600 text-white rounded-lg font-semibold shadow hover:bg-red-700 transition-colors duration-200">Operación de Administrador</button>
 </div>

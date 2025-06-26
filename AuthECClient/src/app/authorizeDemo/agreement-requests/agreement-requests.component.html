@@ -1,45 +1,43 @@
 <div *ngIf="!selectedDepartment">
-  <h2>Selecciona el Departamento de Interés</h2>
-  <div style="display: flex; flex-wrap: wrap; gap: 2rem; justify-content: center; margin-top: 2rem;">
-    <button *ngFor="let dep of departments" (click)="selectDepartment(dep.value)" style="border: none; background: none; cursor: pointer; text-align: center;">
-      <img [src]="dep.image" [alt]="dep.name" style="width: 120px; height: 120px; object-fit: contain; display: block; margin: 0 auto 1rem;" />
-      <span style="font-size: 1.2rem; font-weight: bold;">{{ dep.name }}</span>
+  <h2 class="text-2xl font-bold text-blue-900 mb-6 text-center">Selecciona el Departamento de Interés</h2>
+  <div class="flex flex-wrap gap-8 justify-center mt-8">
+    <button *ngFor="let dep of departments" (click)="selectDepartment(dep.value)" class="flex flex-col items-center bg-white rounded-xl shadow-md p-4 hover:bg-blue-50 transition cursor-pointer border-2 border-transparent hover:border-blue-400">
+      <img [src]="dep.image" [alt]="dep.name" class="w-28 h-28 object-contain mb-3" />
+      <span class="text-lg font-semibold text-blue-800">{{ dep.name }}</span>
     </button>
   </div>
 </div>
 
 <div *ngIf="selectedDepartment">
-  <button (click)="backToDepartments()" style="margin-bottom: 1rem;">&larr; Volver a departamentos</button>
-  <h2>Directores de {{ selectedDepartment }}</h2>
-  <div *ngIf="loadingDirectors">Cargando directores...</div>
-  <div *ngIf="!loadingDirectors && directors.length === 0">No hay directores registrados en este departamento.</div>
-  <ul *ngIf="!loadingDirectors && directors.length > 0" style="list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 2rem; justify-content: center;">
-    <li *ngFor="let director of directors" style="margin-bottom: 1.5rem;">
-      <button style="width: 220px; height: 180px; border: 2px solid #1976d2; border-radius: 12px; background: #fff; box-shadow: 0 2px 8px #0001; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer;" (click)="selectDirector(director)">
-        <span style="font-size: 1.1rem; font-weight: bold; margin-bottom: 0.5rem;">{{ director.fullName }}</span>
-        <span style="margin-bottom: 0.3rem;">Carrera: {{ director.career ? director.career : '(sin especificar)' }}</span>
-        
-        
+  <button (click)="backToDepartments()" class="mb-4 text-blue-700 border border-blue-700 rounded px-3 py-1 hover:bg-blue-100 transition">&larr; Volver a departamentos</button>
+  <h2 class="text-xl font-bold text-blue-900 mb-4">Directores de {{ selectedDepartment }}</h2>
+  <div *ngIf="loadingDirectors" class="text-blue-700">Cargando directores...</div>
+  <div *ngIf="!loadingDirectors && directors.length === 0" class="text-gray-600">No hay directores registrados en este departamento.</div>
+  <ul *ngIf="!loadingDirectors && directors.length > 0" class="flex flex-wrap gap-8 justify-center list-none p-0">
+    <li *ngFor="let director of directors" class="mb-6">
+      <button class="w-56 h-44 border-2 border-blue-700 rounded-xl bg-white shadow flex flex-col items-center justify-center cursor-pointer hover:bg-blue-50 transition" (click)="selectDirector(director)">
+        <span class="text-lg font-bold mb-2 text-blue-800">{{ director.fullName }}</span>
+        <span class="mb-1 text-gray-700">Carrera: {{ director.career ? director.career : '(sin especificar)' }}</span>
       </button>
     </li>
   </ul>
 </div>
 
-<div *ngIf="showRequestForm && selectedDirector" style="display: flex; flex-direction: column; align-items: center; margin-top: 2rem;">
-  <div style="background: #fff; border: 2px solid #1976d2; border-radius: 12px; padding: 2rem; min-width: 320px; box-shadow: 0 2px 8px #0001;">
-    <h3 style="margin-bottom: 1rem;">Solicitar convenio a <b>{{ selectedDirector.fullName }}</b></h3>
-    <form (ngSubmit)="$event.preventDefault(); submitAgreementRequest();" style="display: flex; flex-direction: column; gap: 1rem;">
-      <label>
-        Descripción (mínimo 20 caracteres):
-        <textarea [(ngModel)]="requestDescription" name="description" required minlength="20" rows="4" style="width: 100%; margin-top: 0.5rem;"></textarea>
+<div *ngIf="showRequestForm && selectedDirector" class="flex flex-col items-center mt-8">
+  <div class="bg-white border-2 border-blue-700 rounded-xl p-8 min-w-[320px] shadow-lg">
+    <h3 class="mb-4 text-lg font-bold text-blue-900">Solicitar convenio a <b>{{ selectedDirector.fullName }}</b></h3>
+    <form (ngSubmit)="$event.preventDefault(); submitAgreementRequest();" class="flex flex-col gap-4">
+      <label class="block">
+        <span class="font-semibold">Descripción (mínimo 20 caracteres):</span>
+        <textarea [(ngModel)]="requestDescription" name="description" required minlength="20" rows="4" class="w-full mt-2 px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400"></textarea>
       </label>
-      <label>
-        Seleccione carta PDF:
-        <input type="file" accept="application/pdf" (change)="onPdfFileChange($event)" required />
+      <label class="block">
+        <span class="font-semibold">Seleccione carta PDF:</span>
+        <input type="file" accept="application/pdf" (change)="onPdfFileChange($event)" required class="block mt-2" />
       </label>
-      <div style="display: flex; gap: 1rem; justify-content: flex-end;">
-        <button type="button" (click)="cancelAgreementRequest()" style="background: #eee; border: none; padding: 0.5rem 1.2rem; border-radius: 6px; cursor: pointer;">Cancelar</button>
-        <button type="submit" style="background: #1976d2; color: #fff; border: none; padding: 0.5rem 1.2rem; border-radius: 6px; cursor: pointer;">Enviar solicitud</button>
+      <div class="flex gap-4 justify-end">
+        <button type="button" (click)="cancelAgreementRequest()" class="bg-gray-100 border border-gray-400 px-4 py-2 rounded hover:bg-gray-200 transition">Cancelar</button>
+        <button type="submit" class="bg-blue-700 text-white px-4 py-2 rounded hover:bg-blue-800 transition">Enviar solicitud</button>
       </div>
     </form>
   </div>

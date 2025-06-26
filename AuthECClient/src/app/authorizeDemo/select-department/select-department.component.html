@@ -1,26 +1,23 @@
-<div class="container" style="background: #e6f0ff; padding: 2rem; border-radius: 1rem;">
-  <h2 class="mb-4">Selecciona el Departamento para Publicar Pasantía</h2>
-  <p class="mb-4">Solo se muestran departamentos con convenios aprobados</p>
-  
-  <div *ngIf="loading" class="text-center">
+<div class="bg-blue-50 p-8 rounded-2xl max-w-2xl mx-auto mt-8 shadow-lg">
+  <h2 class="mb-6 text-2xl font-bold text-blue-900">Selecciona el Departamento para Publicar Pasantía</h2>
+  <p class="mb-6 text-blue-800">Solo se muestran departamentos con convenios aprobados</p>
+  <div *ngIf="loading" class="text-center text-blue-700">
     <p>Cargando departamentos disponibles...</p>
   </div>
-  
   <div *ngIf="!loading && availableDepartments.length === 0" class="text-center">
-    <p>No tienes convenios aprobados con ningún departamento.</p>
-    <p>Debes solicitar y obtener la aprobación de convenios antes de poder publicar pasantías.</p>
+    <p class="text-gray-700">No tienes convenios aprobados con ningún departamento.</p>
+    <p class="text-gray-500">Debes solicitar y obtener la aprobación de convenios antes de poder publicar pasantías.</p>
   </div>
-  
-  <div *ngIf="!loading && availableDepartments.length > 0" style="display: flex; flex-wrap: wrap; gap: 2rem; justify-content: center; margin-top: 2rem;">
+  <div *ngIf="!loading && availableDepartments.length > 0" class="flex flex-wrap gap-8 justify-center mt-8">
     <button 
       *ngFor="let dep of availableDepartments" 
       (click)="selectDepartment(dep)" 
-      style="border: none; background: none; cursor: pointer; text-align: center;">
+      class="flex flex-col items-center bg-white rounded-xl shadow-md p-4 hover:bg-blue-50 transition cursor-pointer border-2 border-transparent hover:border-blue-400">
       <img 
         [src]="dep.image" 
         [alt]="dep.name" 
-        style="width: 120px; height: 120px; object-fit: contain; display: block; margin: 0 auto 1rem;" />
-      <span style="font-size: 1.2rem; font-weight: bold;">{{ dep.name }}</span>
+        class="w-28 h-28 object-contain mb-3" />
+      <span class="text-lg font-semibold text-blue-800">{{ dep.name }}</span>
     </button>
   </div>
 </div>

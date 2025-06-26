@@ -1,29 +1,42 @@
-<div class="container" style="background: #e6f0ff; padding: 2rem; border-radius: 1rem;">
-  <h2 class="mb-4">Mis Convenios</h2>
-  <div *ngIf="loading">Cargando convenios...</div>
-  <div *ngIf="!loading && agreementRequests.length === 0">No tienes convenios registrados.</div>
+<div class="bg-blue-50 p-8 rounded-2xl max-w-4xl mx-auto mt-8 shadow-lg">
+  <h2 class="mb-6 text-2xl font-bold text-blue-900">Mis Convenios</h2>
+  <div *ngIf="loading" class="text-blue-700">Cargando convenios...</div>
+  <div *ngIf="!loading && agreementRequests.length === 0" class="text-gray-600">No tienes convenios registrados.</div>
   <div *ngIf="!loading && agreementRequests.length > 0">
-    <div class="card">
-      <div class="card-header fw-bold">Convenios de mi organización</div>
-      <div class="card-body p-0">
-        <table class="table mb-0">
+    <div class="bg-white rounded-xl shadow p-4">
+      <div class="border-b pb-2 mb-4 font-bold text-blue-800">Convenios de mi organización</div>
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-sm text-left">
           <thead>
-            <tr>
-              <th>Director</th>
-              <th>Departamento</th>
-              <th>Fecha Solicitud</th>
-              <th>Estado</th>
-              <th>Acciones</th>
+            <tr class="bg-blue-50">
+              <th class="py-2 px-4 font-semibold">Director</th>
+              <th class="py-2 px-4 font-semibold">Departamento</th>
+              <th class="py-2 px-4 font-semibold">Fecha Solicitud</th>
+              <th class="py-2 px-4 font-semibold">Estado</th>
+              <th class="py-2 px-4 font-semibold">Acciones</th>
             </tr>
           </thead>
           <tbody>
             <tr *ngFor="let req of agreementRequests">
-              <td>{{ req.directorName }}</td>
-              <td>{{ req.directorDepartment }}</td>
-              <td>{{ req.requestDate | date:'short' }}</td>
-              <td><span [ngClass]="getStatusColor(req.status)">{{ req.status === 'Accepted' ? 'Aceptado' : req.status === 'Rejected' ? 'Rechazado' : req.status }}</span></td>
-              <td>
-                <a *ngIf="req.pdfFilePath" class="btn btn-primary btn-sm" [href]="environment.apiBaseUrl + '/AgreementRequest/pdf/' + req.pdfFilePath" target="_blank">Ver PDF</a>
+              <td class="py-2 px-4">{{ req.directorName }}</td>
+              <td class="py-2 px-4">{{ req.directorDepartment }}</td>
+              <td class="py-2 px-4">{{ req.requestDate | date:'short' }}</td>
+              <td class="py-2 px-4">
+                <span [ngClass]="getStatusColor(req.status)" class="px-2 py-1 rounded text-xs font-semibold">
+                  {{ req.status === 'Accepted' ? 'Aceptado' : req.status === 'Rejected' ? 'Rechazado' : req.status }}
+                </span>
+              </td>
+              <td class="py-2 px-4">
+                <a *ngIf="req.pdfFilePath"
+                   class="inline-flex items-center gap-1 bg-gray-100 text-gray-700 px-3 py-1 rounded hover:bg-gray-200 transition border border-gray-300"
+                   [href]="environment.apiBaseUrl + '/AgreementRequest/pdf/' + req.pdfFilePath"
+                   target="_blank"
+                   title="Ver PDF">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h8a2 2 0 002-2v-2M7 10V6a5 5 0 0110 0v4M5 20h14" />
+                  </svg>
+                  PDF
+                </a>
               </td>
             </tr>
           </tbody>

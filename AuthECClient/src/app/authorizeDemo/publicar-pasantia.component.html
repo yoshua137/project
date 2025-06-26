@@ -1,188 +1,128 @@
-<div class="container" style="background: #e6f0ff; padding: 2rem; border-radius: 1rem; max-width: 600px; margin: 0 auto;">
-  <style>
-    .form-control.is-invalid {
-      border-color: #dc3545;
-      box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
-    }
-    .form-control.is-valid {
-      border-color: #28a745;
-      box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
-    }
-    .hover-bg-light:hover {
-      background-color: #f8f9fa;
-    }
-    .text-success {
-      color: #28a745 !important;
-    }
-    .text-danger {
-      color: #dc3545 !important;
-    }
-    .input-group .form-control {
-      border-right: none;
-    }
-    .input-group .btn {
-      border-left: 1px solid #ced4da;
-    }
-    .input-group .form-control:focus {
-      border-right: none;
-      box-shadow: none;
-    }
-    .input-group .form-control:focus + .btn {
-      border-color: #80bdff;
-    }
-    .input-group .form-control.is-invalid {
-      border-right: none;
-    }
-    .input-group .form-control.is-valid {
-      border-right: none;
-    }
-  </style>
-  
-  <h2 class="mb-4">Publicar Oferta de Pasantía</h2>
-  
+<div class="bg-blue-50 p-8 rounded-2xl max-w-xl mx-auto mt-8 shadow-lg">
+  <h2 class="mb-6 text-2xl font-bold text-blue-900">Publicar Oferta de Pasantía</h2>
   <!-- Estado de carga -->
-  <div *ngIf="loadingDepartments" class="text-center">
+  <div *ngIf="loadingDepartments" class="text-center text-blue-700 mb-4">
     <p>Cargando información de convenios...</p>
   </div>
-
   <!-- Mensaje cuando no hay convenios aprobados -->
   <div *ngIf="!loadingDepartments && !hasApprovedAgreements" class="text-center">
-    <div class="alert alert-warning">
-      <h4>No tienes convenios aprobados</h4>
+    <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded mb-4">
+      <h4 class="font-bold mb-2">No tienes convenios aprobados</h4>
       <p>Para poder publicar pasantías, primero debes solicitar y obtener la aprobación de convenios con los departamentos.</p>
-      <p>Ve a la sección "Solicitar Convenio" para comenzar el proceso.</p>
+      <p>Ve a la sección <span class="font-semibold">Solicitar Convenio</span> para comenzar el proceso.</p>
     </div>
   </div>
-
-  <!-- Selección de departamentos cuando hay convenios aprobados pero no se ha seleccionado uno -->
+  <!-- Selección de departamentos -->
   <div *ngIf="!loadingDepartments && hasApprovedAgreements && !selectedDepartment">
-    <p class="mb-4">Selecciona el departamento para el cual quieres publicar la pasantía:</p>
-    <div style="display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center;">
-      <div 
-        *ngFor="let dept of availableDepartments" 
-        class="card"
-        style="min-width: 250px; cursor: pointer;"
-        (click)="selectDepartment(dept.value)">
-        <div class="card-body">
-          <h5 class="card-title">{{ dept.name }}</h5>
-          <p class="card-text small">
-            <strong>Carreras:</strong><br>
-            <span *ngFor="let career of dept.careers; let last = last">
-              • {{ career }}<br *ngIf="!last">
-            </span>
-          </p>
-        </div>
+    <p class="mb-4 text-blue-900 font-medium">Selecciona el departamento para el cual quieres publicar la pasantía:</p>
+    <div class="flex flex-wrap gap-4 justify-center">
+      <div *ngFor="let dept of availableDepartments" class="bg-white rounded-lg shadow-md p-4 min-w-[250px] cursor-pointer hover:bg-blue-100 transition" (click)="selectDepartment(dept.value)">
+        <h5 class="font-bold text-blue-800 mb-2">{{ dept.name }}</h5>
+        <p class="text-sm text-gray-700">
+          <span class="font-semibold">Carreras:</span><br>
+          <span *ngFor="let career of dept.careers; let last = last">
+            • {{ career }}<br *ngIf="!last">
+          </span>
+        </p>
       </div>
     </div>
   </div>
-
-  <!-- Formulario de publicación cuando hay departamento seleccionado -->
+  <!-- Formulario de publicación -->
   <div *ngIf="!loadingDepartments && hasApprovedAgreements && selectedDepartment">
     <div class="mb-3">
-      <button (click)="selectedDepartment = ''" class="btn btn-outline-secondary mb-3">
-        &larr; Cambiar departamento
-      </button>
+      <button (click)="selectedDepartment = ''" class="text-blue-700 border border-blue-700 rounded px-3 py-1 mb-3 hover:bg-blue-100 transition">&larr; Cambiar departamento</button>
     </div>
-    
-    <form [formGroup]="form" (ngSubmit)="onSubmit()">
-      <div class="mb-3">
-        <label class="form-label">Título</label>
-        <input class="form-control" formControlName="title" maxlength="100" required placeholder="Ej: Pasantía en desarrollo web" />
-        <div *ngIf="form.get('title')?.invalid && form.get('title')?.touched" class="text-danger small">Título requerido (máx 100 caracteres).</div>
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4">
+      <div>
+        <label class="block font-semibold mb-1">Título</label>
+        <input class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400" formControlName="title" maxlength="100" required placeholder="Ej: Pasantía en desarrollo web" />
+        <div *ngIf="form.get('title')?.invalid && form.get('title')?.touched" class="text-red-600 text-sm mt-1">Título requerido (máx 100 caracteres).</div>
       </div>
-      <div class="mb-3">
-        <label class="form-label">Departamento</label>
-        <input class="form-control" [value]="selectedDepartment" readonly style="background-color: #f8f9fa;" />
-        <small class="text-muted">Departamento seleccionado con convenio aprobado</small>
+      <div>
+        <label class="block font-semibold mb-1">Departamento</label>
+        <input class="w-full px-3 py-2 border rounded bg-gray-100" [value]="selectedDepartment" readonly />
+        <span class="text-xs text-gray-500">Departamento seleccionado con convenio aprobado</span>
       </div>
-      <div class="mb-3">
-        <label class="form-label">Carrera</label>
-        <div class="position-relative">
-          <div class="input-group">
+      <div>
+        <label class="block font-semibold mb-1">Carrera</label>
+        <div class="relative">
+          <div class="flex">
             <input 
-              class="form-control" 
-              [class.is-invalid]="(form.get('career')?.hasError('invalidCareer') && searchTerm.trim() !== '') || (form.get('career')?.hasError('required') && form.get('career')?.touched)"
-              [class.is-valid]="isCareerValid() && searchTerm.trim() !== ''"
+              class="w-full px-3 py-2 border rounded-l focus:outline-none focus:ring-2 focus:ring-blue-400"
+              [class.border-red-500]="(form.get('career')?.hasError('invalidCareer') && searchTerm.trim() !== '') || (form.get('career')?.hasError('required') && form.get('career')?.touched)"
+              [class.border-green-500]="isCareerValid() && searchTerm.trim() !== ''"
               [value]="searchTerm"
               (input)="onCareerSearch($event)"
               (focus)="onCareerInputFocus()"
               (blur)="onCareerInputBlur()"
               placeholder="Escribe o selecciona una carrera..."
               required />
-            <button 
-              type="button" 
-              class="btn btn-outline-secondary"
-              (click)="toggleCareerDropdown()"
-              style="border-left: none;">
+            <button type="button" class="px-3 py-2 border border-l-0 rounded-r bg-gray-100 hover:bg-blue-100 transition" (click)="toggleCareerDropdown()">
               <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                 <path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/>
               </svg>
             </button>
           </div>
-          <div *ngIf="showCareerDropdown && filteredCareers.length > 0" class="position-absolute w-100 bg-white border rounded-bottom" style="z-index: 1000; max-height: 200px; overflow-y: auto; top: 100%;">
-            <div 
-              *ngFor="let career of filteredCareers" 
-              class="p-2 cursor-pointer hover-bg-light"
-              style="cursor: pointer;"
-              (click)="selectCareer(career)">
+          <div *ngIf="showCareerDropdown && filteredCareers.length > 0" class="absolute w-full bg-white border rounded-b shadow z-10 max-h-52 overflow-y-auto">
+            <div *ngFor="let career of filteredCareers" class="px-4 py-2 cursor-pointer hover:bg-blue-100" (click)="selectCareer(career)">
               {{ career }}
             </div>
           </div>
         </div>
-        <div *ngIf="form.get('career')?.hasError('invalidCareer') && searchTerm.trim() !== ''" class="text-danger small">
+        <div *ngIf="form.get('career')?.hasError('invalidCareer') && searchTerm.trim() !== ''" class="text-red-600 text-sm mt-1">
           {{ getCareerErrorMessage() }}
         </div>
-        <div *ngIf="form.get('career')?.hasError('required') && form.get('career')?.touched" class="text-danger small">
+        <div *ngIf="form.get('career')?.hasError('required') && form.get('career')?.touched" class="text-red-600 text-sm mt-1">
           La carrera es requerida.
         </div>
-        <div *ngIf="isCareerValid() && searchTerm.trim() !== ''" class="text-success small">
+        <div *ngIf="isCareerValid() && searchTerm.trim() !== ''" class="text-green-600 text-sm mt-1">
           ✓ Carrera válida
         </div>
-        <small class="text-muted">Carreras disponibles en {{ selectedDepartment }}</small>
+        <span class="text-xs text-gray-500">Carreras disponibles en {{ selectedDepartment }}</span>
       </div>
-      <div class="mb-3">
-        <label class="form-label">Descripción</label>
-        <textarea class="form-control" formControlName="description" rows="3" required placeholder="Ej: Apoyar en el área de marketing digital, manejo de redes sociales, desarrollo de Software para una Landing Page..."></textarea>
-        <div *ngIf="form.get('description')?.invalid && form.get('description')?.touched" class="text-danger small">Descripción requerida (mín 20 caracteres).</div>
+      <div>
+        <label class="block font-semibold mb-1">Descripción</label>
+        <textarea class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400" formControlName="description" rows="3" required placeholder="Ej: Apoyar en el área de marketing digital, manejo de redes sociales, desarrollo de Software para una Landing Page..."></textarea>
+        <div *ngIf="form.get('description')?.invalid && form.get('description')?.touched" class="text-red-600 text-sm mt-1">Descripción requerida (mín 20 caracteres).</div>
       </div>
-      <div class="mb-3">
-        <label class="form-label">Requisitos</label>
-        <textarea class="form-control" formControlName="requirements" rows="2" required placeholder="Ej: Hoja de vida, CV, portafolio, entrevistas..."></textarea>
-        <div *ngIf="form.get('requirements')?.invalid && form.get('requirements')?.touched" class="text-danger small">Requisitos requeridos (mín 10 caracteres).</div>
+      <div>
+        <label class="block font-semibold mb-1">Requisitos</label>
+        <textarea class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400" formControlName="requirements" rows="2" required placeholder="Ej: Hoja de vida, CV, portafolio, entrevistas..."></textarea>
+        <div *ngIf="form.get('requirements')?.invalid && form.get('requirements')?.touched" class="text-red-600 text-sm mt-1">Requisitos requeridos (mín 10 caracteres).</div>
       </div>
-      <div class="mb-3">
-        <label class="form-label">Fecha de Inicio</label>
-        <input type="date" class="form-control" formControlName="startDate" required />
+      <div>
+        <label class="block font-semibold mb-1">Fecha de Inicio</label>
+        <input type="date" class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400" formControlName="startDate" required />
       </div>
-      <div class="mb-3">
-        <label class="form-label">Fecha de Fin</label>
-        <input type="date" class="form-control" formControlName="endDate" required />
+      <div>
+        <label class="block font-semibold mb-1">Fecha de Fin</label>
+        <input type="date" class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400" formControlName="endDate" required />
       </div>
-      <div class="mb-3">
-        <label class="form-label">Modalidad</label>
-        <select class="form-control" formControlName="mode" required>
+      <div>
+        <label class="block font-semibold mb-1">Modalidad</label>
+        <select class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400" formControlName="mode" required>
           <option value="" disabled selected>Selecciona modalidad</option>
           <option *ngFor="let m of modalidades" [value]="m.value">{{ m.label }}</option>
         </select>
-        <div *ngIf="form.get('mode')?.invalid && form.get('mode')?.touched" class="text-danger small">La modalidad es requerida.</div>
+        <div *ngIf="form.get('mode')?.invalid && form.get('mode')?.touched" class="text-red-600 text-sm mt-1">La modalidad es requerida.</div>
       </div>
-      <div class="mb-3">
-        <label class="form-label">Correo de contacto</label>
-        <input class="form-control" formControlName="contactEmail" type="email" placeholder="ejemplo@correo.com" required />
-        <div *ngIf="form.get('contactEmail')?.invalid && form.get('contactEmail')?.touched" class="text-danger small">
+      <div>
+        <label class="block font-semibold mb-1">Correo de contacto</label>
+        <input class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400" formControlName="contactEmail" type="email" placeholder="ejemplo@correo.com" required />
+        <div *ngIf="form.get('contactEmail')?.invalid && form.get('contactEmail')?.touched" class="text-red-600 text-sm mt-1">
           El correo es requerido y debe ser válido.
         </div>
       </div>
-      <div class="mb-3">
-        <label class="form-label">Número de contacto</label>
-        <input class="form-control" formControlName="contactPhone" type="text" placeholder="Ej: 71234567" required />
-        <div *ngIf="form.get('contactPhone')?.invalid && form.get('contactPhone')?.touched" class="text-danger small">
+      <div>
+        <label class="block font-semibold mb-1">Número de contacto</label>
+        <input class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400" formControlName="contactPhone" type="text" placeholder="Ej: 71234567" required />
+        <div *ngIf="form.get('contactPhone')?.invalid && form.get('contactPhone')?.touched" class="text-red-600 text-sm mt-1">
           El número de contacto es requerido.
         </div>
       </div>
-      <button class="btn btn-primary w-100" type="submit" [disabled]="form.invalid || loading">{{ loading ? 'Publicando...' : 'Publicar Oferta' }}</button>
+      <button class="w-full bg-blue-700 text-white font-bold py-2 px-4 rounded hover:bg-blue-800 transition disabled:opacity-50" type="submit" [disabled]="form.invalid || loading">{{ loading ? 'Publicando...' : 'Publicar Oferta' }}</button>
     </form>
-    <div *ngIf="successMsg" class="alert alert-success mt-3">{{ successMsg }}</div>
-    <div *ngIf="errorMsg" class="alert alert-danger mt-3">{{ errorMsg }}</div>
+    <div *ngIf="successMsg" class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded mt-4">{{ successMsg }}</div>
+    <div *ngIf="errorMsg" class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded mt-4">{{ errorMsg }}</div>
   </div>
 </div>
