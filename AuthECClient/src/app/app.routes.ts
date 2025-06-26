@@ -19,6 +19,7 @@ import { RegistrationInvitationsComponent } from './authorizeDemo/registration-i
 import { AgreementReviewComponent } from './authorizeDemo/agreement-review/agreement-review.component';
 import { MisConveniosComponent } from './authorizeDemo/mis-convenios.component';
 import { PublicarPasantiaComponent } from './authorizeDemo/publicar-pasantia.component';
+import { VerOfertasPasantiaComponent } from './authorizeDemo/ver-ofertas-pasantia/ver-ofertas-pasantia.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/user/login', pathMatch: 'full' },
@@ -83,6 +84,10 @@ export const routes: Routes = [
       {
         path: 'publicar-pasantia', component: PublicarPasantiaComponent,
         data: { claimReq: claimReq.organizationInternshipOffer }
+      },
+      {
+        path: 'ver-ofertas-pasantia', component: VerOfertasPasantiaComponent,
+        data: { claimReq: claimReq.studentInternshipOffers }
       },
     ]
   },

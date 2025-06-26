@@ -1,0 +1,142 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <h2 class="mb-4 text-success">Ofertas de Pasantía</h2>
+      
+      <!-- Filter Section -->
+      <div class="card mb-4">
+        <div class="card-body">
+          <h5 class="card-title">Filtrar por Carrera</h5>
+          <div class="row">
+            <div class="col-md-6">
+              <select 
+                class="form-select" 
+                [(ngModel)]="selectedCareer"
+                (change)="filterByCareer()">
+                <option value="">Todas las carreras</option>
+                <option *ngFor="let career of careers" [value]="career">
+                  {{ career }}
+                </option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <button 
+                class="btn btn-outline-secondary" 
+                (click)="clearFilter()"
+                [disabled]="!selectedCareer">
+                Limpiar Filtro
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div *ngIf="loading" class="text-center">
+        <div class="spinner-border text-success" role="status">
+          <span class="visually-hidden">Cargando...</span>
+        </div>
+        <p class="mt-2">Cargando ofertas de pasantía...</p>
+      </div>
+
+      <!-- Error State -->
+      <div *ngIf="error" class="alert alert-danger" role="alert">
+        {{ error }}
+        <button class="btn btn-outline-danger ms-3" (click)="loadInternshipOffers()">
+          Reintentar
+        </button>
+      </div>
+
+      <!-- Results Count -->
+      <div *ngIf="!loading && !error" class="mb-3">
+        <p class="text-muted">
+          Mostrando {{ filteredOffers.length }} oferta{{ filteredOffers.length !== 1 ? 's' : '' }}
+          <span *ngIf="selectedCareer"> para {{ selectedCareer }}</span>
+        </p>
+      </div>
+
+      <!-- Internship Offers Grid -->
+      <div *ngIf="!loading && !error" class="row">
+        <div *ngFor="let offer of filteredOffers" class="col-lg-6 col-xl-4 mb-4">
+          <div class="card h-100 shadow-sm">
+            <div class="card-header bg-success text-white">
+              <h5 class="card-title mb-0">{{ offer.title }}</h5>
+            </div>
+            <div class="card-body">
+              <div class="mb-3">
+                <strong class="text-success">Organización:</strong>
+                <p class="mb-1">{{ offer.organizationName }}</p>
+              </div>
+              
+              <div class="mb-3">
+                <strong class="text-success">Descripción:</strong>
+                <p class="mb-1">{{ offer.description }}</p>
+              </div>
+              
+              <div class="mb-3">
+                <strong class="text-success">Requisitos:</strong>
+                <p class="mb-1">{{ offer.requirements }}</p>
+              </div>
+              
+              <div class="row mb-3">
+                <div class="col-6">
+                  <strong class="text-success">Carrera:</strong>
+                  <p class="mb-1">{{ offer.career }}</p>
+                </div>
+                <div class="col-6">
+                  <strong class="text-success">Modalidad:</strong>
+                  <p class="mb-1">{{ offer.mode }}</p>
+                </div>
+              </div>
+              
+              <div class="row mb-3">
+                <div class="col-6">
+                  <strong class="text-success">Fecha Inicio:</strong>
+                  <p class="mb-1">{{ formatDate(offer.startDate) }}</p>
+                </div>
+                <div class="col-6">
+                  <strong class="text-success">Fecha Fin:</strong>
+                  <p class="mb-1">{{ formatDate(offer.endDate) }}</p>
+                </div>
+              </div>
+              
+              <div class="row mb-3">
+                <div class="col-6">
+                  <strong class="text-success">Email:</strong>
+                  <p class="mb-1">
+                    <a href="mailto:{{ offer.contactEmail }}" class="text-decoration-none">
+                      {{ offer.contactEmail }}
+                    </a>
+                  </p>
+                </div>
+                <div class="col-6">
+                  <strong class="text-success">Teléfono:</strong>
+                  <p class="mb-1">
+                    <a href="tel:{{ offer.contactPhone }}" class="text-decoration-none">
+                      {{ offer.contactPhone }}
+                    </a>
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="card-footer bg-light">
+              <button class="btn btn-success w-100">
+                <i class="bi bi-envelope me-2"></i>
+                Postularse
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- No Results -->
+      <div *ngIf="!loading && !error && filteredOffers.length === 0" class="text-center">
+        <div class="alert alert-info" role="alert">
+          <i class="bi bi-info-circle me-2"></i>
+          No se encontraron ofertas de pasantía
+          <span *ngIf="selectedCareer"> para {{ selectedCareer }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 

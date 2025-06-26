@@ -94,5 +94,35 @@ namespace AuthECAPI.Controllers
                 return StatusCode(500, $"Error interno del servidor: {ex.Message}");
             }
         }
+
+        // GET: api/InternshipOffer?career=Ingenieria de Sistemas
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<ActionResult<IEnumerable<InternshipOfferResponse>>> GetInternshipOffers([FromQuery] string? career = null)
+        {
+            var query = _context.InternshipOffers.Include(io => io.Organization).ThenInclude(o => o.AppUser).AsQueryable();
+            if (!string.IsNullOrEmpty(career))
+            {
+                query = query.Where(io => io.Career.ToLower() == career.ToLower());
+            }
+            var offers = await query
+                .Select(io => new InternshipOfferResponse
+                {
+                    Id = io.Id,
+                    Title = io.Title,
+                    Description = io.Description,
+                    Requirements = io.Requirements,
+                    StartDate = io.StartDate,
+                    EndDate = io.EndDate,
+                    OrganizationId = io.OrganizationId,
+                    OrganizationName = io.Organization.AppUser != null ? io.Organization.AppUser.FullName : null,
+                    Mode = io.Mode,
+                    Career = io.Career,
+                    ContactEmail = io.ContactEmail,
+                    ContactPhone = io.ContactPhone
+                })
+                .ToListAsync();
+            return Ok(offers);
+        }
     }
 } 

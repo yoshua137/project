@@ -8,5 +8,6 @@ export const claimReq = {
   adminInvitationManager: (c: any) => Array.isArray(c.role) ? c.role.includes("Admin") : c.role == "Admin",
   directorAgreementReviewer: (c: any) => Array.isArray(c.role) ? c.role.includes("Director") : c.role == "Director",
   organizationAgreementList: (c: any) => Array.isArray(c.role) ? c.role.includes("Organization") : c.role == "Organization",
-  organizationInternshipOffer: (c: any) => Array.isArray(c.role) ? c.role.includes("Organization") : c.role == "Organization"
+  organizationInternshipOffer: (c: any) => Array.isArray(c.role) ? c.role.includes("Organization") : c.role == "Organization",
+  studentInternshipOffers: (c: any) => Array.isArray(c.role) ? c.role.includes("Student") : c.role == "Student"
 }
