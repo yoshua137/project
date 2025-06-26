@@ -69,7 +69,9 @@ export class PublicarPasantiaComponent implements OnInit {
       startDate: ['', Validators.required],
       endDate: ['', Validators.required],
       mode: ['', Validators.required],
-      career: ['', Validators.required]
+      career: ['', Validators.required],
+      contactEmail: ['', [Validators.required, Validators.email]],
+      contactPhone: ['', Validators.required],
     });
   }
 

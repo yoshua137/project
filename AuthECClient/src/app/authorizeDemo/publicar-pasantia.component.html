@@ -87,7 +87,7 @@
     <form [formGroup]="form" (ngSubmit)="onSubmit()">
       <div class="mb-3">
         <label class="form-label">Título</label>
-        <input class="form-control" formControlName="title" maxlength="100" required />
+        <input class="form-control" formControlName="title" maxlength="100" required placeholder="Ej: Pasantía en desarrollo web" />
         <div *ngIf="form.get('title')?.invalid && form.get('title')?.touched" class="text-danger small">Título requerido (máx 100 caracteres).</div>
       </div>
       <div class="mb-3">
@@ -107,7 +107,7 @@
               (input)="onCareerSearch($event)"
               (focus)="onCareerInputFocus()"
               (blur)="onCareerInputBlur()"
-              placeholder="Escribe para buscar carrera..."
+              placeholder="Escribe o selecciona una carrera..."
               required />
             <button 
               type="button" 
@@ -142,12 +142,12 @@
       </div>
       <div class="mb-3">
         <label class="form-label">Descripción</label>
-        <textarea class="form-control" formControlName="description" rows="3" required></textarea>
+        <textarea class="form-control" formControlName="description" rows="3" required placeholder="Ej: Apoyar en el área de marketing digital, manejo de redes sociales, desarrollo de Software para una Landing Page..."></textarea>
         <div *ngIf="form.get('description')?.invalid && form.get('description')?.touched" class="text-danger small">Descripción requerida (mín 20 caracteres).</div>
       </div>
       <div class="mb-3">
         <label class="form-label">Requisitos</label>
-        <textarea class="form-control" formControlName="requirements" rows="2" required></textarea>
+        <textarea class="form-control" formControlName="requirements" rows="2" required placeholder="Ej: Hoja de vida, CV, portafolio, entrevistas..."></textarea>
         <div *ngIf="form.get('requirements')?.invalid && form.get('requirements')?.touched" class="text-danger small">Requisitos requeridos (mín 10 caracteres).</div>
       </div>
       <div class="mb-3">
@@ -165,6 +165,20 @@
           <option *ngFor="let m of modalidades" [value]="m.value">{{ m.label }}</option>
         </select>
         <div *ngIf="form.get('mode')?.invalid && form.get('mode')?.touched" class="text-danger small">La modalidad es requerida.</div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Correo de contacto</label>
+        <input class="form-control" formControlName="contactEmail" type="email" placeholder="ejemplo@correo.com" required />
+        <div *ngIf="form.get('contactEmail')?.invalid && form.get('contactEmail')?.touched" class="text-danger small">
+          El correo es requerido y debe ser válido.
+        </div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Número de contacto</label>
+        <input class="form-control" formControlName="contactPhone" type="text" placeholder="Ej: 71234567" required />
+        <div *ngIf="form.get('contactPhone')?.invalid && form.get('contactPhone')?.touched" class="text-danger small">
+          El número de contacto es requerido.
+        </div>
       </div>
       <button class="btn btn-primary w-100" type="submit" [disabled]="form.invalid || loading">{{ loading ? 'Publicando...' : 'Publicar Oferta' }}</button>
     </form>

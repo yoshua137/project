@@ -28,5 +28,8 @@ namespace AuthECAPI.Models
 
         [Required(ErrorMessage = "La carrera es requerida")]
         public string Career { get; set; }
+
+        public string? ContactEmail { get; set; }
+        public string? ContactPhone { get; set; }
     }
 } 
