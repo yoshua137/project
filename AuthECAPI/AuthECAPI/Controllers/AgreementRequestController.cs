@@ -435,5 +435,34 @@ namespace AuthECAPI.Controllers
                 return StatusCode(500, $"Error interno del servidor: {ex.Message}");
             }
         }
+
+        // GET: api/AgreementRequest/organization/approved-departments
+        [HttpGet("organization/approved-departments")]
+        [Authorize(Roles = "Organization")]
+        public async Task<ActionResult<IEnumerable<string>>> GetApprovedDepartmentsForOrganization()
+        {
+            try
+            {
+                var currentUserId = User.Claims.First(c => c.Type == "userID").Value;
+                
+                var approvedDepartments = await _context.AgreementRequests
+                    .Include(ar => ar.Director)
+                    .Where(ar => ar.OrganizationId == currentUserId && ar.Status == "Accepted")
+                    .Select(ar => ar.Director.Department)
+                    .Distinct()
+                    .Where(dept => !string.IsNullOrEmpty(dept))
+                    .ToListAsync();
+
+                return Ok(approvedDepartments);
+            }
+            catch (InvalidOperationException)
+            {
+                return Unauthorized("Token inválido o malformado. No se encontró el claim 'userID'.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error interno del servidor: {ex.Message}");
+            }
+        }
     }
-} 
+}

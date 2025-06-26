@@ -1,0 +1,26 @@
+<div class="container" style="background: #e6f0ff; padding: 2rem; border-radius: 1rem;">
+  <h2 class="mb-4">Selecciona el Departamento para Publicar Pasantía</h2>
+  <p class="mb-4">Solo se muestran departamentos con convenios aprobados</p>
+  
+  <div *ngIf="loading" class="text-center">
+    <p>Cargando departamentos disponibles...</p>
+  </div>
+  
+  <div *ngIf="!loading && availableDepartments.length === 0" class="text-center">
+    <p>No tienes convenios aprobados con ningún departamento.</p>
+    <p>Debes solicitar y obtener la aprobación de convenios antes de poder publicar pasantías.</p>
+  </div>
+  
+  <div *ngIf="!loading && availableDepartments.length > 0" style="display: flex; flex-wrap: wrap; gap: 2rem; justify-content: center; margin-top: 2rem;">
+    <button 
+      *ngFor="let dep of availableDepartments" 
+      (click)="selectDepartment(dep)" 
+      style="border: none; background: none; cursor: pointer; text-align: center;">
+      <img 
+        [src]="dep.image" 
+        [alt]="dep.name" 
+        style="width: 120px; height: 120px; object-fit: contain; display: block; margin: 0 auto 1rem;" />
+      <span style="font-size: 1.2rem; font-weight: bold;">{{ dep.name }}</span>
+    </button>
+  </div>
+</div>

@@ -1,7 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
+import { ActivatedRoute, Router } from '@angular/router';
 import { environment } from '../../environments/environment';
 
 @Component({
@@ -11,18 +12,27 @@ import { environment } from '../../environments/environment';
   templateUrl: './publicar-pasantia.component.html',
   styles: ''
 })
-export class PublicarPasantiaComponent {
+export class PublicarPasantiaComponent implements OnInit {
   form: FormGroup;
   loading = false;
   successMsg = '';
   errorMsg = '';
+  selectedDepartment: string = '';
+  approvedDepartments: string[] = [];
+  loadingDepartments = true;
+  hasApprovedAgreements = false;
   modalidades = [
     { value: 'Virtual', label: 'Virtual' },
     { value: 'Presencial', label: 'Presencial' },
     { value: 'Mixto', label: 'Mixto' }
   ];
 
-  constructor(private fb: FormBuilder, private http: HttpClient) {
+  constructor(
+    private fb: FormBuilder, 
+    private http: HttpClient, 
+    private route: ActivatedRoute,
+    private router: Router
+  ) {
     this.form = this.fb.group({
       title: ['', [Validators.required, Validators.maxLength(100)]],
       description: ['', [Validators.required, Validators.minLength(20)]],
@@ -31,6 +41,36 @@ export class PublicarPasantiaComponent {
       endDate: ['', Validators.required],
       mode: ['', Validators.required]
     });
+  }
+
+  ngOnInit() {
+    this.loadApprovedDepartments();
+  }
+
+  loadApprovedDepartments() {
+    this.http.get<string[]>(`${environment.apiBaseUrl}/AgreementRequest/organization/approved-departments`).subscribe({
+      next: (departments) => {
+        this.approvedDepartments = departments;
+        this.hasApprovedAgreements = departments.length > 0;
+        this.loadingDepartments = false;
+        
+        // Si hay departamentos aprobados, verificar si hay uno seleccionado en la URL
+        if (this.hasApprovedAgreements) {
+          this.route.queryParams.subscribe(params => {
+            this.selectedDepartment = params['department'] || '';
+          });
+        }
+      },
+      error: (err) => {
+        console.error('Error loading approved departments:', err);
+        this.loadingDepartments = false;
+        this.hasApprovedAgreements = false;
+      }
+    });
+  }
+
+  selectDepartment(department: string) {
+    this.selectedDepartment = department;
   }
 
   onSubmit() {
