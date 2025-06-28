@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, AfterViewInit } from '@angular/core';
 import { RegistrationComponent } from './registration/registration.component';
 import { ChildrenOutletContexts, RouterOutlet } from '@angular/router';
 import { trigger, style, animate, transition, query } from "@angular/animations";
@@ -20,9 +20,30 @@ import { trigger, style, animate, transition, query } from "@angular/animations"
     ])
   ]
 })
-export class UserComponent {
+export class UserComponent implements AfterViewInit {
 
   constructor(private context: ChildrenOutletContexts) { }
+
+  ngAfterViewInit(): void {
+    const tryPlayVideoBg = () => {
+      const vid = document.getElementById('bgVideo') as HTMLVideoElement | null;
+      if (vid) {
+        vid.muted = true;
+        vid.removeAttribute('controls');
+        vid.volume = 0;
+        const playPromise = vid.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(() => {
+            setTimeout(() => { vid.play().catch(()=>{}); }, 500);
+          });
+        }
+      }
+    };
+    tryPlayVideoBg();
+    document.addEventListener('visibilitychange', function() {
+      if (!document.hidden) tryPlayVideoBg();
+    });
+  }
 
   getRouteUrl() {
     return this.context.getContext('primary')?.route?.url;

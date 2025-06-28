@@ -66,3 +66,19 @@ body {
   background-color: #007fff17;
   border-radius: 0.5rem;
 }
+
+html, body {
+  scrollbar-width: thin;
+  scrollbar-color: #003366 #ffe066;
+}
+html::-webkit-scrollbar, body::-webkit-scrollbar {
+  width: 8px;
+}
+html::-webkit-scrollbar-thumb, body::-webkit-scrollbar-thumb {
+  background: #003366;
+  border-radius: 8px;
+}
+html::-webkit-scrollbar-track, body::-webkit-scrollbar-track {
+  background: #ffe066;
+  border-radius: 8px;
+}

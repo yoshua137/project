@@ -20,13 +20,13 @@
         <h5 class="font-bold text-blue-800 mb-2">{{ dept.name }}</h5>
         <p class="text-sm text-gray-700">
           <span class="font-semibold">Carreras:</span><br>
-          <span *ngFor="let career of dept.careers; let last = last">
-            • {{ career }}<br *ngIf="!last">
-          </span>
-        </p>
+            <span *ngFor="let career of dept.careers; let last = last">
+              • {{ career }}<br *ngIf="!last">
+            </span>
+          </p>
+        </div>
       </div>
     </div>
-  </div>
   <!-- Formulario de publicación -->
   <div *ngIf="!loadingDepartments && hasApprovedAgreements && selectedDepartment">
     <div class="mb-3">

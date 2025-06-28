@@ -115,7 +115,8 @@ export class RegistrationComponent implements OnInit {
     } else if (role === 'Director') {
       fullNameControl?.setValidators([Validators.required]);
       departmentControl?.setValidators([Validators.required]);
-      invitationTokenControl?.setValidators([Validators.required]);
+      // No pedir token en el formulario, pero puede estar en el form si viene por URL
+      invitationTokenControl?.clearValidators();
     }
 
     // Actualizar el estado de validación
@@ -200,7 +201,10 @@ export class RegistrationComponent implements OnInit {
       case 'Director':
         payload.fullName = registrationData.fullName;
         payload.department = registrationData.department;
-        payload.invitationToken = registrationData.invitationToken;
+        // Solo enviar invitationToken si existe (viene de la URL)
+        if (registrationData.invitationToken) {
+          payload.invitationToken = registrationData.invitationToken;
+        }
         apiCall = this.authService.registerDirector(payload);
         break;
       default:

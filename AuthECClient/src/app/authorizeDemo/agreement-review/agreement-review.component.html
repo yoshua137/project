@@ -10,96 +10,96 @@
         <div *ngIf="loading" class="text-center py-8">
           <svg class="animate-spin h-8 w-8 text-blue-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>
           <span class="block mt-2 text-blue-700">Cargando...</span>
-        </div>
+            </div>
         <div *ngIf="!loading && agreementRequests.length === 0" class="text-center text-gray-400 py-8">
-          No hay solicitudes de convenio asignadas.
-        </div>
+            No hay solicitudes de convenio asignadas.
+          </div>
         <div *ngIf="!loading && agreementRequests.length > 0" class="overflow-x-auto">
           <table class="min-w-full text-sm text-left">
-            <thead>
+              <thead>
               <tr class="bg-blue-50">
                 <th class="py-2 px-4 font-semibold">Organización</th>
                 <th class="py-2 px-4 font-semibold">Fecha Solicitud</th>
                 <th class="py-2 px-4 font-semibold">Estado</th>
                 <th class="py-2 px-4 font-semibold">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
+                </tr>
+              </thead>
+              <tbody>
               <tr *ngFor="let request of agreementRequests" [class]="selectedRequest?.id === request.id ? 'bg-blue-100' : 'hover:bg-blue-50'" style="cursor: pointer;">
                 <td class="py-2 px-4">
-                  <strong>{{ request.organizationName }}</strong>
-                  <br>
+                    <strong>{{ request.organizationName }}</strong>
+                    <br>
                   <span class="text-xs text-gray-500">{{ request.description.substring(0, 50) }}...</span>
-                </td>
+                  </td>
                 <td class="py-2 px-4">{{ request.requestDate | date:'short' }}</td>
                 <td class="py-2 px-4">
                   <span class="px-2 py-1 rounded text-xs font-semibold" [ngClass]="getStatusClass(request.status)">
-                    {{ getStatusText(request.status) }}
-                  </span>
-                </td>
+                      {{ getStatusText(request.status) }}
+                    </span>
+                  </td>
                 <td class="py-2 px-4 flex gap-2">
                   <button class="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition text-xs font-semibold flex items-center gap-1" (click)="selectRequest(request)">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                     Ver
-                  </button>
+                    </button>
                   <button class="px-3 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition text-xs font-semibold flex items-center gap-1" (click)="downloadPdf(request.pdfFilePath)">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h8a2 2 0 002-2v-2M7 10V6a5 5 0 0110 0v4M5 20h14" /></svg>
                     PDF
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
-    </div>
     <!-- Panel de revisión -->
     <div class="w-full lg:w-1/3">
       <div *ngIf="selectedRequest" class="bg-white rounded-xl shadow p-4 mb-4">
         <div class="border-b pb-2 mb-4">
           <h5 class="text-lg font-semibold text-blue-800">Revisar Solicitud</h5>
         </div>
-        <div class="mb-3">
-          <strong>Organización:</strong>
-          <p>{{ selectedRequest.organizationName }}</p>
-        </div>
-        <div class="mb-3">
-          <strong>Descripción:</strong>
-          <p>{{ selectedRequest.description }}</p>
-        </div>
-        <div class="mb-3">
-          <strong>Fecha de Solicitud:</strong>
+          <div class="mb-3">
+            <strong>Organización:</strong>
+            <p>{{ selectedRequest.organizationName }}</p>
+          </div>
+          <div class="mb-3">
+            <strong>Descripción:</strong>
+            <p>{{ selectedRequest.description }}</p>
+          </div>
+          <div class="mb-3">
+            <strong>Fecha de Solicitud:</strong>
           <p>{{ selectedRequest.requestDate | date:'short' }}</p>
-        </div>
-        <div class="mb-3">
-          <strong>Estado Actual:</strong>
-          <p>
+          </div>
+          <div class="mb-3">
+            <strong>Estado Actual:</strong>
+            <p>
             <span class="px-2 py-1 rounded text-xs font-semibold" [ngClass]="getStatusClass(selectedRequest.status)">
-              {{ getStatusText(selectedRequest.status) }}
-            </span>
-          </p>
-        </div>
-        <div *ngIf="canReview(selectedRequest)" class="mb-3">
+                {{ getStatusText(selectedRequest.status) }}
+              </span>
+            </p>
+          </div>
+          <div *ngIf="canReview(selectedRequest)" class="mb-3">
           <label for="reviewComments" class="block font-semibold mb-1">Comentarios (opcional):</label>
           <textarea id="reviewComments" class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400" rows="3" [(ngModel)]="reviewComments" placeholder="Agregue comentarios sobre su decisión..."></textarea>
-        </div>
+          </div>
         <div *ngIf="canReview(selectedRequest)" class="flex flex-col gap-2">
           <button class="bg-green-600 text-white font-semibold py-2 px-4 rounded hover:bg-green-700 transition disabled:opacity-50" (click)="reviewAgreement('Accepted')" [disabled]="reviewing">
             <span *ngIf="reviewing" class="animate-spin inline-block mr-2"><svg class="h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg></span>
-            {{ reviewing ? 'Procesando...' : 'Aceptar Convenio' }}
-          </button>
+              {{ reviewing ? 'Procesando...' : 'Aceptar Convenio' }}
+            </button>
           <button class="bg-red-600 text-white font-semibold py-2 px-4 rounded hover:bg-red-700 transition disabled:opacity-50" (click)="reviewAgreement('Rejected')" [disabled]="reviewing">
             <span *ngIf="reviewing" class="animate-spin inline-block mr-2"><svg class="h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg></span>
-            {{ reviewing ? 'Procesando...' : 'Rechazar Convenio' }}
-          </button>
-        </div>
+              {{ reviewing ? 'Procesando...' : 'Rechazar Convenio' }}
+            </button>
+          </div>
         <div *ngIf="!canReview(selectedRequest)" class="bg-blue-50 border-l-4 border-blue-400 text-blue-700 p-4 rounded mt-4">
-          <strong>Ya revisada:</strong> Esta solicitud ya fue procesada el {{ selectedRequest.reviewDate | date:'short' }}
+            <strong>Ya revisada:</strong> Esta solicitud ya fue procesada el {{ selectedRequest.reviewDate | date:'short' }}
         </div>
       </div>
       <div *ngIf="!selectedRequest" class="bg-white rounded-xl shadow p-8 text-center text-gray-400 flex flex-col items-center justify-center">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mb-2 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 20a8 8 0 100-16 8 8 0 000 16z" /></svg>
-        <p class="mt-2">Seleccione una solicitud para revisar</p>
+          <p class="mt-2">Seleccione una solicitud para revisar</p>
       </div>
     </div>
   </div>

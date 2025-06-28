@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { Router, RouterLink, RouterOutlet } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../shared/services/auth.service';
 import { HideIfClaimsNotMetDirective } from '../../directives/hide-if-claims-not-met.directive';
 import { claimReq } from "../../shared/utils/claimReq-utils";
@@ -7,7 +7,7 @@ import { claimReq } from "../../shared/utils/claimReq-utils";
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, HideIfClaimsNotMetDirective],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, HideIfClaimsNotMetDirective],
   templateUrl: './main-layout.component.html',
   styles: ``
 })
