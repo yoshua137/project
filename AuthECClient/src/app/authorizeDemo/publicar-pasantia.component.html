@@ -120,6 +120,16 @@
           El número de contacto es requerido.
         </div>
       </div>
+      <div>
+        <label class="block font-semibold mb-1">Vacantes</label>
+        <select class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400" formControlName="vacancies" required>
+          <option value="DISPONIBLES">DISPONIBLES</option>
+          <option value="AGOTADAS">AGOTADAS</option>
+        </select>
+        <div *ngIf="form.get('vacancies')?.invalid && form.get('vacancies')?.touched" class="text-red-600 text-sm mt-1">
+          El estado de vacantes es requerido.
+        </div>
+      </div>
       <button class="w-full bg-blue-700 text-white font-bold py-2 px-4 rounded hover:bg-blue-800 transition disabled:opacity-50" type="submit" [disabled]="form.invalid || loading">{{ loading ? 'Publicando...' : 'Publicar Oferta' }}</button>
     </form>
     <div *ngIf="successMsg" class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded mt-4">{{ successMsg }}</div>

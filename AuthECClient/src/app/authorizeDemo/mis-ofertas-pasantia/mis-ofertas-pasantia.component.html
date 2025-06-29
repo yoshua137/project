@@ -128,6 +128,18 @@
                   Modalidad
                 </span>
               </span>
+              <span class="flex items-center relative group">
+                <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none" />
+                  <text x="12" y="16" text-anchor="middle" font-size="10" fill="currentColor">V</text>
+                </svg>
+                <span [ngClass]="offer.vacancies === 'DISPONIBLES' ? 'text-green-700' : 'text-red-600'">
+                  {{ offer.vacancies }}
+                </span>
+                <span class="absolute left-1/2 -translate-x-1/2 -top-8 z-10 hidden group-hover:flex px-3 py-1 rounded bg-gray-900 text-white text-xs shadow-lg whitespace-nowrap transition-all duration-200">
+                  Vacantes
+                </span>
+              </span>
             </div>
 
             <!-- Description -->
@@ -232,6 +244,15 @@
         <div>
           <label class="block text-sm font-medium text-gray-700">Teléfono de contacto</label>
           <input [(ngModel)]="editForm.contactPhone" name="contactPhone" class="w-full border rounded px-3 py-2 mt-1" required />
+        </div>
+        <div class="flex gap-2">
+          <div class="flex-1">
+            <label class="block text-sm font-medium text-gray-700">Vacantes</label>
+            <select [(ngModel)]="editForm.vacancies" name="vacancies" class="w-full border rounded px-3 py-2 mt-1" required>
+              <option value="DISPONIBLES">DISPONIBLES</option>
+              <option value="AGOTADAS">AGOTADAS</option>
+            </select>
+          </div>
         </div>
       </div>
       <div class="mt-4 flex flex-col gap-2">

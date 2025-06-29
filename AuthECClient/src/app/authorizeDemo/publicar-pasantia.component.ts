@@ -72,6 +72,7 @@ export class PublicarPasantiaComponent implements OnInit {
       career: ['', Validators.required],
       contactEmail: ['', [Validators.required, Validators.email]],
       contactPhone: ['', Validators.required],
+      vacancies: ['DISPONIBLES', [Validators.required, Validators.pattern('DISPONIBLES|AGOTADAS')]]
     });
   }
 

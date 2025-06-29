@@ -60,7 +60,8 @@ namespace AuthECAPI.Controllers
                     Mode = offerRequest.Mode,
                     Career = offerRequest.Career,
                     ContactEmail = offerRequest.ContactEmail,
-                    ContactPhone = offerRequest.ContactPhone
+                    ContactPhone = offerRequest.ContactPhone,
+                    Vacancies = string.IsNullOrEmpty(offerRequest.Vacancies) ? "DISPONIBLES" : offerRequest.Vacancies
                 };
 
                 _context.InternshipOffers.Add(internshipOffer);
@@ -79,7 +80,8 @@ namespace AuthECAPI.Controllers
                     Mode = internshipOffer.Mode,
                     Career = internshipOffer.Career,
                     ContactEmail = internshipOffer.ContactEmail,
-                    ContactPhone = internshipOffer.ContactPhone
+                    ContactPhone = internshipOffer.ContactPhone,
+                    Vacancies = internshipOffer.Vacancies
                 };
 
                 return CreatedAtAction(nameof(CreateInternshipOffer), new { id = offerResponse.Id }, offerResponse);
@@ -119,7 +121,8 @@ namespace AuthECAPI.Controllers
                     Mode = io.Mode,
                     Career = io.Career,
                     ContactEmail = io.ContactEmail,
-                    ContactPhone = io.ContactPhone
+                    ContactPhone = io.ContactPhone,
+                    Vacancies = io.Vacancies
                 })
                 .ToListAsync();
             return Ok(offers);
@@ -154,7 +157,8 @@ namespace AuthECAPI.Controllers
                         Mode = io.Mode,
                         Career = io.Career,
                         ContactEmail = io.ContactEmail,
-                        ContactPhone = io.ContactPhone
+                        ContactPhone = io.ContactPhone,
+                        Vacancies = io.Vacancies
                     })
                     .ToListAsync();
                 return Ok(offers);
@@ -226,6 +230,7 @@ namespace AuthECAPI.Controllers
                 internshipOffer.Career = offerRequest.Career;
                 internshipOffer.ContactEmail = offerRequest.ContactEmail;
                 internshipOffer.ContactPhone = offerRequest.ContactPhone;
+                internshipOffer.Vacancies = string.IsNullOrEmpty(offerRequest.Vacancies) ? internshipOffer.Vacancies : offerRequest.Vacancies;
 
                 await _context.SaveChangesAsync();
 

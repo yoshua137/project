@@ -17,6 +17,7 @@ interface InternshipOffer {
   career: string;
   contactEmail: string;
   contactPhone: string;
+  vacancies: string;
 }
 
 @Component({
@@ -32,6 +33,7 @@ export class VerOfertasPasantiaComponent implements OnInit {
   careers: string[] = [];
   loading: boolean = false;
   error: string = '';
+  showOnlyAvailable: boolean = false;
 
   constructor(private http: HttpClient) {}
 
@@ -64,17 +66,19 @@ export class VerOfertasPasantiaComponent implements OnInit {
   }
 
   get filteredOffers(): InternshipOffer[] {
-    return this.internshipOffers.filter(offer => {
+    let offers = this.internshipOffers.filter(offer => {
       const matchesSearch = !this.searchTerm || 
         offer.title.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         offer.description.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         offer.career.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         offer.organizationName.toLowerCase().includes(this.searchTerm.toLowerCase());
-      
       const matchesCareer = !this.selectedCareer || offer.career === this.selectedCareer;
-      
       return matchesSearch && matchesCareer;
     });
+    if (this.showOnlyAvailable) {
+      offers = offers.filter(offer => offer.vacancies === 'DISPONIBLES');
+    }
+    return offers;
   }
 
   clearFilters(): void {

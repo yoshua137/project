@@ -17,6 +17,7 @@ interface InternshipOffer {
   career: string;
   contactEmail?: string;
   contactPhone?: string;
+  vacancies: string;
 }
 
 @Component({
@@ -164,7 +165,8 @@ export class MisOfertasPasantiaComponent implements OnInit {
     this.editForm = {
       ...offer,
       startDate: offer.startDate ? offer.startDate.substring(0, 10) : '',
-      endDate: offer.endDate ? offer.endDate.substring(0, 10) : ''
+      endDate: offer.endDate ? offer.endDate.substring(0, 10) : '',
+      vacancies: offer.vacancies
     };
     this.editError = '';
     this.editSuccess = '';
@@ -193,7 +195,8 @@ export class MisOfertasPasantiaComponent implements OnInit {
       mode: this.editForm.mode,
       career: this.editForm.career,
       contactEmail: this.editForm.contactEmail,
-      contactPhone: this.editForm.contactPhone
+      contactPhone: this.editForm.contactPhone,
+      vacancies: this.editForm.vacancies
     };
     this.http.put(`${environment.apiBaseUrl}/InternshipOffer/${this.editingOffer.id}`, body)
       .subscribe({

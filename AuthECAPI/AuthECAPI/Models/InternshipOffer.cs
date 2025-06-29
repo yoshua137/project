@@ -22,5 +22,11 @@ namespace AuthECAPI.Models
         public string Career { get; set; }
         public string? ContactEmail { get; set; }
         public string? ContactPhone { get; set; }
+        /// <summary>
+        /// Estado de vacantes: 'DISPONIBLES' o 'AGOTADAS'
+        /// </summary>
+        [Required]
+        [RegularExpression("DISPONIBLES|AGOTADAS", ErrorMessage = "Vacancies solo puede ser 'DISPONIBLES' o 'AGOTADAS'")]
+        public string Vacancies { get; set; }
     }
 } 

@@ -29,6 +29,10 @@ namespace AuthECAPI.Models
         [Required(ErrorMessage = "La carrera es requerida")]
         public string Career { get; set; }
 
+        [Required(ErrorMessage = "El estado de vacantes es requerido")]
+        [RegularExpression("DISPONIBLES|AGOTADAS", ErrorMessage = "Vacancies solo puede ser 'DISPONIBLES' o 'AGOTADAS'")]
+        public string Vacancies { get; set; }
+
         public string? ContactEmail { get; set; }
         public string? ContactPhone { get; set; }
     }

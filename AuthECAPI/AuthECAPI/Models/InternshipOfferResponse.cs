@@ -16,5 +16,6 @@ namespace AuthECAPI.Models
         public string Career { get; set; }
         public string? ContactEmail { get; set; }
         public string? ContactPhone { get; set; }
+        public string Vacancies { get; set; }
     }
 } 
