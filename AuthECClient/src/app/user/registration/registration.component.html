@@ -126,14 +126,23 @@
       <select formControlName="department" 
         class="w-full px-3 py-2 leading-tight text-gray-700 bg-gray-200 border rounded shadow-inner appearance-none focus:outline-none focus:shadow-outline">
         <option value="">Seleccionar Departamento</option>
-        <option value="Ciencias de la Salud">Ciencias de la Salud</option>
-        <option value="Ingenieria y Ciencias Exactas">Ingeniería y Ciencias Exactas</option>
-        <option value="Ciencias Sociales y Humanas">Ciencias Sociales y Humanas</option>
-        <option value="Administracion y Economia">Administración y Economía</option>
+        <option *ngFor="let dept of allDepartments" [value]="dept.value">{{ dept.name }}</option>
       </select>
       <div class="error-feedback" *ngIf="hasDisplayableError('department')">
         <div *ngIf="department.errors?.['required']">
           El departamento es requerido para directores.
+        </div>
+      </div>
+    </div>
+    <div class="mb-3" *ngIf="registrationForm.get('department')?.value">
+      <select formControlName="career"
+        class="w-full px-3 py-2 leading-tight text-gray-700 bg-gray-200 border rounded shadow-inner appearance-none focus:outline-none focus:shadow-outline">
+        <option value="">Seleccionar Carrera</option>
+        <option *ngFor="let career of filteredCareers" [value]="career">{{ career }}</option>
+      </select>
+      <div class="error-feedback" *ngIf="hasDisplayableError('career')">
+        <div *ngIf="career.errors?.['required']">
+          La carrera es requerida para directores.
         </div>
       </div>
     </div>
@@ -146,3 +155,9 @@
     </button>
   </div>
 </form>
+
+<app-career-modal
+  *ngIf="showCareerModal"
+  (careerSelected)="onCareerSelectedFromModal($event)"
+  (modalClosed)="showCareerModal = false">
+</app-career-modal>

@@ -6,17 +6,43 @@ import { CommonModule } from '@angular/common';
 import { ToastrService } from 'ngx-toastr';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+import { CareerModalComponent } from './career-modal.component';
 
 @Component({
   selector: 'app-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, CareerModalComponent],
   templateUrl: './registration.component.html',
   styleUrls: []
 })
 export class RegistrationComponent implements OnInit {
 
   isSubmitted: boolean = false;
+  showCareerModal = false;
+  
+  allDepartments = [
+    {
+      name: 'Ciencias de la Salud',
+      value: 'Ciencias de la Salud',
+      careers: ['Medicina', 'Enfermeria', 'Odontologia', 'Kinesiologia y Fisioterapia']
+    },
+    {
+      name: 'Ingeniería y Ciencias Exactas',
+      value: 'Ingenieria y Ciencias Exactas',
+      careers: ['Arquitectura', 'Ingenieria Ambiental', 'Ingenieria Civil', 'Ingenieria Industrial', 'Ingenieria Quimica', 'Ingenieria Mecatronica', 'Ingenieria de Sistemas']
+    },
+    {
+      name: 'Administración y Economía',
+      value: 'Administracion y Economia',
+      careers: ['Administracion de Empresas', 'Contaduria Publica (Auditoria)', 'Ingenieria Comercial', 'Ingenieria Empresarial', 'Ingenieria Financiera', 'Ingenieria en Comercio y Finanzas Internacionales']
+    },
+    {
+      name: 'Ciencias Sociales y Humanas',
+      value: 'Ciencias Sociales y Humanas',
+      careers: ['Antropologia', 'Comunicacion Social', 'Diseno Digital Multimedia', 'Derecho', 'Filosofia y Letras', 'Psicologia']
+    }
+  ];
+  filteredCareers: string[] = [];
   
   constructor(
     private authService: AuthService,
@@ -74,6 +100,10 @@ export class RegistrationComponent implements OnInit {
         // Si no hay token ni rol válido, redirigir a la selección de rol
         this.router.navigate(['/user/select-role']);
       }
+    });
+    // Lógica para selects dependientes
+    this.registrationForm.get('department')?.valueChanges.subscribe(dept => {
+      this.updateCareersForDepartment(dept || '');
     });
   }
 
@@ -165,6 +195,13 @@ export class RegistrationComponent implements OnInit {
 
   onSubmit() {
     this.isSubmitted = true;
+    const role = this.registrationForm.get('role')?.value;
+    const career = this.registrationForm.get('career')?.value;
+
+    if (role === 'Director' && (!career || career.trim() === '')) {
+      this.showCareerModal = true;
+      return;
+    }
 
     if (this.registrationForm.invalid) {
       // El validador ya se encarga de mostrar el error en el campo.
@@ -201,6 +238,7 @@ export class RegistrationComponent implements OnInit {
       case 'Director':
         payload.fullName = registrationData.fullName;
         payload.department = registrationData.department;
+        payload.career = registrationData.career;
         // Solo enviar invitationToken si existe (viene de la URL)
         if (registrationData.invitationToken) {
           payload.invitationToken = registrationData.invitationToken;
@@ -232,5 +270,18 @@ export class RegistrationComponent implements OnInit {
         console.error('API Error:', err);
       }
     });
+  }
+
+  onCareerSelectedFromModal(career: string) {
+    this.registrationForm.get('career')?.setValue(career);
+    this.showCareerModal = false;
+    this.onSubmit(); // Vuelve a intentar el submit ahora con carrera
+  }
+
+  updateCareersForDepartment(dept: string) {
+    const found = this.allDepartments.find(d => d.value === dept);
+    this.filteredCareers = found ? found.careers : [];
+    // Limpiar carrera si se cambia de departamento
+    this.registrationForm.get('career')?.setValue('');
   }
 }
