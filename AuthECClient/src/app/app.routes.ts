@@ -20,6 +20,7 @@ import { AgreementReviewComponent } from './authorizeDemo/agreement-review/agree
 import { MisConveniosComponent } from './authorizeDemo/mis-convenios.component';
 import { PublicarPasantiaComponent } from './authorizeDemo/publicar-pasantia.component';
 import { VerOfertasPasantiaComponent } from './authorizeDemo/ver-ofertas-pasantia/ver-ofertas-pasantia.component';
+import { MisOfertasPasantiaComponent } from './authorizeDemo/mis-ofertas-pasantia/mis-ofertas-pasantia.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/user/login', pathMatch: 'full' },
@@ -88,6 +89,10 @@ export const routes: Routes = [
       {
         path: 'ver-ofertas-pasantia', component: VerOfertasPasantiaComponent,
         data: { claimReq: claimReq.studentInternshipOffers }
+      },
+      {
+        path: 'mis-ofertas-pasantia', component: MisOfertasPasantiaComponent,
+        data: { claimReq: claimReq.organizationInternshipOffer }
       },
     ]
   },

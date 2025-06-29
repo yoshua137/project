@@ -1,31 +1,65 @@
 <div class="w-full max-w-6xl mx-auto">
   <h2 class="mb-8 text-2xl font-bold text-green-700 text-center">Ofertas de Pasantía</h2>
-  <!-- Filter Section -->
+  
+  <!-- Search Section -->
   <div class="flex justify-center mb-8">
-    <div class="bg-white rounded-xl shadow p-6 flex flex-col md:flex-row gap-4 items-center w-full max-w-xl">
+    <div class="bg-white rounded-xl shadow p-6 flex flex-col md:flex-row gap-4 items-center w-full max-w-2xl">
+      <!-- Search Input -->
       <div class="flex-1">
-        <label class="block font-semibold mb-1">Filtrar por Carrera</label>
-        <select class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-green-400" [(ngModel)]="selectedCareer" (change)="filterByCareer()">
+        <label class="block font-semibold mb-1">Buscar</label>
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          placeholder="Buscar por título, descripción, carrera u organización..."
+          class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-green-400"
+        >
+      </div>
+
+      <!-- Career Filter -->
+      <div class="sm:w-48">
+        <label class="block font-semibold mb-1">Carrera</label>
+        <select
+          [(ngModel)]="selectedCareer"
+          class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-green-400"
+        >
           <option value="">Todas las carreras</option>
           <option *ngFor="let career of careers" [value]="career">{{ career }}</option>
         </select>
       </div>
-      <button class="bg-gray-100 border border-gray-400 px-4 py-2 rounded hover:bg-gray-200 transition disabled:opacity-50" (click)="clearFilter()" [disabled]="!selectedCareer">Limpiar Filtro</button>
+
+      <!-- Clear Button -->
+      <button 
+        class="bg-gray-100 border border-gray-400 px-4 py-2 rounded hover:bg-gray-200 transition disabled:opacity-50" 
+        (click)="clearFilters()" 
+        [disabled]="!searchTerm && !selectedCareer"
+      >
+        Limpiar
+      </button>
     </div>
   </div>
+
   <div *ngIf="!loading && !error" class="mb-4 text-center text-gray-700">
-    Mostrando {{ filteredOffers.length }} oferta{{ filteredOffers.length !== 1 ? 's' : '' }}<span *ngIf="selectedCareer"> para {{ selectedCareer }}</span>
+    Mostrando {{ filteredOffers.length }} oferta{{ filteredOffers.length !== 1 ? 's' : '' }}
+    <span *ngIf="searchTerm || selectedCareer">
+      para 
+      <span *ngIf="searchTerm">"{{ searchTerm }}"</span>
+      <span *ngIf="searchTerm && selectedCareer"> y </span>
+      <span *ngIf="selectedCareer">{{ selectedCareer }}</span>
+    </span>
   </div>
+
   <!-- Loading State -->
   <div *ngIf="loading" class="flex flex-col items-center justify-center py-8">
     <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-green-600 mb-2"></div>
     <p class="text-green-700">Cargando ofertas de pasantía...</p>
   </div>
+
   <!-- Error State -->
   <div *ngIf="error" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4 text-center">
     {{ error }}
     <button class="ml-4 text-red-700 underline" (click)="loadInternshipOffers()">Reintentar</button>
   </div>
+
   <!-- Internship Offers Grid -->
   <div *ngIf="!loading && !error" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 justify-items-center">
     <div *ngFor="let offer of filteredOffers" class="relative bg-white rounded-2xl shadow-lg p-6 flex flex-col justify-between border border-gray-100 w-full max-w-md">
@@ -58,9 +92,16 @@
       </div>
     </div>
   </div>
+
   <!-- No Results -->
   <div *ngIf="!loading && !error && filteredOffers.length === 0" class="bg-blue-50 border-l-4 border-blue-400 text-blue-700 p-4 rounded mb-4 text-center">
     <i class="bi bi-info-circle mr-2"></i>
-    No se encontraron ofertas de pasantía<span *ngIf="selectedCareer"> para {{ selectedCareer }}</span>
+    No se encontraron ofertas de pasantía
+    <span *ngIf="searchTerm || selectedCareer">
+      para 
+      <span *ngIf="searchTerm">"{{ searchTerm }}"</span>
+      <span *ngIf="searchTerm && selectedCareer"> y </span>
+      <span *ngIf="selectedCareer">{{ selectedCareer }}</span>
+    </span>
   </div>
 </div> 

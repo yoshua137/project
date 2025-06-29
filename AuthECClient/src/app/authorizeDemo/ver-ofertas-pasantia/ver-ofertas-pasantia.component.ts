@@ -27,8 +27,8 @@ interface InternshipOffer {
 })
 export class VerOfertasPasantiaComponent implements OnInit {
   internshipOffers: InternshipOffer[] = [];
-  filteredOffers: InternshipOffer[] = [];
-  selectedCareer: string = '';
+  searchTerm = '';
+  selectedCareer = '';
   careers: string[] = [];
   loading: boolean = false;
   error: string = '';
@@ -47,7 +47,6 @@ export class VerOfertasPasantiaComponent implements OnInit {
       .subscribe({
         next: (offers) => {
           this.internshipOffers = offers;
-          this.filteredOffers = offers;
           this.extractCareers();
           this.loading = false;
         },
@@ -64,19 +63,23 @@ export class VerOfertasPasantiaComponent implements OnInit {
     this.careers = Array.from(uniqueCareers).sort();
   }
 
-  filterByCareer(): void {
-    if (!this.selectedCareer) {
-      this.filteredOffers = this.internshipOffers;
-    } else {
-      this.filteredOffers = this.internshipOffers.filter(offer => 
-        offer.career.toLowerCase() === this.selectedCareer.toLowerCase()
-      );
-    }
+  get filteredOffers(): InternshipOffer[] {
+    return this.internshipOffers.filter(offer => {
+      const matchesSearch = !this.searchTerm || 
+        offer.title.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        offer.description.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        offer.career.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        offer.organizationName.toLowerCase().includes(this.searchTerm.toLowerCase());
+      
+      const matchesCareer = !this.selectedCareer || offer.career === this.selectedCareer;
+      
+      return matchesSearch && matchesCareer;
+    });
   }
 
-  clearFilter(): void {
+  clearFilters(): void {
+    this.searchTerm = '';
     this.selectedCareer = '';
-    this.filteredOffers = this.internshipOffers;
   }
 
   formatDate(dateString: string): string {

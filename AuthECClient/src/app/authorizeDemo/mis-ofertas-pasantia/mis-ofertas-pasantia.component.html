@@ -1,0 +1,186 @@
+<div class="min-h-screen bg-gray-50 py-8">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Header -->
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-gray-900">Mis Ofertas de Pasantía</h1>
+      <p class="mt-2 text-gray-600">Gestiona todas las ofertas de pasantía de tu organización</p>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="loading" class="flex justify-center items-center py-12">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="error && !loading" class="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
+      <div class="flex">
+        <div class="flex-shrink-0">
+          <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+          </svg>
+        </div>
+        <div class="ml-3">
+          <p class="text-sm text-red-800">{{ error }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filters and Actions -->
+    <div class="bg-white shadow rounded-lg p-6 mb-6">
+      <div class="flex flex-col sm:flex-row gap-4 items-center justify-between">
+        <!-- Search and Filters -->
+        <div class="flex flex-col sm:flex-row gap-4 flex-1">
+          <!-- Search Input -->
+          <div class="flex-1">
+            <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Buscar</label>
+            <input
+              type="text"
+              id="search"
+              [(ngModel)]="searchTerm"
+              placeholder="Buscar por título, descripción o carrera..."
+              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            >
+          </div>
+
+          <!-- Career Filter -->
+          <div class="sm:w-48">
+            <label for="career" class="block text-sm font-medium text-gray-700 mb-1">Carrera</label>
+            <select
+              id="career"
+              [(ngModel)]="selectedCareer"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">Todas las carreras</option>
+              <option *ngFor="let career of uniqueCareers" [value]="career">{{ career }}</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex gap-3">
+          <button
+            (click)="loadMyOffers()"
+            class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Actualizar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Offers List -->
+    <div *ngIf="!loading && !error">
+      <!-- No Offers State -->
+      <div *ngIf="filteredOffers.length === 0" class="text-center py-12">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <h3 class="mt-2 text-sm font-medium text-gray-900">No hay ofertas</h3>
+        <p class="mt-1 text-sm text-gray-500">
+          {{ offers.length === 0 ? 'Aún no has publicado ninguna oferta de pasantía.' : 'No se encontraron ofertas con los filtros aplicados.' }}
+        </p>
+      </div>
+
+      <!-- Offers Grid -->
+      <div *ngIf="filteredOffers.length > 0" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div *ngFor="let offer of filteredOffers" class="bg-white shadow rounded-lg overflow-hidden hover:shadow-lg transition-shadow duration-300">
+          <!-- Offer Header -->
+          <div class="p-6">
+            <div class="flex items-start justify-between">
+              <div class="flex-1">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ offer.title }}</h3>
+                <span class="relative group inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" [class]="getStatusBadgeClass(offer)">
+                  {{ getStatusText(offer) }}
+                  <span class="absolute left-1/2 -translate-x-1/2 -top-8 z-10 hidden group-hover:flex px-3 py-1 rounded bg-gray-900 text-white text-xs shadow-lg whitespace-nowrap transition-all duration-200">
+                    Estado
+                  </span>
+                </span>
+              </div>
+              <button
+                (click)="deleteOffer(offer.id)"
+                class="text-red-400 hover:text-red-600 transition-colors duration-200"
+                title="Eliminar oferta"
+              >
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            </div>
+
+            <!-- Career and Mode -->
+            <div class="mt-3 flex items-center gap-4 text-sm text-gray-600">
+              <span class="flex items-center relative group">
+                <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 012 2v6a2 2 0 01-2 2H8a2 2 0 01-2-2V8a2 2 0 012-2V6" />
+                </svg>
+                {{ offer.career }}
+                <span class="absolute left-1/2 -translate-x-1/2 -top-8 z-10 hidden group-hover:flex px-3 py-1 rounded bg-gray-900 text-white text-xs shadow-lg whitespace-nowrap transition-all duration-200">
+                  Carrera
+                </span>
+              </span>
+              <span class="flex items-center relative group">
+                <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                {{ offer.mode === 'Mixto' ? 'Virtual/Presencial' : offer.mode }}
+                <span class="absolute left-1/2 -translate-x-1/2 -top-8 z-10 hidden group-hover:flex px-3 py-1 rounded bg-gray-900 text-white text-xs shadow-lg whitespace-nowrap transition-all duration-200">
+                  Modalidad
+                </span>
+              </span>
+            </div>
+
+            <!-- Description -->
+            <p class="mt-3 text-sm text-gray-600 line-clamp-3">{{ offer.description }}</p>
+
+            <!-- Requirements -->
+            <div class="mt-3">
+              <h4 class="text-sm font-medium text-gray-900 mb-1">Requisitos:</h4>
+              <p class="text-sm text-gray-600 line-clamp-2">{{ offer.requirements }}</p>
+            </div>
+
+            <!-- Dates -->
+            <div class="mt-4 space-y-2">
+              <div class="flex items-center text-sm text-gray-600">
+                <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span class="font-medium">Inicio:</span>
+                <span class="ml-1">{{ formatDate(offer.startDate) }}</span>
+              </div>
+              <div class="flex items-center text-sm text-gray-600">
+                <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span class="font-medium">Fin:</span>
+                <span class="ml-1">{{ formatDate(offer.endDate) }}</span>
+              </div>
+            </div>
+
+            <!-- Contact Information -->
+            <div class="mt-4 pt-4 border-t border-gray-200">
+              <h4 class="text-sm font-medium text-gray-900 mb-2">Información de contacto:</h4>
+              <div class="space-y-1 text-sm text-gray-600">
+                <div *ngIf="offer.contactEmail" class="flex items-center">
+                  <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  {{ offer.contactEmail }}
+                </div>
+                <div *ngIf="offer.contactPhone" class="flex items-center">
+                  <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                  </svg>
+                  {{ offer.contactPhone }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 
