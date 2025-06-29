@@ -6,8 +6,16 @@
   </video>
   <!-- Capa oscura para mejorar contraste -->
   <div class="absolute inset-0 bg-black/40 z-10"></div>
+  <!-- Botón toggle login arriba a la izquierda, siempre visible -->
+  <button 
+    (click)="showLogin = !showLogin" 
+    class="absolute top-4 left-4 z-50 bg-transparent hover:bg-transparent p-2 transition flex items-center"
+    title="{{ showLogin ? 'Minimizar' : 'Restaurar' }}"
+  >
+    <img src="assets/logo.png" alt="Logo toggle login" class="w-16 h-16 mr-0 hover:scale-110 transition-transform duration-200" />
+  </button>
   <!-- Contenido del login -->
-  <div class="relative z-20 flex items-center justify-center min-h-screen">
+  <div class="relative z-20 flex items-center justify-center min-h-screen" [class.hidden]="!showLogin">
     <div class="w-full max-w-4xl lg:w-10/12 xl:w-8/12">
       <div class="flex bg-white/60 backdrop-blur-md rounded-3xl shadow-lg" style="min-height:450px;">
         <div class="hidden md:flex flex-col items-center justify-center w-5/12 p-5 text-white bg-blue-ucb/80 rounded-l-3xl">

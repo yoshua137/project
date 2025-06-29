@@ -21,6 +21,7 @@ import { trigger, style, animate, transition, query } from "@angular/animations"
   ]
 })
 export class UserComponent implements AfterViewInit {
+  showLogin: boolean = true;
 
   constructor(private context: ChildrenOutletContexts) { }
 

@@ -47,7 +47,7 @@ export class LoginComponent implements OnInit {
         },
         error: err => {
           if (err.status == 400)
-            this.toastr.error('Incorrect email or password.', 'Login failed')
+            this.toastr.error('Email o contraseña incorrectos.', 'Error de Autenticación');
           else
             console.log('error during login:\n', err);
         }

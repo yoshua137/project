@@ -87,6 +87,6 @@ export class VerOfertasPasantiaComponent implements OnInit {
   }
 
   formatDate(dateString: string): string {
-    return new Date(dateString).toLocaleDateString('es-ES');
+    return new Date(dateString).toLocaleDateString('es-BO', { timeZone: 'America/La_Paz' });
   }
 } 
