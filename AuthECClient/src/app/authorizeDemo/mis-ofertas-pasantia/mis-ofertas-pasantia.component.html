@@ -90,24 +90,21 @@
           <!-- Offer Header -->
           <div class="p-6">
             <div class="flex items-start justify-between">
-              <div class="flex-1">
-                <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ offer.title }}</h3>
-                <span class="relative group inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" [class]="getStatusBadgeClass(offer)">
-                  {{ getStatusText(offer) }}
-                  <span class="absolute left-1/2 -translate-x-1/2 -top-8 z-10 hidden group-hover:flex px-3 py-1 rounded bg-gray-900 text-white text-xs shadow-lg whitespace-nowrap transition-all duration-200">
-                    Estado
-                  </span>
-                </span>
+              <div class="flex-1 flex items-center gap-2">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2 flex-1">{{ offer.title }}</h3>
               </div>
-              <button
-                (click)="deleteOffer(offer.id)"
-                class="text-red-400 hover:text-red-600 transition-colors duration-200"
-                title="Eliminar oferta"
-              >
-                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-              </button>
+              <div class="flex gap-2 items-center ml-2">
+                <button (click)="openEditModal(offer)" class="rounded-full p-2 bg-blue-50 hover:bg-blue-100 text-blue-600 hover:text-blue-800 transition" title="Editar oferta">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-2.828 0L9 13zm-6 6h6v-2a2 2 0 012-2h2v6H3v-2z" />
+                  </svg>
+                </button>
+                <button (click)="openDeleteModal(offer)" class="rounded-full p-2 bg-red-50 hover:bg-red-100 text-red-500 hover:text-red-700 transition" title="Eliminar oferta">
+                  <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              </div>
             </div>
 
             <!-- Career and Mode -->
@@ -181,6 +178,133 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de edición -->
+<div *ngIf="editingOffer" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 bg-opacity-30">
+  <div class="bg-white rounded-lg shadow-lg w-full max-w-lg p-8 relative animate-fade-in max-h-[90vh] overflow-y-auto">
+    <button (click)="closeEditModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-700">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
+    <h2 class="text-xl font-bold mb-4 text-blue-900">Editar Oferta de Pasantía</h2>
+    <form (ngSubmit)="submitEdit()" autocomplete="off">
+      <div class="grid grid-cols-1 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Título</label>
+          <input [(ngModel)]="editForm.title" name="title" class="w-full border rounded px-3 py-2 mt-1" required />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Descripción</label>
+          <textarea [(ngModel)]="editForm.description" name="description" class="w-full border rounded px-3 py-2 mt-1" rows="2" required></textarea>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Requisitos</label>
+          <input [(ngModel)]="editForm.requirements" name="requirements" class="w-full border rounded px-3 py-2 mt-1" required />
+        </div>
+        <div class="flex gap-2">
+          <div class="flex-1">
+            <label class="block text-sm font-medium text-gray-700">Inicio</label>
+            <input type="date" [(ngModel)]="editForm.startDate" name="startDate" class="w-full border rounded px-3 py-2 mt-1" required />
+          </div>
+          <div class="flex-1">
+            <label class="block text-sm font-medium text-gray-700">Fin</label>
+            <input type="date" [(ngModel)]="editForm.endDate" name="endDate" class="w-full border rounded px-3 py-2 mt-1" required />
+          </div>
+        </div>
+        <div class="flex gap-2">
+          <div class="flex-1">
+            <label class="block text-sm font-medium text-gray-700">Modalidad</label>
+            <select [(ngModel)]="editForm.mode" name="mode" class="w-full border rounded px-3 py-2 mt-1" required>
+              <option value="Presencial">Presencial</option>
+              <option value="Virtual">Virtual</option>
+              <option value="Mixto">Virtual/Presencial</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Email de contacto</label>
+          <input [(ngModel)]="editForm.contactEmail" name="contactEmail" class="w-full border rounded px-3 py-2 mt-1" type="email" required />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Teléfono de contacto</label>
+          <input [(ngModel)]="editForm.contactPhone" name="contactPhone" class="w-full border rounded px-3 py-2 mt-1" required />
+        </div>
+      </div>
+      <div class="mt-4 flex flex-col gap-2">
+        <button type="submit" [disabled]="editLoading" class="bg-blue-ucb text-white px-4 py-2 rounded hover:bg-blue-800 transition font-semibold">
+          <span *ngIf="!editLoading">Guardar cambios</span>
+          <span *ngIf="editLoading">Guardando...</span>
+        </button>
+        <div *ngIf="editError" class="text-red-600 text-sm">{{ editError }}</div>
+        <div *ngIf="editSuccess" class="text-green-600 text-sm">{{ editSuccess }}</div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal de confirmación de eliminación -->
+<div *ngIf="deletingOffer" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 bg-opacity-30">
+  <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative animate-fade-in">
+    <button (click)="closeDeleteModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-700">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
+    
+    <!-- Icono de advertencia -->
+    <div class="flex justify-center mb-4">
+      <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
+        <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+        </svg>
+      </div>
+    </div>
+    
+    <!-- Título y mensaje -->
+    <div class="text-center mb-6">
+      <h2 class="text-xl font-bold text-gray-900 mb-2">¿Eliminar oferta?</h2>
+      <p class="text-gray-600">
+        ¿Estás seguro de que deseas eliminar la oferta <strong>"{{ deletingOffer.title }}"</strong>?
+      </p>
+      <p class="text-sm text-red-600 mt-2">
+        Esta acción no se puede deshacer.
+      </p>
+    </div>
+    
+    <!-- Botones -->
+    <div class="flex gap-3">
+      <button 
+        (click)="closeDeleteModal()" 
+        class="flex-1 px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition"
+      >
+        Cancelar
+      </button>
+      <button 
+        (click)="confirmDelete()" 
+        [disabled]="deleteLoading"
+        class="flex-1 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition"
+      >
+        <span *ngIf="!deleteLoading">Eliminar</span>
+        <span *ngIf="deleteLoading" class="flex items-center justify-center">
+          <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          Eliminando...
+        </span>
+      </button>
+    </div>
+    
+    <!-- Mensajes de error/éxito -->
+    <div *ngIf="deleteError" class="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
+      <p class="text-sm text-red-800">{{ deleteError }}</p>
+    </div>
+    <div *ngIf="deleteSuccess" class="mt-4 p-3 bg-green-50 border border-green-200 rounded-md">
+      <p class="text-sm text-green-800">{{ deleteSuccess }}</p>
     </div>
   </div>
 </div> 

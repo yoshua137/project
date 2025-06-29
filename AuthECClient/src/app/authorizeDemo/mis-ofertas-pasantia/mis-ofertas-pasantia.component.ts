@@ -32,6 +32,17 @@ export class MisOfertasPasantiaComponent implements OnInit {
   error = '';
   searchTerm = '';
   selectedCareer = '';
+  editingOffer: InternshipOffer | null = null;
+  editForm: any = {};
+  editLoading = false;
+  editError = '';
+  editSuccess = '';
+  
+  // Propiedades para el modal de eliminación
+  deletingOffer: InternshipOffer | null = null;
+  deleteLoading = false;
+  deleteError = '';
+  deleteSuccess = '';
 
   constructor(private http: HttpClient) {}
 
@@ -110,18 +121,95 @@ export class MisOfertasPasantiaComponent implements OnInit {
     }
   }
 
-  deleteOffer(offerId: number): void {
-    if (confirm('¿Estás seguro de que deseas eliminar esta oferta de pasantía?')) {
-      this.http.delete(`${environment.apiBaseUrl}/InternshipOffer/${offerId}`)
-        .subscribe({
-          next: () => {
-            this.offers = this.offers.filter(offer => offer.id !== offerId);
-          },
-          error: (err) => {
-            console.error('Error deleting offer:', err);
-            alert('Error al eliminar la oferta');
+  // Métodos para el modal de confirmación de eliminación
+  openDeleteModal(offer: InternshipOffer): void {
+    this.deletingOffer = { ...offer };
+    this.deleteError = '';
+    this.deleteSuccess = '';
+    this.deleteLoading = false;
+  }
+
+  closeDeleteModal(): void {
+    this.deletingOffer = null;
+    this.deleteError = '';
+    this.deleteSuccess = '';
+    this.deleteLoading = false;
+  }
+
+  confirmDelete(): void {
+    if (!this.deletingOffer) return;
+    
+    this.deleteLoading = true;
+    this.deleteError = '';
+    this.deleteSuccess = '';
+    
+    this.http.delete(`${environment.apiBaseUrl}/InternshipOffer/${this.deletingOffer.id}`)
+      .subscribe({
+        next: () => {
+          this.deleteSuccess = 'Oferta eliminada correctamente';
+          // Eliminar la oferta de la lista local
+          this.offers = this.offers.filter(offer => offer.id !== this.deletingOffer!.id);
+          setTimeout(() => this.closeDeleteModal(), 1000);
+        },
+        error: (err) => {
+          console.error('Error deleting offer:', err);
+          this.deleteError = err.error?.message || 'Error al eliminar la oferta';
+          this.deleteLoading = false;
+        }
+      });
+  }
+
+  openEditModal(offer: InternshipOffer): void {
+    this.editingOffer = { ...offer };
+    this.editForm = {
+      ...offer,
+      startDate: offer.startDate ? offer.startDate.substring(0, 10) : '',
+      endDate: offer.endDate ? offer.endDate.substring(0, 10) : ''
+    };
+    this.editError = '';
+    this.editSuccess = '';
+    this.editLoading = false;
+  }
+
+  closeEditModal(): void {
+    this.editingOffer = null;
+    this.editForm = {};
+    this.editError = '';
+    this.editSuccess = '';
+    this.editLoading = false;
+  }
+
+  submitEdit(): void {
+    if (!this.editingOffer) return;
+    this.editLoading = true;
+    this.editError = '';
+    this.editSuccess = '';
+    const body = {
+      title: this.editForm.title,
+      description: this.editForm.description,
+      requirements: this.editForm.requirements,
+      startDate: this.editForm.startDate,
+      endDate: this.editForm.endDate,
+      mode: this.editForm.mode,
+      career: this.editForm.career,
+      contactEmail: this.editForm.contactEmail,
+      contactPhone: this.editForm.contactPhone
+    };
+    this.http.put(`${environment.apiBaseUrl}/InternshipOffer/${this.editingOffer.id}`, body)
+      .subscribe({
+        next: () => {
+          this.editSuccess = 'Oferta actualizada correctamente';
+          // Actualizar la oferta en la lista local
+          const idx = this.offers.findIndex(o => o.id === this.editingOffer!.id);
+          if (idx !== -1) {
+            this.offers[idx] = { ...this.editForm };
           }
-        });
-    }
+          setTimeout(() => this.closeEditModal(), 1000);
+        },
+        error: (err) => {
+          this.editError = err.error?.message || 'Error al actualizar la oferta';
+          this.editLoading = false;
+        }
+      });
   }
 } 
