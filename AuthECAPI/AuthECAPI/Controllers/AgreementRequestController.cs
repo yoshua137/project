@@ -384,7 +384,7 @@ namespace AuthECAPI.Controllers
 
                 var fileBytes = await System.IO.File.ReadAllBytesAsync(filePath);
                 Console.WriteLine($"[PDF] Archivo enviado correctamente: {fileName}");
-                return File(fileBytes, "application/pdf", fileName);
+                return File(fileBytes, "application/pdf");
             }
             catch (Exception ex)
             {

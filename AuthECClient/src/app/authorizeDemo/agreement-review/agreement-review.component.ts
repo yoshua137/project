@@ -124,19 +124,9 @@ export class AgreementReviewComponent implements OnInit {
   }
 
   downloadPdf(pdfFilePath: string) {
-    // Usar el endpoint autorizado para descargar PDF
     const url = `${environment.apiBaseUrl}/AgreementRequest/pdf/${pdfFilePath}`;
-    
-    // Crear un enlace temporal para descargar el archivo
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = pdfFilePath;
-    link.target = '_blank';
-    
-    // Agregar el token de autorización
     const token = this.authService.getToken();
     if (token) {
-      // Para descargas con autorización, necesitamos usar fetch
       fetch(url, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -149,18 +139,11 @@ export class AgreementReviewComponent implements OnInit {
         throw new Error('Error al descargar el archivo');
       })
       .then(blob => {
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = pdfFilePath;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-        this.toastr.success('PDF descargado correctamente', 'Descarga Exitosa');
+        const blobUrl = window.URL.createObjectURL(blob);
+        window.open(blobUrl, '_blank');
       })
       .catch(error => {
-        this.toastr.error('Error al descargar el PDF: ' + error.message, 'Error');
+        this.toastr.error('Error al abrir el PDF: ' + error.message, 'Error');
       });
     } else {
       this.toastr.error('No se encontró el token de autorización', 'Error');

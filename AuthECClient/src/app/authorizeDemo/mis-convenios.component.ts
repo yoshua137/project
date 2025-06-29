@@ -48,4 +48,13 @@ export class MisConveniosComponent implements OnInit {
       default: return 'text-secondary';
     }
   }
+
+  abrirPDF(pdfFilePath: string) {
+    this.http.get(`${this.environment.apiBaseUrl}/AgreementRequest/pdf/${pdfFilePath}`, {
+      responseType: 'blob'
+    }).subscribe(blob => {
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, '_blank');
+    });
+  }
 } 
