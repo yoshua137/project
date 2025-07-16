@@ -1,9 +1,7 @@
 <div class="min-h-screen bg-blue-100 flex flex-col">
-  <button
-    (click)="showHeaderMenu = !showHeaderMenu"
+  <button (click)="showHeaderMenu = !showHeaderMenu"
     class="fixed top-4 left-4 z-50 bg-blue-ucb text-white rounded-full shadow-lg p-2 hover:bg-blue-800 transition-all flex items-center gap-2"
-    title="{{ showHeaderMenu ? 'Ocultar menú' : 'Mostrar menú' }}"
-  >
+    title="{{ showHeaderMenu ? 'Ocultar menú' : 'Mostrar menú' }}">
     <ng-container *ngIf="showHeaderMenu; else showMenuIcon">
       <!-- Icono menu_open de Google Fonts Material Symbols -->
       <span class="material-symbols-outlined" style="font-size: 24px;">menu_open</span>
@@ -17,9 +15,10 @@
     </ng-template>
   </button>
 
-  <div *ngIf="showHeaderMenu" class="sticky top-0 z-30 w-full">
-    <!-- Header + Menú sticky juntos -->
-    <header class="flex items-center justify-between bg-crema px-8 py-1 shadow rounded-b-none rounded-t-2xl">
+  <div *ngIf="showHeaderMenu" class="w-full">
+    <!-- Header sticky y animado -->
+    <header *ngIf="showHeaderBar" @slideDownUp
+      class="sticky top-0 z-30 flex items-center justify-between bg-crema px-8 py-1 shadow rounded-b-none rounded-t-2xl transition-all duration-300">
       <div class="flex items-center gap-4">
         <a routerLink="/dashboard">
           <img src="assets/logo-main.png" alt="Logo" class="h-20 w-auto pl-6" />
@@ -27,49 +26,63 @@
       </div>
       <div class="flex items-center gap-4">
         <form class="flex" role="search">
-          <input class="form-input px-2 py-1 rounded-l border border-gray-300 focus:outline-none" type="search" placeholder="¿Qué estás buscando?" aria-label="Search">
-          <button class="bg-blue-ucb text-white px-4 py-1 rounded-r font-semibold hover:bg-blue-800 transition" type="submit">Buscar</button>
+          <input class="form-input px-2 py-1 rounded-l border border-gray-300 focus:outline-none" type="search"
+            placeholder="¿Qué estás buscando?" aria-label="Search">
+          <button class="bg-blue-ucb text-white px-4 py-1 rounded-r font-semibold hover:bg-blue-800 transition"
+            type="submit">Buscar</button>
         </form>
-        <button class="font-bold text-blue-ucb bg-yellow-ucb rounded-lg py-2 px-4 border-2 border-transparent hover:border-blue-ucb transition-all duration-300 ease-in-out shadow-sm" (click)="onLogout()">
+        <button
+          class="font-bold text-blue-ucb bg-yellow-ucb rounded-lg py-2 px-4 border-2 border-transparent hover:border-blue-ucb transition-all duration-300 ease-in-out shadow-sm"
+          (click)="onLogout()">
           Cerrar Sesión
         </button>
       </div>
     </header>
-    <nav class="flex bg-blue-ucb text-white px-8 py-2 shadow rounded-b-2xl rounded-t-none">
-      <ul class="flex flex-row gap-2 w-full justify-start">
-        <li class="nav-item" [appHideIfClaimsNotMet]="claimReq.organizationOnly">
-          <a class="nav-link text-white hover:bg-blue-800 rounded px-4 py-2 transition border-2 border-transparent router-link-active:bg-white/10 router-link-active:border-yellow-ucb router-link-active:text-yellow-ucb"
-             routerLink="/agreement-requests" routerLinkActive="!bg-white/10 !border-yellow-ucb !text-yellow-ucb" [routerLinkActiveOptions]="{ exact: true }">Solicitar Convenio</a>
-        </li>
-        <li class="nav-item" [appHideIfClaimsNotMet]="claimReq.adminInvitationManager">
-          <a class="nav-link text-white hover:bg-blue-800 rounded px-4 py-2 transition border-2 border-transparent router-link-active:bg-white/10 router-link-active:border-yellow-ucb router-link-active:text-yellow-ucb"
-             routerLink="/registration-invitations" routerLinkActive="!bg-white/10 !border-yellow-ucb !text-yellow-ucb" [routerLinkActiveOptions]="{ exact: true }">Invitaciones de Registro</a>
-        </li>
-        <li class="nav-item" [appHideIfClaimsNotMet]="claimReq.directorAgreementReviewer">
-          <a class="nav-link text-white hover:bg-blue-800 rounded px-4 py-2 transition border-2 border-transparent router-link-active:bg-white/10 router-link-active:border-yellow-ucb router-link-active:text-yellow-ucb"
-             routerLink="/agreement-review" routerLinkActive="!bg-white/10 !border-yellow-ucb !text-yellow-ucb" [routerLinkActiveOptions]="{ exact: true }">Revisar Convenios</a>
-        </li>
-        <li class="nav-item" [appHideIfClaimsNotMet]="claimReq.organizationAgreementList">
-          <a class="nav-link text-white hover:bg-blue-800 rounded px-4 py-2 transition border-2 border-transparent router-link-active:bg-white/10 router-link-active:border-yellow-ucb router-link-active:text-yellow-ucb"
-             routerLink="/mis-convenios" routerLinkActive="!bg-white/10 !border-yellow-ucb !text-yellow-ucb" [routerLinkActiveOptions]="{ exact: true }">Mis convenios</a>
-        </li>
-        <li class="nav-item" [appHideIfClaimsNotMet]="claimReq.organizationInternshipOffer">
-          <a class="nav-link text-white hover:bg-blue-800 rounded px-4 py-2 transition border-2 border-transparent router-link-active:bg-white/10 router-link-active:border-yellow-ucb router-link-active:text-yellow-ucb"
-             routerLink="/publicar-pasantia" routerLinkActive="!bg-white/10 !border-yellow-ucb !text-yellow-ucb" [routerLinkActiveOptions]="{ exact: true }">Publicar Pasantía</a>
-        </li>
-        <li class="nav-item" [appHideIfClaimsNotMet]="claimReq.organizationInternshipOffer">
-          <a class="nav-link text-white hover:bg-blue-800 rounded px-4 py-2 transition border-2 border-transparent router-link-active:bg-white/10 router-link-active:border-yellow-ucb router-link-active:text-yellow-ucb"
-             routerLink="/mis-ofertas-pasantia" routerLinkActive="!bg-white/10 !border-yellow-ucb !text-yellow-ucb" [routerLinkActiveOptions]="{ exact: true }">Mis Ofertas de Pasantía</a>
-        </li>
-        <li class="nav-item" [appHideIfClaimsNotMet]="claimReq.studentInternshipOffers">
-          <a class="nav-link text-white hover:bg-blue-800 rounded px-4 py-2 transition border-2 border-transparent router-link-active:bg-white/10 router-link-active:border-yellow-ucb router-link-active:text-yellow-ucb"
-             routerLink="/ver-ofertas-pasantia" routerLinkActive="!bg-white/10 !border-yellow-ucb !text-yellow-ucb" [routerLinkActiveOptions]="{ exact: true }">Ver Ofertas de Pasantía</a>
-        </li>
-      </ul>
-    </nav>
   </div>
+  <!-- Nav azul sticky SIEMPRE visible mientras showHeaderMenu sea true -->
+  <nav *ngIf="showHeaderMenu"
+    class="sticky top-0 z-20 bg-blue-ucb text-white px-8 py-2 shadow rounded-b-2xl rounded-t-none transition-all duration-300">
+    <ul class="flex flex-row gap-2 w-full justify-start">
+      <li class="nav-item" [appHideIfClaimsNotMet]="claimReq.organizationOnly">
+        <a class="nav-link text-white hover:bg-blue-800 rounded px-4 py-2 transition border-2 border-transparent router-link-active:bg-white/10 router-link-active:border-yellow-ucb router-link-active:text-yellow-ucb"
+          routerLink="/agreement-requests" routerLinkActive="!bg-white/10 !border-yellow-ucb !text-yellow-ucb"
+          [routerLinkActiveOptions]="{ exact: true }">Solicitar Convenio</a>
+      </li>
+      <li class="nav-item" [appHideIfClaimsNotMet]="claimReq.adminInvitationManager">
+        <a class="nav-link text-white hover:bg-blue-800 rounded px-4 py-2 transition border-2 border-transparent router-link-active:bg-white/10 router-link-active:border-yellow-ucb router-link-active:text-yellow-ucb"
+          routerLink="/registration-invitations" routerLinkActive="!bg-white/10 !border-yellow-ucb !text-yellow-ucb"
+          [routerLinkActiveOptions]="{ exact: true }">Invitaciones de Registro</a>
+      </li>
+      <li class="nav-item" [appHideIfClaimsNotMet]="claimReq.directorAgreementReviewer">
+        <a class="nav-link text-white hover:bg-blue-800 rounded px-4 py-2 transition border-2 border-transparent router-link-active:bg-white/10 router-link-active:border-yellow-ucb router-link-active:text-yellow-ucb"
+          routerLink="/agreement-review" routerLinkActive="!bg-white/10 !border-yellow-ucb !text-yellow-ucb"
+          [routerLinkActiveOptions]="{ exact: true }">Revisar Convenios</a>
+      </li>
+      <li class="nav-item" [appHideIfClaimsNotMet]="claimReq.organizationAgreementList">
+        <a class="nav-link text-white hover:bg-blue-800 rounded px-4 py-2 transition border-2 border-transparent router-link-active:bg-white/10 router-link-active:border-yellow-ucb router-link-active:text-yellow-ucb"
+          routerLink="/mis-convenios" routerLinkActive="!bg-white/10 !border-yellow-ucb !text-yellow-ucb"
+          [routerLinkActiveOptions]="{ exact: true }">Mis convenios</a>
+      </li>
+      <li class="nav-item" [appHideIfClaimsNotMet]="claimReq.organizationInternshipOffer">
+        <a class="nav-link text-white hover:bg-blue-800 rounded px-4 py-2 transition border-2 border-transparent router-link-active:bg-white/10 router-link-active:border-yellow-ucb router-link-active:text-yellow-ucb"
+          routerLink="/publicar-pasantia" routerLinkActive="!bg-white/10 !border-yellow-ucb !text-yellow-ucb"
+          [routerLinkActiveOptions]="{ exact: true }">Publicar Pasantía</a>
+      </li>
+      <li class="nav-item" [appHideIfClaimsNotMet]="claimReq.organizationInternshipOffer">
+        <a class="nav-link text-white hover:bg-blue-800 rounded px-4 py-2 transition border-2 border-transparent router-link-active:bg-white/10 router-link-active:border-yellow-ucb router-link-active:text-yellow-ucb"
+          routerLink="/mis-ofertas-pasantia" routerLinkActive="!bg-white/10 !border-yellow-ucb !text-yellow-ucb"
+          [routerLinkActiveOptions]="{ exact: true }">Mis Ofertas de Pasantía</a>
+      </li>
+      <li class="nav-item" [appHideIfClaimsNotMet]="claimReq.studentInternshipOffers">
+        <a class="nav-link text-white hover:bg-blue-800 rounded px-4 py-2 transition border-2 border-transparent router-link-active:bg-white/10 router-link-active:border-yellow-ucb router-link-active:text-yellow-ucb"
+          routerLink="/ver-ofertas-pasantia" routerLinkActive="!bg-white/10 !border-yellow-ucb !text-yellow-ucb"
+          [routerLinkActiveOptions]="{ exact: true }">Ver Ofertas de Pasantía</a>
+      </li>
+    </ul>
+  </nav>
   <!-- Contenido principal -->
-  <main class="flex-1 flex flex-col items-center py-8 px-4 bg-crema rounded-3xl m-8 shadow-xl overflow-auto custom-scrollbar">
+  <main
+    class="flex-1 flex flex-col items-center py-8 px-4 bg-crema rounded-3xl m-8 shadow-xl overflow-auto custom-scrollbar">
     <router-outlet />
   </main>
 </div>
@@ -77,14 +90,17 @@
   .custom-scrollbar::-webkit-scrollbar {
     width: 8px;
   }
+
   .custom-scrollbar::-webkit-scrollbar-thumb {
     background: #003366;
     border-radius: 8px;
   }
+
   .custom-scrollbar::-webkit-scrollbar-track {
     background: #ffe066;
     border-radius: 8px;
   }
+
   /* Firefox */
   .custom-scrollbar {
     scrollbar-width: thin;
