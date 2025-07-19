@@ -24,25 +24,54 @@ export class RegistrationComponent implements OnInit {
     {
       name: 'Ciencias de la Salud',
       value: 'Ciencias de la Salud',
-      careers: ['Medicina', 'Enfermeria', 'Odontologia', 'Kinesiologia y Fisioterapia']
+      careers: [
+        { value: 'Medicina', display: 'Medicina' },
+        { value: 'Enfermeria', display: 'Enfermería' },
+        { value: 'Odontologia', display: 'Odontología' },
+        { value: 'Kinesiologia y Fisioterapia', display: 'Kinesiología y Fisioterapia' }
+      ]
     },
     {
       name: 'Ingeniería y Ciencias Exactas',
       value: 'Ingenieria y Ciencias Exactas',
-      careers: ['Arquitectura', 'Ingenieria Ambiental', 'Ingenieria Civil', 'Ingenieria Industrial', 'Ingenieria Quimica', 'Ingenieria Mecatronica', 'Ingenieria de Sistemas']
+      careers: [
+        { value: 'Arquitectura', display: 'Arquitectura' },
+        { value: 'Ingenieria Ambiental', display: 'Ingeniería Ambiental' },
+        { value: 'Ingenieria Civil', display: 'Ingeniería Civil' },
+        { value: 'Ingenieria Industrial', display: 'Ingeniería Industrial' },
+        { value: 'Ingenieria Quimica', display: 'Ingeniería Química' },
+        { value: 'Ingenieria Mecatronica', display: 'Ingeniería Mecatrónica' },
+        { value: 'Ingenieria de Sistemas', display: 'Ingeniería de Sistemas' }
+      ]
     },
     {
       name: 'Administración y Economía',
       value: 'Administracion y Economia',
-      careers: ['Administracion de Empresas', 'Contaduria Publica (Auditoria)', 'Ingenieria Comercial', 'Ingenieria Empresarial', 'Ingenieria Financiera', 'Ingenieria en Comercio y Finanzas Internacionales']
+      careers: [
+        { value: 'Administracion de Empresas', display: 'Administración de Empresas' },
+        { value: 'Contaduria Publica (Auditoria)', display: 'Contaduría Pública (Auditoría)' },
+        { value: 'Ingenieria Comercial', display: 'Ingeniería Comercial' },
+        { value: 'Ingenieria Empresarial', display: 'Ingeniería Empresarial' },
+        { value: 'Ingenieria Financiera', display: 'Ingeniería Financiera' },
+        { value: 'Ingenieria en Comercio y Finanzas Internacionales', display: 'Ingeniería en Comercio y Finanzas Internacionales' }
+      ]
     },
     {
       name: 'Ciencias Sociales y Humanas',
       value: 'Ciencias Sociales y Humanas',
-      careers: ['Antropologia', 'Comunicacion Social', 'Diseno Digital Multimedia', 'Derecho', 'Filosofia y Letras', 'Psicologia']
+      careers: [
+        { value: 'Antropologia', display: 'Antropología' },
+        { value: 'Comunicacion Social', display: 'Comunicación Social' },
+        { value: 'Diseno Digital Multimedia', display: 'Diseño Digital Multimedia' },
+        { value: 'Derecho', display: 'Derecho' },
+        { value: 'Filosofia y Letras', display: 'Filosofía y Letras' },
+        { value: 'Psicologia', display: 'Psicología' }
+      ]
     }
   ];
   filteredCareers: string[] = [];
+  filteredCareersWithDisplay: { value: string; display: string; }[] = [];
+  allCareers: { value: string; display: string; }[] = [];
   
   constructor(
     private authService: AuthService,
@@ -84,6 +113,9 @@ export class RegistrationComponent implements OnInit {
   }, { validators: this.passwordMatchValidator });
 
   ngOnInit(): void {
+    // Inicializar la lista completa de carreras
+    this.allCareers = this.allDepartments.flatMap(dept => dept.careers);
+    
     this.route.queryParams.subscribe(params => {
       const role = params['role'];
       const token = params['token'];
@@ -280,7 +312,8 @@ export class RegistrationComponent implements OnInit {
 
   updateCareersForDepartment(dept: string) {
     const found = this.allDepartments.find(d => d.value === dept);
-    this.filteredCareers = found ? found.careers : [];
+    this.filteredCareers = found ? found.careers.map(career => career.value) : [];
+    this.filteredCareersWithDisplay = found ? found.careers : [];
     // Limpiar carrera si se cambia de departamento
     this.registrationForm.get('career')?.setValue('');
   }
