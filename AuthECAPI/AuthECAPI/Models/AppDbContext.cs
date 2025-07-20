@@ -15,6 +15,7 @@ namespace AuthECAPI.Models
         public DbSet<Organization> Organizations { get; set; }
         public DbSet<AgreementRequest> AgreementRequests { get; set; }
         public DbSet<InternshipOffer> InternshipOffers { get; set; }
+        public DbSet<InternshipApplication> InternshipApplications { get; set; }
         public DbSet<RegistrationInvitation> RegistrationInvitations { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
@@ -60,6 +61,19 @@ namespace AuthECAPI.Models
                 .HasOne(io => io.Organization)
                 .WithMany(o => o.InternshipOffers)
                 .HasForeignKey(io => io.OrganizationId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // InternshipApplication relationships
+            builder.Entity<InternshipApplication>()
+                .HasOne(ia => ia.InternshipOffer)
+                .WithMany()
+                .HasForeignKey(ia => ia.InternshipOfferId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<InternshipApplication>()
+                .HasOne(ia => ia.Student)
+                .WithMany()
+                .HasForeignKey(ia => ia.StudentId)
                 .OnDelete(DeleteBehavior.Restrict);
         }
     }

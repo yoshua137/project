@@ -160,6 +160,59 @@ namespace AuthECAPI.Migrations
                     b.ToTable("Directors");
                 });
 
+            modelBuilder.Entity("AuthECAPI.Models.InternshipApplication", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("ApplicationDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CVFilePath")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CoverLetter")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("InternshipOfferId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("InternshipOfferId1")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("ReviewDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ReviewNotes")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("StudentId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("StudentId1")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InternshipOfferId");
+
+                    b.HasIndex("InternshipOfferId1");
+
+                    b.HasIndex("StudentId");
+
+                    b.HasIndex("StudentId1");
+
+                    b.ToTable("InternshipApplications");
+                });
+
             modelBuilder.Entity("AuthECAPI.Models.InternshipOffer", b =>
                 {
                     b.Property<int>("Id")
@@ -446,6 +499,33 @@ namespace AuthECAPI.Migrations
                     b.Navigation("AppUser");
                 });
 
+            modelBuilder.Entity("AuthECAPI.Models.InternshipApplication", b =>
+                {
+                    b.HasOne("AuthECAPI.Models.InternshipOffer", "InternshipOffer")
+                        .WithMany()
+                        .HasForeignKey("InternshipOfferId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("AuthECAPI.Models.InternshipOffer", null)
+                        .WithMany("InternshipApplications")
+                        .HasForeignKey("InternshipOfferId1");
+
+                    b.HasOne("AuthECAPI.Models.Student", "Student")
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("AuthECAPI.Models.Student", null)
+                        .WithMany("InternshipApplications")
+                        .HasForeignKey("StudentId1");
+
+                    b.Navigation("InternshipOffer");
+
+                    b.Navigation("Student");
+                });
+
             modelBuilder.Entity("AuthECAPI.Models.InternshipOffer", b =>
                 {
                     b.HasOne("AuthECAPI.Models.Organization", "Organization")
@@ -561,11 +641,21 @@ namespace AuthECAPI.Migrations
                     b.Navigation("AgreementRequests");
                 });
 
+            modelBuilder.Entity("AuthECAPI.Models.InternshipOffer", b =>
+                {
+                    b.Navigation("InternshipApplications");
+                });
+
             modelBuilder.Entity("AuthECAPI.Models.Organization", b =>
                 {
                     b.Navigation("AgreementRequests");
 
                     b.Navigation("InternshipOffers");
+                });
+
+            modelBuilder.Entity("AuthECAPI.Models.Student", b =>
+                {
+                    b.Navigation("InternshipApplications");
                 });
 #pragma warning restore 612, 618
         }

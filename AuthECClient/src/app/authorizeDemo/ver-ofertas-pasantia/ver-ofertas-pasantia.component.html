@@ -154,11 +154,23 @@
       </div>
       <div class="flex gap-2 mt-4">
         <button 
+          *ngIf="!hasAppliedToOffer(offer.id) && offer.vacancies === 'DISPONIBLES'"
+          (click)="openApplyModal(offer)"
           class="flex-1 py-2 rounded-lg font-semibold transition 
-            bg-blue-600 hover:bg-blue-700 text-white 
-            disabled:bg-gray-300 disabled:text-gray-400 disabled:opacity-60 disabled:cursor-not-allowed"
-          [disabled]="offer.vacancies === 'AGOTADAS'">
+            bg-blue-600 hover:bg-blue-700 text-white">
           <i class="bi bi-envelope mr-2"></i> Postularse
+        </button>
+        <button 
+          *ngIf="hasAppliedToOffer(offer.id)"
+          class="flex-1 py-2 rounded-lg font-semibold transition 
+            bg-green-600 text-white cursor-default">
+          <i class="bi bi-check-circle mr-2"></i> Ya Aplicaste
+        </button>
+        <button 
+          *ngIf="offer.vacancies === 'AGOTADAS'"
+          class="flex-1 py-2 rounded-lg font-semibold transition 
+            bg-gray-300 text-gray-400 cursor-not-allowed">
+          <i class="bi bi-x-circle mr-2"></i> Agotadas
         </button>
       </div>
     </div>
@@ -175,4 +187,12 @@
       <span *ngIf="selectedCareer">{{ selectedCareer }}</span>
     </span>
   </div>
+
+  <!-- Apply Internship Modal -->
+  <app-apply-internship-modal
+    [isOpen]="showApplyModal"
+    [offer]="selectedOffer"
+    (modalClosed)="closeApplyModal()"
+    (applicationSubmitted)="onApplicationSubmitted()">
+  </app-apply-internship-modal>
 </div> 

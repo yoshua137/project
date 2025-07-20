@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -28,5 +29,7 @@ namespace AuthECAPI.Models
         [Required]
         [RegularExpression("DISPONIBLES|AGOTADAS", ErrorMessage = "Vacancies solo puede ser 'DISPONIBLES' o 'AGOTADAS'")]
         public string Vacancies { get; set; }
+
+        public virtual ICollection<InternshipApplication> InternshipApplications { get; set; }
     }
 } 

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { FormsModule } from '@angular/forms';
+import { ApplyInternshipModalComponent } from './apply-internship-modal.component';
 
 interface InternshipOffer {
   id: number;
@@ -23,7 +24,7 @@ interface InternshipOffer {
 @Component({
   selector: 'app-ver-ofertas-pasantia',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ApplyInternshipModalComponent],
   templateUrl: './ver-ofertas-pasantia.component.html'
 })
 export class VerOfertasPasantiaComponent implements OnInit {
@@ -34,11 +35,17 @@ export class VerOfertasPasantiaComponent implements OnInit {
   loading: boolean = false;
   error: string = '';
   showOnlyAvailable: boolean = false;
+  
+  // Modal properties
+  showApplyModal = false;
+  selectedOffer: InternshipOffer | null = null;
+  appliedOffers: Set<number> = new Set();
 
   constructor(private http: HttpClient) {}
 
   ngOnInit(): void {
     this.loadInternshipOffers();
+    this.checkAppliedOffers();
   }
 
   loadInternshipOffers(): void {
@@ -88,5 +95,44 @@ export class VerOfertasPasantiaComponent implements OnInit {
 
   formatDate(dateString: string): string {
     return new Date(dateString).toLocaleDateString('es-BO', { timeZone: 'America/La_Paz' });
+  }
+
+  // Modal methods
+  openApplyModal(offer: InternshipOffer): void {
+    this.selectedOffer = offer;
+    this.showApplyModal = true;
+  }
+
+  closeApplyModal(): void {
+    this.showApplyModal = false;
+    this.selectedOffer = null;
+  }
+
+  onApplicationSubmitted(): void {
+    if (this.selectedOffer) {
+      this.appliedOffers.add(this.selectedOffer.id);
+    }
+    this.closeApplyModal();
+  }
+
+  checkAppliedOffers(): void {
+    // Check which offers the current student has already applied to
+    this.internshipOffers.forEach(offer => {
+      this.http.get<boolean>(`${environment.apiBaseUrl}/InternshipOffer/${offer.id}/has-applied`)
+        .subscribe({
+          next: (hasApplied) => {
+            if (hasApplied) {
+              this.appliedOffers.add(offer.id);
+            }
+          },
+          error: (err) => {
+            console.error('Error checking application status:', err);
+          }
+        });
+    });
+  }
+
+  hasAppliedToOffer(offerId: number): boolean {
+    return this.appliedOffers.has(offerId);
   }
 } 

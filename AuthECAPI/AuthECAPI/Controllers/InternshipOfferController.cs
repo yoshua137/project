@@ -245,5 +245,71 @@ namespace AuthECAPI.Controllers
                 return StatusCode(500, $"Error interno del servidor: {ex.Message}");
             }
         }
+
+        // GET: api/InternshipOffer/{id}
+        [HttpGet("{id}")]
+        [AllowAnonymous]
+        public async Task<ActionResult<InternshipOfferResponse>> GetInternshipOffer(int id)
+        {
+            try
+            {
+                var offer = await _context.InternshipOffers
+                    .Include(io => io.Organization)
+                    .ThenInclude(o => o.AppUser)
+                    .FirstOrDefaultAsync(io => io.Id == id);
+
+                if (offer == null)
+                {
+                    return NotFound("No se encontró la oferta de pasantía");
+                }
+
+                var offerResponse = new InternshipOfferResponse
+                {
+                    Id = offer.Id,
+                    Title = offer.Title,
+                    Description = offer.Description,
+                    Requirements = offer.Requirements,
+                    StartDate = offer.StartDate,
+                    EndDate = offer.EndDate,
+                    OrganizationId = offer.OrganizationId,
+                    OrganizationName = offer.Organization.AppUser?.FullName,
+                    Mode = offer.Mode,
+                    Career = offer.Career,
+                    ContactEmail = offer.ContactEmail,
+                    ContactPhone = offer.ContactPhone,
+                    Vacancies = offer.Vacancies
+                };
+
+                return Ok(offerResponse);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error interno del servidor: {ex.Message}");
+            }
+        }
+
+        // GET: api/InternshipOffer/{id}/has-applied
+        [HttpGet("{id}/has-applied")]
+        [Authorize(Roles = "Student")]
+        public async Task<ActionResult<bool>> HasAppliedToOffer(int id)
+        {
+            try
+            {
+                var userId = User.Claims.First(c => c.Type == "userID").Value;
+
+                var hasApplied = await _context.InternshipApplications
+                    .AnyAsync(ia => ia.InternshipOfferId == id && ia.StudentId == userId);
+
+                return Ok(hasApplied);
+            }
+            catch (InvalidOperationException)
+            {
+                return Unauthorized("Token inválido o malformado. No se encontró el claim 'userID'.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error interno del servidor: {ex.Message}");
+            }
+        }
     }
 } 

@@ -78,6 +78,11 @@
           routerLink="/ver-ofertas-pasantia" routerLinkActive="!bg-white/10 !border-yellow-ucb !text-yellow-ucb"
           [routerLinkActiveOptions]="{ exact: true }">Ver Ofertas de Pasantía</a>
       </li>
+      <li class="nav-item" [appHideIfClaimsNotMet]="claimReq.studentInternshipOffers">
+        <a class="nav-link text-white hover:bg-blue-800 rounded px-4 py-2 transition border-2 border-transparent router-link-active:bg-white/10 router-link-active:border-yellow-ucb router-link-active:text-yellow-ucb"
+          routerLink="/mis-aplicaciones" routerLinkActive="!bg-white/10 !border-yellow-ucb !text-yellow-ucb"
+          [routerLinkActiveOptions]="{ exact: true }">Mis Pasantías</a>
+      </li>
     </ul>
   </nav>
   <!-- Contenido principal -->
