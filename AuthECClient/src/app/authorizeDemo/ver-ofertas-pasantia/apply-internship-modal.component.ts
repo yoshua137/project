@@ -1,8 +1,9 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { environment } from '../../../environments/environment';
+import { ToastrService } from 'ngx-toastr';
 
 interface InternshipOffer {
   id: number;
@@ -38,6 +39,15 @@ interface InternshipOffer {
         </div>
 
         <div *ngIf="offer" class="space-y-4">
+          <!-- Warning if already applied -->
+          <div *ngIf="hasAlreadyApplied" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+            <div class="flex items-center">
+              <i class="bi bi-check-circle mr-2"></i>
+              <strong>Ya te has postulado a esta oferta de pasantía</strong>
+            </div>
+            <p class="mt-1 text-sm">Tu aplicación ha sido enviada exitosamente. Puedes ver el estado de tu postulación en "Mis Postulaciones".</p>
+          </div>
+
           <!-- Información de la oferta -->
           <div class="bg-gray-50 p-4 rounded-lg">
             <h3 class="font-semibold text-lg mb-2">{{ offer.title }}</h3>
@@ -62,7 +72,8 @@ interface InternshipOffer {
                 rows="6"
                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Describe por qué te interesa esta pasantía, tus habilidades relevantes y cómo puedes contribuir a la organización..."
-                required>
+                required
+                [disabled]="hasAlreadyApplied">
               </textarea>
               <p class="text-sm text-gray-500 mt-1">
                 Mínimo 10 caracteres, máximo 2000 caracteres
@@ -79,11 +90,13 @@ interface InternshipOffer {
                   (change)="onFileSelected($event)"
                   accept=".pdf"
                   class="hidden"
-                  #fileInput>
+                  #fileInput
+                  [disabled]="hasAlreadyApplied">
                 <button
                   type="button"
                   (click)="fileInput.click()"
-                  class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                  class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
+                  [disabled]="hasAlreadyApplied">
                   Elegir archivo
                 </button>
                 <span class="text-sm text-gray-500">
@@ -114,7 +127,10 @@ interface InternshipOffer {
               </button>
               <button
                 type="submit"
-                class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                class="px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                [ngClass]="hasAlreadyApplied ? 
+                  'bg-orange-600 hover:bg-orange-700 text-white' : 
+                  'bg-blue-600 hover:bg-blue-700 text-white'"
                 [disabled]="loading || !applicationForm.coverLetter || applicationForm.coverLetter.length < 10">
                 <span *ngIf="loading">Enviando...</span>
                 <span *ngIf="!loading">Postularse</span>
@@ -127,7 +143,7 @@ interface InternshipOffer {
   `,
   styles: []
 })
-export class ApplyInternshipModalComponent {
+export class ApplyInternshipModalComponent implements OnChanges {
   @Input() isOpen = false;
   @Input() offer: InternshipOffer | null = null;
   @Output() modalClosed = new EventEmitter<void>();
@@ -136,13 +152,17 @@ export class ApplyInternshipModalComponent {
   loading = false;
   error = '';
   success = '';
+  hasAlreadyApplied = false;
 
   applicationForm = {
     coverLetter: '',
     cv: null as File | null
   };
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private toastr: ToastrService
+  ) {}
 
   closeModal(): void {
     if (!this.loading) {
@@ -160,10 +180,45 @@ export class ApplyInternshipModalComponent {
     this.error = '';
     this.success = '';
     this.loading = false;
+    this.hasAlreadyApplied = false;
+  }
+
+  // Check if student has already applied to this offer
+  checkIfAlreadyApplied(): void {
+    if (!this.offer) return;
+    
+    this.http.get<boolean>(`${environment.apiBaseUrl}/InternshipOffer/${this.offer.id}/has-applied`)
+      .subscribe({
+        next: (hasApplied) => {
+          this.hasAlreadyApplied = hasApplied;
+          if (hasApplied) {
+            this.toastr.info('Ya te has postulado a esta oferta de pasantía', 'Estado de Postulación');
+          }
+        },
+        error: (err) => {
+          console.error('Error checking application status:', err);
+        }
+      });
+  }
+
+  // Override the ngOnChanges to check application status when offer changes
+  ngOnChanges(): void {
+    if (this.isOpen && this.offer) {
+      this.checkIfAlreadyApplied();
+    }
   }
 
   submitApplication(): void {
     if (!this.offer || !this.applicationForm.coverLetter || this.applicationForm.coverLetter.length < 10) {
+      return;
+    }
+
+    // If already applied, show toaster and close modal
+    if (this.hasAlreadyApplied) {
+      this.toastr.info('Ya te has postulado a esta oferta de pasantía', 'Estado de Postulación');
+      setTimeout(() => {
+        this.closeModal();
+      }, 2000);
       return;
     }
 
@@ -182,6 +237,7 @@ export class ApplyInternshipModalComponent {
       .subscribe({
         next: () => {
           this.success = '¡Aplicación enviada exitosamente!';
+          this.toastr.success('¡Aplicación enviada exitosamente!', 'Éxito');
           setTimeout(() => {
             this.closeModal();
             this.applicationSubmitted.emit();
@@ -189,6 +245,14 @@ export class ApplyInternshipModalComponent {
         },
         error: (err) => {
           console.error('Error submitting application:', err);
+          
+          // Check if the error is about already having applied
+          if (err.error && typeof err.error === 'string' && err.error.includes('Ya has aplicado')) {
+            this.toastr.info('Ya te has postulado a esta oferta de pasantía', 'Estado de Postulación');
+            this.closeModal();
+            return;
+          }
+          
           this.error = err.error?.message || 'Error al enviar la aplicación';
           this.loading = false;
         }

@@ -5,11 +5,12 @@ import { HideIfClaimsNotMetDirective } from '../../directives/hide-if-claims-not
 import { claimReq } from "../../shared/utils/claimReq-utils";
 import { CommonModule } from '@angular/common';
 import { trigger, transition, style, animate } from '@angular/animations';
+import { BackendStatusBannerComponent } from '../../shared/components/backend-status-banner.component';
 
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, HideIfClaimsNotMetDirective, CommonModule],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, HideIfClaimsNotMetDirective, CommonModule, BackendStatusBannerComponent],
   templateUrl: './main-layout.component.html',
   styles: ``,
   animations: [

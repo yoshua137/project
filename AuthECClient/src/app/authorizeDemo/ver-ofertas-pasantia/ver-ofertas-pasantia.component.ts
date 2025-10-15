@@ -4,6 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { FormsModule } from '@angular/forms';
 import { ApplyInternshipModalComponent } from './apply-internship-modal.component';
+import { ToastrService } from 'ngx-toastr';
 
 interface InternshipOffer {
   id: number;
@@ -41,7 +42,10 @@ export class VerOfertasPasantiaComponent implements OnInit {
   selectedOffer: InternshipOffer | null = null;
   appliedOffers: Set<number> = new Set();
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private toastr: ToastrService
+  ) {}
 
   ngOnInit(): void {
     this.loadInternshipOffers();
@@ -99,6 +103,7 @@ export class VerOfertasPasantiaComponent implements OnInit {
 
   // Modal methods
   openApplyModal(offer: InternshipOffer): void {
+    // Allow opening the modal even if already applied to trigger the toaster message
     this.selectedOffer = offer;
     this.showApplyModal = true;
   }
@@ -111,8 +116,11 @@ export class VerOfertasPasantiaComponent implements OnInit {
   onApplicationSubmitted(): void {
     if (this.selectedOffer) {
       this.appliedOffers.add(this.selectedOffer.id);
+      this.toastr.success(`Aplicación enviada exitosamente a "${this.selectedOffer.title}"`, 'Éxito');
     }
     this.closeApplyModal();
+    // Refresh the applied offers list
+    this.checkAppliedOffers();
   }
 
   checkAppliedOffers(): void {

@@ -154,17 +154,14 @@
       </div>
       <div class="flex gap-2 mt-4">
         <button 
-          *ngIf="!hasAppliedToOffer(offer.id) && offer.vacancies === 'DISPONIBLES'"
+          *ngIf="offer.vacancies === 'DISPONIBLES'"
           (click)="openApplyModal(offer)"
-          class="flex-1 py-2 rounded-lg font-semibold transition 
-            bg-blue-600 hover:bg-blue-700 text-white">
-          <i class="bi bi-envelope mr-2"></i> Postularse
-        </button>
-        <button 
-          *ngIf="hasAppliedToOffer(offer.id)"
-          class="flex-1 py-2 rounded-lg font-semibold transition 
-            bg-green-600 text-white cursor-default">
-          <i class="bi bi-check-circle mr-2"></i> Ya Aplicaste
+          class="flex-1 py-2 rounded-lg font-semibold transition"
+          [ngClass]="hasAppliedToOffer(offer.id) ? 
+            'bg-orange-500 hover:bg-orange-600 text-white' : 
+            'bg-blue-600 hover:bg-blue-700 text-white'">
+          <i class="bi" [ngClass]="hasAppliedToOffer(offer.id) ? 'bi-exclamation-triangle' : 'bi-envelope'"></i>
+          <span class="ml-2">Postularse</span>
         </button>
         <button 
           *ngIf="offer.vacancies === 'AGOTADAS'"

@@ -6,7 +6,8 @@ export const authGuard: CanActivateFn = (route, state) => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  if (authService.isLoggedIn()) {
+  // Verificar si el usuario está logueado Y el token es válido (no expirado)
+  if (authService.isLoggedIn() && authService.isTokenValid()) {
     const claimReq = route.data['claimReq'] as Function;
     if (claimReq) {
       const claims = authService.getClaims();
@@ -19,7 +20,13 @@ export const authGuard: CanActivateFn = (route, state) => {
     return true;
   }
   else {
-    router.navigateByUrl('/signin')
+    // Si el token existe pero está expirado, eliminarlo
+    if (authService.isLoggedIn() && !authService.isTokenValid()) {
+      console.warn('Sesión expirada. Redirigiendo a login...');
+      authService.logout();
+    }
+    
+    router.navigateByUrl('/user/login')
     return false
   }
 

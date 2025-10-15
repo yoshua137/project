@@ -1,4 +1,7 @@
 <div class="min-h-screen bg-blue-100 flex flex-col">
+  <!-- Banner de estado del backend -->
+  <app-backend-status-banner></app-backend-status-banner>
+  
   <button (click)="showHeaderMenu = !showHeaderMenu"
     class="fixed top-4 left-4 z-50 bg-blue-ucb text-white rounded-full shadow-lg p-2 hover:bg-blue-800 transition-all flex items-center gap-2"
     title="{{ showHeaderMenu ? 'Ocultar menú' : 'Mostrar menú' }}">
