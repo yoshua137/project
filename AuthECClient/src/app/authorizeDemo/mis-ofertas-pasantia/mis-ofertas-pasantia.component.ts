@@ -20,6 +20,22 @@ interface InternshipOffer {
   vacancies: string;
 }
 
+interface InternshipApplication {
+  id: number;
+  internshipOfferId: number;
+  internshipOfferTitle: string;
+  organizationName: string;
+  studentId: string;
+  studentName: string;
+  studentCareer: string;
+  applicationDate: string;
+  status: string;
+  coverLetter?: string;
+  cvFilePath?: string;
+  reviewDate?: string;
+  reviewNotes?: string;
+}
+
 @Component({
   selector: 'app-mis-ofertas-pasantia',
   standalone: true,
@@ -44,6 +60,19 @@ export class MisOfertasPasantiaComponent implements OnInit {
   deleteLoading = false;
   deleteError = '';
   deleteSuccess = '';
+  
+  // Propiedades para el modal de postulantes
+  viewingApplicants: InternshipOffer | null = null;
+  applicants: InternshipApplication[] = [];
+  applicantsLoading = false;
+  applicantsError = '';
+  
+  // Propiedades para el modal de revisión
+  reviewingApplication: InternshipApplication | null = null;
+  reviewAction: string = '';
+  reviewNotes: string = '';
+  reviewLoading = false;
+  reviewError = '';
 
   constructor(private http: HttpClient) {}
 
@@ -212,6 +241,129 @@ export class MisOfertasPasantiaComponent implements OnInit {
         error: (err) => {
           this.editError = err.error?.message || 'Error al actualizar la oferta';
           this.editLoading = false;
+        }
+      });
+  }
+
+  // Métodos para el modal de postulantes
+  openApplicantsModal(offer: InternshipOffer): void {
+    this.viewingApplicants = { ...offer };
+    this.applicants = [];
+    this.applicantsError = '';
+    this.applicantsLoading = true;
+    
+    // Cargar postulantes para esta oferta
+    this.loadApplicants(offer.id);
+  }
+
+  closeApplicantsModal(): void {
+    this.viewingApplicants = null;
+    this.applicants = [];
+    this.applicantsError = '';
+    this.applicantsLoading = false;
+  }
+
+  loadApplicants(offerId: number): void {
+    this.http.get<InternshipApplication[]>(`${environment.apiBaseUrl}/InternshipApplication/offer/${offerId}`)
+      .subscribe({
+        next: (data) => {
+          this.applicants = data;
+          this.applicantsLoading = false;
+        },
+        error: (err) => {
+          console.error('Error loading applicants:', err);
+          this.applicantsError = 'Error al cargar los postulantes';
+          this.applicantsLoading = false;
+        }
+      });
+  }
+
+  getApplicationStatusClass(status: string): string {
+    switch (status) {
+      case 'PENDIENTE':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'ACEPTADA':
+        return 'bg-green-100 text-green-800';
+      case 'RECHAZADA':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  }
+
+  getApplicationStatusText(status: string): string {
+    switch (status) {
+      case 'PENDIENTE':
+        return 'Pendiente';
+      case 'ACEPTADA':
+        return 'Aceptada';
+      case 'RECHAZADA':
+        return 'Rechazada';
+      default:
+        return status;
+    }
+  }
+
+  viewCV(applicationId: number): void {
+    this.http.get(`${environment.apiBaseUrl}/InternshipApplication/${applicationId}/cv`, { responseType: 'blob' })
+      .subscribe({
+        next: (blob) => {
+          const url = window.URL.createObjectURL(blob);
+          window.open(url, '_blank');
+          // Note: We don't revoke the URL immediately as the new tab needs it
+          // The browser will clean it up when the tab is closed
+        },
+        error: (err) => {
+          console.error('Error opening CV:', err);
+          alert('Error al abrir el CV');
+        }
+      });
+  }
+
+  // Métodos para el modal de revisión
+  openReviewModal(applicant: InternshipApplication, action: string): void {
+    this.reviewingApplication = { ...applicant };
+    this.reviewAction = action;
+    this.reviewNotes = '';
+    this.reviewError = '';
+    this.reviewLoading = false;
+  }
+
+  closeReviewModal(): void {
+    this.reviewingApplication = null;
+    this.reviewAction = '';
+    this.reviewNotes = '';
+    this.reviewError = '';
+    this.reviewLoading = false;
+  }
+
+  submitReview(): void {
+    if (!this.reviewingApplication) return;
+    
+    this.reviewLoading = true;
+    this.reviewError = '';
+    
+    const body = { 
+      status: this.reviewAction, 
+      reviewNotes: this.reviewNotes 
+    };
+    
+    this.http.put(`${environment.apiBaseUrl}/InternshipApplication/${this.reviewingApplication.id}/review`, body)
+      .subscribe({
+        next: () => {
+          // Actualizar el estado en la lista local
+          const applicant = this.applicants.find(a => a.id === this.reviewingApplication!.id);
+          if (applicant) {
+            applicant.status = this.reviewAction;
+            applicant.reviewDate = new Date().toISOString();
+            applicant.reviewNotes = this.reviewNotes;
+          }
+          this.closeReviewModal();
+        },
+        error: (err) => {
+          console.error('Error updating application status:', err);
+          this.reviewError = err.error?.message || 'Error al actualizar el estado de la postulación';
+          this.reviewLoading = false;
         }
       });
   }

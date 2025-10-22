@@ -169,7 +169,10 @@ interface InternshipApplication {
                     <!-- Action Buttons -->
                     <div class="pt-4 border-t border-gray-200 space-y-2">
                       <button 
-                        class="w-full bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">
+                        [disabled]="selectedApplication.status === 'RECHAZADA'"
+                        [ngClass]="selectedApplication.status === 'RECHAZADA' ? 
+                          'w-full bg-gray-300 text-gray-500 px-4 py-2 rounded cursor-not-allowed' : 
+                          'w-full bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition'">
                         Ver Detalles de Entrevista
                       </button>
                       <button 

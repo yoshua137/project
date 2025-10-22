@@ -108,27 +108,29 @@
             </div>
 
             <!-- Career and Mode -->
-            <div class="mt-3 flex items-center gap-4 text-sm text-gray-600">
-              <span class="flex items-center relative group">
-                <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 012 2v6a2 2 0 01-2 2H8a2 2 0 01-2-2V8a2 2 0 012-2V6" />
-                </svg>
-                {{ offer.career }}
-                <span class="absolute left-1/2 -translate-x-1/2 -top-8 z-10 hidden group-hover:flex px-3 py-1 rounded bg-gray-900 text-white text-xs shadow-lg whitespace-nowrap transition-all duration-200">
-                  Carrera
+            <div class="mt-3 text-sm text-gray-600">
+              <div class="flex items-center gap-4">
+                <span class="flex items-center relative group">
+                  <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 012 2v6a2 2 0 01-2 2H8a2 2 0 01-2-2V8a2 2 0 012-2V6" />
+                  </svg>
+                  {{ offer.career }}
+                  <span class="absolute left-1/2 -translate-x-1/2 -top-8 z-10 hidden group-hover:flex px-3 py-1 rounded bg-gray-900 text-white text-xs shadow-lg whitespace-nowrap transition-all duration-200">
+                    Carrera
+                  </span>
                 </span>
-              </span>
-              <span class="flex items-center relative group">
-                <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                {{ offer.mode === 'Mixto' ? 'Virtual/Presencial' : offer.mode }}
-                <span class="absolute left-1/2 -translate-x-1/2 -top-8 z-10 hidden group-hover:flex px-3 py-1 rounded bg-gray-900 text-white text-xs shadow-lg whitespace-nowrap transition-all duration-200">
-                  Modalidad
+                <span class="flex items-center relative group">
+                  <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  {{ offer.mode === 'Mixto' ? 'Virtual/Presencial' : offer.mode }}
+                  <span class="absolute left-1/2 -translate-x-1/2 -top-8 z-10 hidden group-hover:flex px-3 py-1 rounded bg-gray-900 text-white text-xs shadow-lg whitespace-nowrap transition-all duration-200">
+                    Modalidad
+                  </span>
                 </span>
-              </span>
-              <span class="flex items-center relative group">
+              </div>
+              <div class="flex items-center mt-2 relative group">
                 <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none" />
                   <text x="12" y="16" text-anchor="middle" font-size="10" fill="currentColor">V</text>
@@ -139,7 +141,7 @@
                 <span class="absolute left-1/2 -translate-x-1/2 -top-8 z-10 hidden group-hover:flex px-3 py-1 rounded bg-gray-900 text-white text-xs shadow-lg whitespace-nowrap transition-all duration-200">
                   Vacantes
                 </span>
-              </span>
+              </div>
             </div>
 
             <!-- Description -->
@@ -186,6 +188,18 @@
                   {{ offer.contactPhone }}
                 </div>
               </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="mt-4 pt-4 border-t border-gray-200">
+              <button 
+                (click)="openApplicantsModal(offer)"
+                class="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition font-semibold flex items-center justify-center gap-2">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m9-4a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+                Ver Postulantes
+              </button>
             </div>
           </div>
         </div>
@@ -328,4 +342,192 @@
       <p class="text-sm text-green-800">{{ deleteSuccess }}</p>
     </div>
   </div>
-</div> 
+</div>
+
+<!-- Modal de postulantes -->
+<div *ngIf="viewingApplicants" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 bg-opacity-30">
+  <div class="bg-white rounded-lg shadow-lg w-full max-w-4xl p-6 relative animate-fade-in max-h-[90vh] overflow-y-auto">
+    <button (click)="closeApplicantsModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-700">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
+    
+    <h2 class="text-xl font-bold mb-4 text-blue-900">Postulantes para: {{ viewingApplicants.title }}</h2>
+    
+    <!-- Loading State -->
+    <div *ngIf="applicantsLoading" class="flex justify-center items-center py-8">
+      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <span class="ml-2 text-gray-600">Cargando postulantes...</span>
+    </div>
+    
+    <!-- Error State -->
+    <div *ngIf="applicantsError" class="bg-red-50 border border-red-200 rounded-md p-4 mb-4">
+      <div class="flex">
+        <div class="flex-shrink-0">
+          <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+          </svg>
+        </div>
+        <div class="ml-3">
+          <p class="text-sm text-red-800">{{ applicantsError }}</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- No Applicants State -->
+    <div *ngIf="!applicantsLoading && !applicantsError && applicants.length === 0" class="text-center py-8">
+      <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m9-4a4 4 0 11-8 0 4 4 0 018 0z" />
+      </svg>
+      <h3 class="mt-2 text-sm font-medium text-gray-900">No hay postulantes</h3>
+      <p class="mt-1 text-sm text-gray-500">Aún no se han postulado estudiantes a esta oferta.</p>
+    </div>
+    
+    <!-- Applicants List -->
+    <div *ngIf="!applicantsLoading && !applicantsError && applicants.length > 0" class="space-y-4">
+      <div class="bg-gray-50 rounded-lg p-4 mb-4">
+        <div class="flex items-center justify-between">
+          <span class="text-sm font-medium text-gray-700">Total de postulantes:</span>
+          <span class="bg-blue-100 text-blue-800 text-sm font-semibold px-2 py-1 rounded-full">
+            {{ applicants.length }}
+          </span>
+        </div>
+      </div>
+      
+      <div class="grid gap-4">
+        <div *ngFor="let applicant of applicants" class="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+          <div class="flex items-start justify-between">
+            <div class="flex-1">
+              <div class="flex items-center gap-3 mb-2">
+                <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                  <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+                <div>
+                  <h4 class="font-semibold text-gray-900">{{ applicant.studentName }}</h4>
+                  <p class="text-sm text-gray-600">{{ applicant.studentCareer }}</p>
+                </div>
+              </div>
+              
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                <div>
+                  <span class="text-sm font-medium text-gray-700">Fecha de postulación:</span>
+                  <p class="text-sm text-gray-600">{{ formatDate(applicant.applicationDate) }}</p>
+                </div>
+                <div>
+                  <span class="text-sm font-medium text-gray-700">Estado:</span>
+                  <span class="ml-2 px-2 py-1 rounded-full text-xs font-semibold"
+                        [ngClass]="getApplicationStatusClass(applicant.status)">
+                    {{ getApplicationStatusText(applicant.status) }}
+                  </span>
+                </div>
+              </div>
+              
+              <div *ngIf="applicant.coverLetter" class="mt-3">
+                <span class="text-sm font-medium text-gray-700">Nota de postulación:</span>
+                <p class="text-sm text-gray-600 mt-1 bg-gray-50 p-2 rounded">{{ applicant.coverLetter }}</p>
+              </div>
+              
+              <div class="mt-3 flex gap-2">
+                <button 
+                  *ngIf="applicant.cvFilePath"
+                  (click)="viewCV(applicant.id)"
+                  class="bg-blue-100 text-blue-700 px-3 py-1 rounded text-sm hover:bg-blue-200 transition flex items-center gap-1">
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                  Ver CV
+                </button>
+                <button 
+                  (click)="openReviewModal(applicant, 'ACEPTADA')"
+                  *ngIf="applicant.status === 'PENDIENTE'"
+                  class="bg-green-100 text-green-700 px-3 py-1 rounded text-sm hover:bg-green-200 transition">
+                  Aceptar
+                </button>
+                <button 
+                  (click)="openReviewModal(applicant, 'RECHAZADA')"
+                  *ngIf="applicant.status === 'PENDIENTE'"
+                  class="bg-red-100 text-red-700 px-3 py-1 rounded text-sm hover:bg-red-200 transition">
+                  Rechazar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de revisión de postulación -->
+<div *ngIf="reviewingApplication" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 bg-opacity-30">
+  <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative animate-fade-in">
+    <button (click)="closeReviewModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-700">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
+    
+    <h2 class="text-xl font-bold mb-4 text-blue-900">
+      {{ reviewAction === 'ACEPTADA' ? 'Aceptar' : 'Rechazar' }} Postulación
+    </h2>
+    
+    <div class="mb-4">
+      <p class="text-sm text-gray-600 mb-2">
+        <strong>Estudiante:</strong> {{ reviewingApplication.studentName }}
+      </p>
+      <p class="text-sm text-gray-600">
+        <strong>Oferta:</strong> {{ reviewingApplication.internshipOfferTitle }}
+      </p>
+    </div>
+    
+    <form (ngSubmit)="submitReview()">
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-2">
+          Nota para el estudiante:
+        </label>
+        <textarea 
+          [(ngModel)]="reviewNotes"
+          name="reviewNotes"
+          rows="4"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+          [placeholder]="reviewAction === 'ACEPTADA' ? 'Explica por qué fue aceptado el estudiante...' : 'Explica por qué fue rechazado el estudiante...'"
+          required>
+        </textarea>
+      </div>
+      
+      <div class="flex gap-3">
+        <button 
+          type="button"
+          (click)="closeReviewModal()"
+          class="flex-1 px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition">
+          Cancelar
+        </button>
+        <button 
+          type="submit"
+          [disabled]="reviewLoading"
+          [ngClass]="reviewAction === 'ACEPTADA' ? 'bg-green-600 hover:bg-green-700 focus:ring-green-500' : 'bg-red-600 hover:bg-red-700 focus:ring-red-500'"
+          class="flex-1 px-4 py-2 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition">
+          <span *ngIf="!reviewLoading">
+            {{ reviewAction === 'ACEPTADA' ? 'Aceptar' : 'Rechazar' }}
+          </span>
+          <span *ngIf="reviewLoading" class="flex items-center justify-center">
+            <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Procesando...
+          </span>
+        </button>
+      </div>
+      
+      <!-- Mensajes de error/éxito -->
+      <div *ngIf="reviewError" class="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
+        <p class="text-sm text-red-800">{{ reviewError }}</p>
+      </div>
+    </form>
+  </div>
+</div>
