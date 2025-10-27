@@ -34,6 +34,7 @@ interface InternshipApplication {
   cvFilePath?: string;
   reviewDate?: string;
   reviewNotes?: string;
+  virtualMeetingLink?: string;
 }
 
 @Component({
@@ -71,6 +72,7 @@ export class MisOfertasPasantiaComponent implements OnInit {
   reviewingApplication: InternshipApplication | null = null;
   reviewAction: string = '';
   reviewNotes: string = '';
+  virtualMeetingLink: string = '';
   reviewLoading = false;
   reviewError = '';
 
@@ -219,8 +221,8 @@ export class MisOfertasPasantiaComponent implements OnInit {
       title: this.editForm.title,
       description: this.editForm.description,
       requirements: this.editForm.requirements,
-      startDate: this.editForm.startDate,
-      endDate: this.editForm.endDate,
+      startDate: new Date(this.editForm.startDate).toISOString(),
+      endDate: new Date(this.editForm.endDate).toISOString(),
       mode: this.editForm.mode,
       career: this.editForm.career,
       contactEmail: this.editForm.contactEmail,
@@ -239,7 +241,14 @@ export class MisOfertasPasantiaComponent implements OnInit {
           setTimeout(() => this.closeEditModal(), 1000);
         },
         error: (err) => {
-          this.editError = err.error?.message || 'Error al actualizar la oferta';
+          console.error('Error updating offer:', err);
+          if (err.error && typeof err.error === 'string') {
+            this.editError = err.error;
+          } else if (err.error?.message) {
+            this.editError = err.error.message;
+          } else {
+            this.editError = 'Error al actualizar la oferta';
+          }
           this.editLoading = false;
         }
       });
@@ -282,6 +291,8 @@ export class MisOfertasPasantiaComponent implements OnInit {
     switch (status) {
       case 'PENDIENTE':
         return 'bg-yellow-100 text-yellow-800';
+      case 'ENTREVISTA':
+        return 'bg-blue-100 text-blue-800';
       case 'ACEPTADA':
         return 'bg-green-100 text-green-800';
       case 'RECHAZADA':
@@ -295,6 +306,8 @@ export class MisOfertasPasantiaComponent implements OnInit {
     switch (status) {
       case 'PENDIENTE':
         return 'Pendiente';
+      case 'ENTREVISTA':
+        return 'Entrevista';
       case 'ACEPTADA':
         return 'Aceptada';
       case 'RECHAZADA':
@@ -325,6 +338,7 @@ export class MisOfertasPasantiaComponent implements OnInit {
     this.reviewingApplication = { ...applicant };
     this.reviewAction = action;
     this.reviewNotes = '';
+    this.virtualMeetingLink = '';
     this.reviewError = '';
     this.reviewLoading = false;
   }
@@ -333,6 +347,7 @@ export class MisOfertasPasantiaComponent implements OnInit {
     this.reviewingApplication = null;
     this.reviewAction = '';
     this.reviewNotes = '';
+    this.virtualMeetingLink = '';
     this.reviewError = '';
     this.reviewLoading = false;
   }
@@ -345,7 +360,8 @@ export class MisOfertasPasantiaComponent implements OnInit {
     
     const body = { 
       status: this.reviewAction, 
-      reviewNotes: this.reviewNotes 
+      reviewNotes: this.reviewNotes,
+      virtualMeetingLink: this.virtualMeetingLink || null
     };
     
     this.http.put(`${environment.apiBaseUrl}/InternshipApplication/${this.reviewingApplication.id}/review`, body)

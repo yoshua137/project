@@ -200,6 +200,9 @@ namespace AuthECAPI.Migrations
                     b.Property<string>("StudentId1")
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<string>("VirtualMeetingLink")
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("InternshipOfferId");

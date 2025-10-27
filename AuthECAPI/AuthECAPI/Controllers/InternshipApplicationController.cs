@@ -122,7 +122,8 @@ namespace AuthECAPI.Controllers
                     CoverLetter = application.CoverLetter,
                     CVFilePath = application.CVFilePath,
                     ReviewDate = application.ReviewDate,
-                    ReviewNotes = application.ReviewNotes
+                    ReviewNotes = application.ReviewNotes,
+                    VirtualMeetingLink = application.VirtualMeetingLink
                 };
 
                 return CreatedAtAction(nameof(CreateApplication), new { id = applicationResponse.Id }, applicationResponse);
@@ -168,7 +169,8 @@ namespace AuthECAPI.Controllers
                         CoverLetter = ia.CoverLetter,
                         CVFilePath = ia.CVFilePath,
                         ReviewDate = ia.ReviewDate,
-                        ReviewNotes = ia.ReviewNotes
+                        ReviewNotes = ia.ReviewNotes,
+                        VirtualMeetingLink = ia.VirtualMeetingLink
                     })
                     .ToListAsync();
 
@@ -224,7 +226,8 @@ namespace AuthECAPI.Controllers
                         CoverLetter = ia.CoverLetter,
                         CVFilePath = ia.CVFilePath,
                         ReviewDate = ia.ReviewDate,
-                        ReviewNotes = ia.ReviewNotes
+                        ReviewNotes = ia.ReviewNotes,
+                        VirtualMeetingLink = ia.VirtualMeetingLink
                     })
                     .ToListAsync();
 
@@ -267,6 +270,7 @@ namespace AuthECAPI.Controllers
                 application.Status = reviewRequest.Status;
                 application.ReviewDate = DateTime.UtcNow;
                 application.ReviewNotes = reviewRequest.ReviewNotes;
+                application.VirtualMeetingLink = reviewRequest.VirtualMeetingLink;
 
                 await _context.SaveChangesAsync();
 
@@ -382,10 +386,13 @@ namespace AuthECAPI.Controllers
     public class ReviewApplicationRequest
     {
         [Required]
-        [RegularExpression("ACEPTADA|RECHAZADA", ErrorMessage = "Status solo puede ser 'ACEPTADA' o 'RECHAZADA'")]
+        [RegularExpression("ENTREVISTA|ACEPTADA|RECHAZADA", ErrorMessage = "Status solo puede ser 'ENTREVISTA', 'ACEPTADA' o 'RECHAZADA'")]
         public string Status { get; set; }
 
         [StringLength(1000, ErrorMessage = "Las notas de revisión no pueden exceder 1000 caracteres")]
         public string? ReviewNotes { get; set; }
+
+        [StringLength(500, ErrorMessage = "El enlace de reunión virtual no puede exceder 500 caracteres")]
+        public string? VirtualMeetingLink { get; set; }
     }
 } 

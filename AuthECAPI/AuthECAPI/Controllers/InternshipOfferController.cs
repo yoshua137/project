@@ -204,6 +204,13 @@ namespace AuthECAPI.Controllers
         {
             try
             {
+                // Validar el modelo
+                if (!ModelState.IsValid)
+                {
+                    var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
+                    return BadRequest($"Datos inválidos: {string.Join(", ", errors)}");
+                }
+
                 var userId = User.Claims.First(c => c.Type == "userID").Value;
                 var internshipOffer = await _context.InternshipOffers.FirstOrDefaultAsync(io => io.Id == id);
 
@@ -217,8 +224,16 @@ namespace AuthECAPI.Controllers
                 if (offerRequest.StartDate >= offerRequest.EndDate)
                     return BadRequest("La fecha de inicio debe ser anterior a la fecha de fin");
 
-                if (offerRequest.StartDate < DateTime.Today)
+                if (offerRequest.StartDate.Date < DateTime.Today)
                     return BadRequest("La fecha de inicio no puede ser en el pasado");
+
+                // Validar vacantes
+                if (!string.IsNullOrEmpty(offerRequest.Vacancies) && 
+                    offerRequest.Vacancies != "DISPONIBLES" && 
+                    offerRequest.Vacancies != "AGOTADAS")
+                {
+                    return BadRequest("El estado de vacantes debe ser 'DISPONIBLES' o 'AGOTADAS'");
+                }
 
                 // Actualizar campos
                 internshipOffer.Title = offerRequest.Title;

@@ -18,6 +18,7 @@ interface InternshipApplication {
   cvFilePath?: string;
   reviewDate?: string;
   reviewNotes?: string;
+  virtualMeetingLink?: string;
 }
 
 @Component({
@@ -172,6 +173,8 @@ interface InternshipApplication {
                         [disabled]="selectedApplication.status === 'RECHAZADA'"
                         [ngClass]="selectedApplication.status === 'RECHAZADA' ? 
                           'w-full bg-gray-300 text-gray-500 px-4 py-2 rounded cursor-not-allowed' : 
+                          selectedApplication.status === 'ENTREVISTA' ?
+                          'w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition' :
                           'w-full bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition'">
                         Ver Detalles de Entrevista
                       </button>
@@ -250,6 +253,8 @@ export class MyApplicationsComponent implements OnInit {
     switch (status) {
       case 'PENDIENTE':
         return 'bg-yellow-100 text-yellow-800';
+      case 'ENTREVISTA':
+        return 'bg-blue-100 text-blue-800';
       case 'ACEPTADA':
         return 'bg-green-100 text-green-800';
       case 'RECHAZADA':
@@ -262,11 +267,13 @@ export class MyApplicationsComponent implements OnInit {
   getStatusText(status: string): string {
     switch (status) {
       case 'PENDIENTE':
-        return 'PENDIENTE';
+        return 'Pendiente';
+      case 'ENTREVISTA':
+        return 'Entrevista';
       case 'ACEPTADA':
-        return 'ACEPTADA';
+        return 'Aceptada';
       case 'RECHAZADA':
-        return 'RECHAZADA';
+        return 'Rechazada';
       default:
         return status;
     }

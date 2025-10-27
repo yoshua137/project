@@ -17,5 +17,6 @@ namespace AuthECAPI.Models
         public string? CVFilePath { get; set; }
         public DateTime? ReviewDate { get; set; }
         public string? ReviewNotes { get; set; }
+        public string? VirtualMeetingLink { get; set; }
     }
 } 
