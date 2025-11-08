@@ -89,6 +89,10 @@
         <label class="block font-semibold mb-1">Requisitos</label>
         <textarea class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400" formControlName="requirements" rows="2" required placeholder="Ej: Hoja de vida, CV, portafolio, entrevistas..."></textarea>
         <div *ngIf="form.get('requirements')?.invalid && form.get('requirements')?.touched" class="text-red-600 text-sm mt-1">Requisitos requeridos (mín 10 caracteres).</div>
+        <div class="mt-2 flex flex-wrap gap-2">
+          <button type="button" class="px-3 py-1 text-sm border rounded hover:bg-blue-100" (click)="insertRequirement('Hoja de vida(Curriculum Vitae)')">Hoja de vida(Curriculum Vitae)</button>
+          <button type="button" class="px-3 py-1 text-sm border rounded hover:bg-blue-100" (click)="insertRequirement('Entrevistas')">Entrevistas</button>
+        </div>
       </div>
       <div>
         <label class="block font-semibold mb-1">Fecha de Inicio</label>

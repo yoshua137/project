@@ -491,6 +491,35 @@
     </div>
     
     <form (ngSubmit)="submitReview()">
+      <!-- Campos de entrevista cuando la acción es ENTREVISTA -->
+      <div *ngIf="reviewAction === 'ENTREVISTA'" class="mb-4 space-y-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Fecha</label>
+            <input type="date" [(ngModel)]="interviewDate" name="interviewDate" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Hora</label>
+            <input type="time" [(ngModel)]="interviewTime" name="interviewTime" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Modalidad</label>
+          <select [(ngModel)]="interviewMode" name="interviewMode" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+            <option value="" disabled>Seleccione modalidad</option>
+            <option value="Virtual">Virtual</option>
+            <option value="Presencial">Presencial</option>
+          </select>
+        </div>
+        <div *ngIf="interviewMode === 'Virtual'">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Link de la reunión</label>
+          <input type="url" [(ngModel)]="interviewLink" name="interviewLink" placeholder="https://meet.google.com/xxx-xxxx-xxx o https://zoom.us/j/xxxxxxxxx" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+        </div>
+        <div *ngIf="interviewMode === 'Presencial'">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Dirección de la entrevista</label>
+          <input type="text" [(ngModel)]="interviewAddress" name="interviewAddress" placeholder="Ej: Av. Siempre Viva 742, Piso 3, Sala A" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+        </div>
+      </div>
       <div class="mb-4">
         <label class="block text-sm font-medium text-gray-700 mb-2">
           Nota para el estudiante:
@@ -500,24 +529,11 @@
           name="reviewNotes"
           rows="4"
           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-          [placeholder]="reviewAction === 'ACEPTADA' ? 'Explica por qué fue aceptado el estudiante...' : reviewAction === 'RECHAZADA' ? 'Explica por qué fue rechazado el estudiante...' : 'Proporciona detalles sobre la entrevista (fecha, hora, modalidad, etc.)...'"
+          [placeholder]="reviewAction === 'ACEPTADA' ? 'Explica por qué fue aceptado el estudiante...' : reviewAction === 'RECHAZADA' ? 'Explica por qué fue rechazado el estudiante...' : 'Mensaje adicional para la entrevista (opcional)...'"
           required>
         </textarea>
       </div>
       
-      <!-- Virtual Meeting Link Field (only for interviews) -->
-      <div *ngIf="reviewAction === 'ENTREVISTA'" class="mb-4">
-        <label class="block text-sm font-medium text-gray-700 mb-2">
-          Link de reunión virtual (opcional):
-        </label>
-        <input 
-          type="url"
-          [(ngModel)]="virtualMeetingLink"
-          name="virtualMeetingLink"
-          placeholder="https://meet.google.com/xxx-xxxx-xxx o https://zoom.us/j/xxxxxxxxx"
-          class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-        <p class="text-xs text-gray-500 mt-1">Proporciona el enlace si la entrevista será virtual</p>
-      </div>
       
       <div class="flex gap-3">
         <button 

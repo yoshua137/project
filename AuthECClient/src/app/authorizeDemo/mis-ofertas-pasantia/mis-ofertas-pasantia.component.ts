@@ -76,6 +76,13 @@ export class MisOfertasPasantiaComponent implements OnInit {
   reviewLoading = false;
   reviewError = '';
 
+  // Campos para programar entrevista
+  interviewDate: string = '';
+  interviewTime: string = '';
+  interviewMode: string = '';
+  interviewLink: string = '';
+  interviewAddress: string = '';
+
   constructor(private http: HttpClient) {}
 
   ngOnInit(): void {
@@ -339,6 +346,11 @@ export class MisOfertasPasantiaComponent implements OnInit {
     this.reviewAction = action;
     this.reviewNotes = '';
     this.virtualMeetingLink = '';
+    this.interviewDate = '';
+    this.interviewTime = '';
+    this.interviewMode = '';
+    this.interviewLink = '';
+    this.interviewAddress = '';
     this.reviewError = '';
     this.reviewLoading = false;
   }
@@ -348,6 +360,11 @@ export class MisOfertasPasantiaComponent implements OnInit {
     this.reviewAction = '';
     this.reviewNotes = '';
     this.virtualMeetingLink = '';
+    this.interviewDate = '';
+    this.interviewTime = '';
+    this.interviewMode = '';
+    this.interviewLink = '';
+    this.interviewAddress = '';
     this.reviewError = '';
     this.reviewLoading = false;
   }
@@ -358,11 +375,49 @@ export class MisOfertasPasantiaComponent implements OnInit {
     this.reviewLoading = true;
     this.reviewError = '';
     
-    const body = { 
+    // Validación para entrevista
+    if (this.reviewAction === 'ENTREVISTA') {
+      if (!this.interviewDate || !this.interviewTime || !this.interviewMode) {
+        this.reviewError = 'Debe especificar fecha, hora y modalidad de la entrevista.';
+        this.reviewLoading = false;
+        return;
+      }
+      if (this.interviewMode === 'Virtual' && !this.interviewLink) {
+        this.reviewError = 'Debe proporcionar el link de la reunión para entrevistas virtuales.';
+        this.reviewLoading = false;
+        return;
+      }
+      if (this.interviewMode === 'Presencial' && !this.interviewAddress) {
+        this.reviewError = 'Debe proporcionar la dirección para entrevistas presenciales.';
+        this.reviewLoading = false;
+        return;
+      }
+    }
+
+    // Construir fecha/hora ISO si aplica
+    let interviewDateTimeIso: string | null = null;
+    if (this.reviewAction === 'ENTREVISTA') {
+      try {
+        // Construir ISO local (fecha + hora) sin zona si backend espera UTC; aquí generamos ISO en local time y lo enviamos tal cual
+        const dateTime = new Date(`${this.interviewDate}T${this.interviewTime}:00`);
+        interviewDateTimeIso = dateTime.toISOString();
+      } catch {
+        interviewDateTimeIso = null;
+      }
+    }
+
+    const body: any = { 
       status: this.reviewAction, 
       reviewNotes: this.reviewNotes,
       virtualMeetingLink: this.virtualMeetingLink || null
     };
+
+    if (this.reviewAction === 'ENTREVISTA') {
+      body.interviewDateTime = interviewDateTimeIso;
+      body.interviewMode = this.interviewMode;
+      body.interviewLink = this.interviewMode === 'Virtual' ? this.interviewLink : null;
+      body.interviewAddress = this.interviewMode === 'Presencial' ? this.interviewAddress : null;
+    }
     
     this.http.put(`${environment.apiBaseUrl}/InternshipApplication/${this.reviewingApplication.id}/review`, body)
       .subscribe({

@@ -210,6 +210,19 @@ export class PublicarPasantiaComponent implements OnInit {
     return '';
   }
 
+  // Inserta texto de requisito predefinido en el campo requirements
+  insertRequirement(text: string) {
+    const control = this.form.get('requirements');
+    if (!control) return;
+    const current = (control.value || '').toString();
+    const trimmed = current.trim();
+    const needsComma = trimmed.length > 0 && !trimmed.endsWith(',');
+    const prefix = trimmed.length > 0 ? (needsComma ? ', ' : ' ') : '';
+    const updated = (trimmed + prefix + text + ', ').trimStart();
+    control.setValue(updated);
+    control.markAsTouched();
+  }
+
   onSubmit() {
     this.successMsg = '';
     this.errorMsg = '';
