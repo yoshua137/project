@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using AuthECAPI.Models;
-using AuthECAPI.Helpers;
+using AuthECAPI.Services;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
@@ -16,10 +16,12 @@ namespace AuthECAPI.Controllers
     public class RegistrationInvitationController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly ICloudTimeService _cloudTimeService;
 
-        public RegistrationInvitationController(AppDbContext context)
+        public RegistrationInvitationController(AppDbContext context, ICloudTimeService cloudTimeService)
         {
             _context = context;
+            _cloudTimeService = cloudTimeService;
         }
 
         // POST: api/RegistrationInvitation/generate
@@ -41,7 +43,7 @@ namespace AuthECAPI.Controllers
                 var token = GenerateUniqueToken();
 
                 // Crear la invitación
-                var nowUtc = DateTimeHelper.ToUtc(DateTimeHelper.Now);
+                var nowUtc = _cloudTimeService.Now;
                 var invitation = new RegistrationInvitation
                 {
                     Token = token,
@@ -90,7 +92,7 @@ namespace AuthECAPI.Controllers
                 return BadRequest("Este token ya ha sido utilizado");
             }
 
-            var nowUtc = DateTimeHelper.ToUtc(DateTimeHelper.Now);
+            var nowUtc = _cloudTimeService.Now;
             if (nowUtc > invitation.ExpiresAt)
             {
                 return BadRequest("Este token ha expirado");

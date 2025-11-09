@@ -1,7 +1,7 @@
 using AuthECAPI.Controllers;
 using AuthECAPI.Extensions;
 using AuthECAPI.Models;
-using AuthECAPI.Helpers;
+using AuthECAPI.Services;
 using AuthECAPI.Hubs;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -39,15 +39,20 @@ builder.Services.AddSwaggerExplorer()
 // Agregar SignalR
 builder.Services.AddSignalR();
 
+// Registrar servicio de tiempo de la nube
+builder.Services.AddHttpClient();
+builder.Services.AddSingleton<ICloudTimeService>(sp =>
+{
+    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
+    var httpClient = httpClientFactory.CreateClient();
+    return new CloudTimeService(httpClient);
+});
+
 var app = builder.Build();
 
-// Configurar zona horaria para la aplicación
-app.Use(async (context, next) =>
-{
-    // Establecer la zona horaria en el contexto de la solicitud
-    context.Items["TimeZone"] = DateTimeHelper.BoliviaTimeZone;
-    await next();
-});
+// Sincronizar hora con la nube al iniciar la aplicación
+var cloudTimeService = app.Services.GetRequiredService<ICloudTimeService>();
+_ = Task.Run(async () => await cloudTimeService.SyncWithCloudAsync());
 
 app.ConfigureSwaggerExplorer()
    .ConfigureCORS(builder.Configuration)

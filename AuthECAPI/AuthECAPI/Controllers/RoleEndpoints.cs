@@ -1,5 +1,5 @@
 using AuthECAPI.Models;
-using AuthECAPI.Helpers;
+using AuthECAPI.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -48,6 +48,7 @@ namespace AuthECAPI.Controllers
         private static async Task<IResult> CreateStudent(
             UserManager<AppUser> userManager,
             AppDbContext dbContext,
+            ICloudTimeService cloudTimeService,
             [FromBody] StudentRegistrationModel model)
         {
             var user = new AppUser
@@ -56,7 +57,7 @@ namespace AuthECAPI.Controllers
                 Email = model.Email,
                 FullName = model.FullName,
                 Gender = model.Gender,
-                DOB = DateOnly.FromDateTime(System.DateTime.Now.AddYears(-model.Age)),
+                DOB = DateOnly.FromDateTime(cloudTimeService.Now.AddYears(-model.Age)),
                 LibraryID = model.LibraryID,
                 Career = model.Career
             };
@@ -77,6 +78,7 @@ namespace AuthECAPI.Controllers
         private static async Task<IResult> CreateTeacher(
             UserManager<AppUser> userManager,
             AppDbContext dbContext,
+            ICloudTimeService cloudTimeService,
             [FromBody] TeacherRegistrationModel model)
         {
             // Validar token de invitación
@@ -93,7 +95,7 @@ namespace AuthECAPI.Controllers
                 return Results.BadRequest("Este token ya ha sido utilizado");
             }
 
-            var nowUtc = DateTimeHelper.ToUtc(DateTimeHelper.Now);
+            var nowUtc = cloudTimeService.Now;
             if (nowUtc > invitation.ExpiresAt)
             {
                 return Results.BadRequest("Este token ha expirado");
@@ -105,7 +107,7 @@ namespace AuthECAPI.Controllers
                 Email = model.Email,
                 FullName = model.FullName,
                 Gender = model.Gender,
-                DOB = DateOnly.FromDateTime(System.DateTime.Now.AddYears(-model.Age)),
+                DOB = DateOnly.FromDateTime(cloudTimeService.Now.AddYears(-model.Age)),
                 LibraryID = model.LibraryID,
                 Career = model.Career
             };
@@ -132,6 +134,7 @@ namespace AuthECAPI.Controllers
         private static async Task<IResult> CreateDirector(
             UserManager<AppUser> userManager,
             AppDbContext dbContext,
+            ICloudTimeService cloudTimeService,
             [FromBody] DirectorRegistrationModel model)
         {
             // Validar token de invitación
@@ -148,7 +151,7 @@ namespace AuthECAPI.Controllers
                 return Results.BadRequest("Este token ya ha sido utilizado");
             }
 
-            var nowUtc = DateTimeHelper.ToUtc(DateTimeHelper.Now);
+            var nowUtc = cloudTimeService.Now;
             if (nowUtc > invitation.ExpiresAt)
             {
                 return Results.BadRequest("Este token ha expirado");
@@ -160,7 +163,7 @@ namespace AuthECAPI.Controllers
                 Email = model.Email,
                 FullName = model.FullName,
                 Gender = model.Gender,
-                DOB = DateOnly.FromDateTime(System.DateTime.Now.AddYears(-model.Age)),
+                DOB = DateOnly.FromDateTime(cloudTimeService.Now.AddYears(-model.Age)),
                 LibraryID = model.LibraryID,
                 Career = model.Career
             };
@@ -187,6 +190,7 @@ namespace AuthECAPI.Controllers
         private static async Task<IResult> CreateOrganization(
             UserManager<AppUser> userManager,
             AppDbContext dbContext,
+            ICloudTimeService cloudTimeService,
             [FromBody] OrganizationRegistrationModel model)
         {
             var user = new AppUser
@@ -195,7 +199,7 @@ namespace AuthECAPI.Controllers
                 Email = model.Email,
                 FullName = model.FullName,
                 Gender = model.Gender,
-                DOB = DateOnly.FromDateTime(System.DateTime.Now.AddYears(-model.Age)),
+                DOB = DateOnly.FromDateTime(cloudTimeService.Now.AddYears(-model.Age)),
                 LibraryID = model.LibraryID,
                 Career = model.Career
             };

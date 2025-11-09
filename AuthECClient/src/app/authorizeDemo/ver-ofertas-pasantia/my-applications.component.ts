@@ -426,7 +426,7 @@ export class MyApplicationsComponent implements OnInit, OnDestroy {
   }
 
   formatDate(dateString: string): string {
-    return new Date(dateString).toLocaleDateString('es-BO', { 
+    return new Date(dateString).toLocaleString('es-BO', { 
       timeZone: 'America/La_Paz',
       year: 'numeric',
       month: '2-digit',

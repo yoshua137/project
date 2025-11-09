@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using AuthECAPI.Models;
-using AuthECAPI.Helpers;
+using AuthECAPI.Services;
 using AuthECAPI.Hubs;
 using System.Security.Claims;
 using System.ComponentModel.DataAnnotations;
@@ -17,11 +17,13 @@ namespace AuthECAPI.Controllers
     {
         private readonly AppDbContext _context;
         private readonly IHubContext<InternshipNotificationHub> _hubContext;
+        private readonly ICloudTimeService _cloudTimeService;
 
-        public InternshipApplicationController(AppDbContext context, IHubContext<InternshipNotificationHub> hubContext)
+        public InternshipApplicationController(AppDbContext context, IHubContext<InternshipNotificationHub> hubContext, ICloudTimeService cloudTimeService)
         {
             _context = context;
             _hubContext = hubContext;
+            _cloudTimeService = cloudTimeService;
         }
 
         // POST: api/InternshipApplication
@@ -89,7 +91,7 @@ namespace AuthECAPI.Controllers
                         Directory.CreateDirectory(uploadsFolder);
                     }
 
-                    var fileName = $"{Guid.NewGuid()}_{DateTimeHelper.Now:yyyyMMddHHmmss}.pdf";
+                    var fileName = $"{Guid.NewGuid()}_{_cloudTimeService.Now:yyyyMMddHHmmss}.pdf";
                     var filePath = Path.Combine(uploadsFolder, fileName);
 
                     using (var stream = new FileStream(filePath, FileMode.Create))
@@ -104,7 +106,7 @@ namespace AuthECAPI.Controllers
                 {
                     InternshipOfferId = applicationRequest.InternshipOfferId,
                     StudentId = userId,
-                    ApplicationDate = DateTimeHelper.ToUtc(DateTimeHelper.Now),
+                    ApplicationDate = _cloudTimeService.Now,
                     Status = "PENDIENTE",
                     CoverLetter = applicationRequest.CoverLetter,
                     CVFilePath = cvFilePath
@@ -288,7 +290,7 @@ namespace AuthECAPI.Controllers
                 }
 
                 application.Status = reviewRequest.Status;
-                application.ReviewDate = DateTimeHelper.ToUtc(DateTimeHelper.Now);
+                application.ReviewDate = _cloudTimeService.Now;
                 application.ReviewNotes = reviewRequest.ReviewNotes;
                 application.VirtualMeetingLink = reviewRequest.VirtualMeetingLink;
                 
