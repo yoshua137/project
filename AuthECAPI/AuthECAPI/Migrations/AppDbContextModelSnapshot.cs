@@ -183,6 +183,21 @@ namespace AuthECAPI.Migrations
                     b.Property<int?>("InternshipOfferId1")
                         .HasColumnType("int");
 
+                    b.Property<string>("InterviewAddress")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool?>("InterviewAttendanceConfirmed")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("InterviewDateTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("InterviewLink")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("InterviewMode")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime?>("ReviewDate")
                         .HasColumnType("datetime2");
 

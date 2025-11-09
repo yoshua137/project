@@ -1,8 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { FormsModule } from '@angular/forms';
+import { SignalRService } from '../../shared/services/signalr.service';
+import { Subscription } from 'rxjs';
+import { ToastrService } from 'ngx-toastr';
 
 interface InternshipOffer {
   id: number;
@@ -35,6 +38,11 @@ interface InternshipApplication {
   reviewDate?: string;
   reviewNotes?: string;
   virtualMeetingLink?: string;
+  interviewDateTime?: string;
+  interviewMode?: string;
+  interviewLink?: string;
+  interviewAddress?: string;
+  interviewAttendanceConfirmed?: boolean | null;
 }
 
 @Component({
@@ -83,10 +91,48 @@ export class MisOfertasPasantiaComponent implements OnInit {
   interviewLink: string = '';
   interviewAddress: string = '';
 
-  constructor(private http: HttpClient) {}
+  // Propiedades para el modal de detalles de entrevista
+  showingInterviewDetails: InternshipApplication | null = null;
+  private subscriptions: Subscription[] = [];
 
-  ngOnInit(): void {
+  constructor(
+    private http: HttpClient,
+    private signalRService: SignalRService,
+    private toastr: ToastrService
+  ) {}
+
+  async ngOnInit(): Promise<void> {
+    await this.signalRService.startConnection();
     this.loadMyOffers();
+    this.setupSignalRListeners();
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.forEach(sub => sub.unsubscribe());
+  }
+
+  setupSignalRListeners(): void {
+    // Escuchar cuando un estudiante confirma asistencia
+    const attendanceSub = this.signalRService.onAttendanceConfirmed().subscribe((notification: any) => {
+      if (notification) {
+        // Si estamos viendo los postulantes de una oferta, actualizar la lista
+        if (this.viewingApplicants) {
+          const applicant = this.applicants.find(a => a.id === notification.applicationId);
+          if (applicant) {
+            applicant.interviewAttendanceConfirmed = notification.willAttend;
+            
+            this.toastr.info(
+              `${notification.studentName} ${notification.willAttend ? 'asistirá' : 'NO asistirá'} a la entrevista para "${notification.offerTitle}"`,
+              'Confirmación de Asistencia',
+              { timeOut: 5000 }
+            );
+          }
+        }
+        this.signalRService.clearNotifications();
+      }
+    });
+
+    this.subscriptions.push(attendanceSub);
   }
 
   loadMyOffers(): void {
@@ -428,6 +474,17 @@ export class MisOfertasPasantiaComponent implements OnInit {
             applicant.status = this.reviewAction;
             applicant.reviewDate = new Date().toISOString();
             applicant.reviewNotes = this.reviewNotes;
+            // Actualizar campos de entrevista si se programó
+            if (this.reviewAction === 'ENTREVISTA') {
+              applicant.interviewDateTime = interviewDateTimeIso || undefined;
+              applicant.interviewMode = this.interviewMode;
+              applicant.interviewLink = this.interviewMode === 'Virtual' ? this.interviewLink : undefined;
+              applicant.interviewAddress = this.interviewMode === 'Presencial' ? this.interviewAddress : undefined;
+            }
+          }
+          // Recargar los postulantes para obtener datos actualizados
+          if (this.viewingApplicants) {
+            this.loadApplicants(this.viewingApplicants.id);
           }
           this.closeReviewModal();
         },
@@ -437,5 +494,29 @@ export class MisOfertasPasantiaComponent implements OnInit {
           this.reviewLoading = false;
         }
       });
+  }
+
+  // Métodos para el modal de detalles de entrevista
+  openInterviewDetailsModal(applicant: InternshipApplication): void {
+    this.showingInterviewDetails = { ...applicant };
+  }
+
+  closeInterviewDetailsModal(): void {
+    this.showingInterviewDetails = null;
+  }
+
+  hasInterviewScheduled(applicant: InternshipApplication): boolean {
+    return applicant.status === 'ENTREVISTA' && !!applicant.interviewDateTime;
+  }
+
+  formatDateTime(dateTimeString: string): string {
+    return new Date(dateTimeString).toLocaleString('es-BO', {
+      timeZone: 'America/La_Paz',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   }
 } 

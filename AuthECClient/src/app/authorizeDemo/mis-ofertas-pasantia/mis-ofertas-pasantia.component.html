@@ -422,6 +422,11 @@
                         [ngClass]="getApplicationStatusClass(applicant.status)">
                     {{ getApplicationStatusText(applicant.status) }}
                   </span>
+                  <span *ngIf="applicant.interviewAttendanceConfirmed !== null && applicant.interviewAttendanceConfirmed !== undefined"
+                        class="ml-2 px-2 py-1 rounded-full text-xs font-semibold"
+                        [ngClass]="applicant.interviewAttendanceConfirmed ? 'bg-green-500 text-white' : 'bg-red-500 text-white'">
+                    {{ applicant.interviewAttendanceConfirmed ? '✓ Asistirá' : '✗ No asistirá' }}
+                  </span>
                 </div>
               </div>
               
@@ -430,7 +435,7 @@
                 <p class="text-sm text-gray-600 mt-1 bg-gray-50 p-2 rounded">{{ applicant.coverLetter }}</p>
               </div>
               
-              <div class="mt-3 flex gap-2">
+              <div class="mt-3 flex gap-2 flex-wrap">
                 <button 
                   *ngIf="applicant.cvFilePath"
                   (click)="viewCV(applicant.id)"
@@ -442,6 +447,15 @@
                   Ver CV
                 </button>
                 <button 
+                  (click)="openInterviewDetailsModal(applicant)"
+                  *ngIf="hasInterviewScheduled(applicant)"
+                  class="bg-purple-100 text-purple-700 px-3 py-1 rounded text-sm hover:bg-purple-200 transition flex items-center gap-1">
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  Detalles Entrevista
+                </button>
+                <button 
                   (click)="openReviewModal(applicant, 'ENTREVISTA')"
                   *ngIf="applicant.status === 'PENDIENTE'"
                   class="bg-blue-100 text-blue-700 px-3 py-1 rounded text-sm hover:bg-blue-200 transition">
@@ -449,13 +463,13 @@
                 </button>
                 <button 
                   (click)="openReviewModal(applicant, 'ACEPTADA')"
-                  *ngIf="applicant.status === 'PENDIENTE'"
+                  *ngIf="applicant.status === 'PENDIENTE' || applicant.status === 'ENTREVISTA'"
                   class="bg-green-100 text-green-700 px-3 py-1 rounded text-sm hover:bg-green-200 transition">
                   Aceptar
                 </button>
                 <button 
                   (click)="openReviewModal(applicant, 'RECHAZADA')"
-                  *ngIf="applicant.status === 'PENDIENTE'"
+                  *ngIf="applicant.status === 'PENDIENTE' || applicant.status === 'ENTREVISTA'"
                   class="bg-red-100 text-red-700 px-3 py-1 rounded text-sm hover:bg-red-200 transition">
                   Rechazar
                 </button>
@@ -470,7 +484,7 @@
 
 <!-- Modal de revisión de postulación -->
 <div *ngIf="reviewingApplication" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 bg-opacity-30">
-  <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative animate-fade-in">
+  <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative animate-fade-in max-h-[90vh] overflow-y-auto">
     <button (click)="closeReviewModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-700">
       <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -565,5 +579,69 @@
         <p class="text-sm text-red-800">{{ reviewError }}</p>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- Modal de detalles de entrevista -->
+<div *ngIf="showingInterviewDetails" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 bg-opacity-30">
+  <div class="bg-white rounded-lg shadow-lg w-full max-w-2xl p-6 relative animate-fade-in max-h-[90vh] overflow-y-auto">
+    <button (click)="closeInterviewDetailsModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-700">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
+    
+    <h2 class="text-xl font-bold mb-4 text-blue-900">Detalles de la Entrevista</h2>
+    
+    <div class="mb-4">
+      <p class="text-sm text-gray-600 mb-2">
+        <strong>Estudiante:</strong> {{ showingInterviewDetails.studentName }}
+      </p>
+      <p class="text-sm text-gray-600">
+        <strong>Oferta:</strong> {{ showingInterviewDetails.internshipOfferTitle }}
+      </p>
+    </div>
+    
+    <div class="space-y-4">
+      <!-- Fecha y Hora -->
+      <div *ngIf="showingInterviewDetails.interviewDateTime" class="bg-blue-50 p-4 rounded-lg">
+        <h3 class="font-semibold text-gray-900 mb-2">Fecha y Hora</h3>
+        <p class="text-gray-700">{{ formatDateTime(showingInterviewDetails.interviewDateTime) }}</p>
+      </div>
+
+      <!-- Modalidad -->
+      <div *ngIf="showingInterviewDetails.interviewMode" class="bg-gray-50 p-4 rounded-lg">
+        <h3 class="font-semibold text-gray-900 mb-2">Modalidad</h3>
+        <p class="text-gray-700">{{ showingInterviewDetails.interviewMode }}</p>
+      </div>
+
+      <!-- Link de Reunión (Virtual) -->
+      <div *ngIf="showingInterviewDetails.interviewLink" class="bg-gray-50 p-4 rounded-lg">
+        <h3 class="font-semibold text-gray-900 mb-2">Link de Reunión</h3>
+        <a [href]="showingInterviewDetails.interviewLink" target="_blank" class="text-blue-600 hover:underline break-all">
+          {{ showingInterviewDetails.interviewLink }}
+        </a>
+      </div>
+
+      <!-- Dirección (Presencial) -->
+      <div *ngIf="showingInterviewDetails.interviewAddress" class="bg-gray-50 p-4 rounded-lg">
+        <h3 class="font-semibold text-gray-900 mb-2">Dirección</h3>
+        <p class="text-gray-700">{{ showingInterviewDetails.interviewAddress }}</p>
+      </div>
+
+      <!-- Notas -->
+      <div *ngIf="showingInterviewDetails.reviewNotes" class="bg-gray-50 p-4 rounded-lg">
+        <h3 class="font-semibold text-gray-900 mb-2">Notas</h3>
+        <p class="text-gray-700">{{ showingInterviewDetails.reviewNotes }}</p>
+      </div>
+    </div>
+    
+    <div class="mt-6 flex justify-end">
+      <button 
+        (click)="closeInterviewDetailsModal()"
+        class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition">
+        Cerrar
+      </button>
+    </div>
   </div>
 </div>

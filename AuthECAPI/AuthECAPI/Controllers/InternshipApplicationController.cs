@@ -1,7 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using AuthECAPI.Models;
+using AuthECAPI.Helpers;
+using AuthECAPI.Hubs;
 using System.Security.Claims;
 using System.ComponentModel.DataAnnotations;
 
@@ -13,10 +16,12 @@ namespace AuthECAPI.Controllers
     public class InternshipApplicationController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly IHubContext<InternshipNotificationHub> _hubContext;
 
-        public InternshipApplicationController(AppDbContext context)
+        public InternshipApplicationController(AppDbContext context, IHubContext<InternshipNotificationHub> hubContext)
         {
             _context = context;
+            _hubContext = hubContext;
         }
 
         // POST: api/InternshipApplication
@@ -84,7 +89,7 @@ namespace AuthECAPI.Controllers
                         Directory.CreateDirectory(uploadsFolder);
                     }
 
-                    var fileName = $"{Guid.NewGuid()}_{DateTime.Now:yyyyMMddHHmmss}.pdf";
+                    var fileName = $"{Guid.NewGuid()}_{DateTimeHelper.Now:yyyyMMddHHmmss}.pdf";
                     var filePath = Path.Combine(uploadsFolder, fileName);
 
                     using (var stream = new FileStream(filePath, FileMode.Create))
@@ -99,7 +104,7 @@ namespace AuthECAPI.Controllers
                 {
                     InternshipOfferId = applicationRequest.InternshipOfferId,
                     StudentId = userId,
-                    ApplicationDate = DateTime.UtcNow,
+                    ApplicationDate = DateTimeHelper.ToUtc(DateTimeHelper.Now),
                     Status = "PENDIENTE",
                     CoverLetter = applicationRequest.CoverLetter,
                     CVFilePath = cvFilePath
@@ -123,7 +128,12 @@ namespace AuthECAPI.Controllers
                     CVFilePath = application.CVFilePath,
                     ReviewDate = application.ReviewDate,
                     ReviewNotes = application.ReviewNotes,
-                    VirtualMeetingLink = application.VirtualMeetingLink
+                    VirtualMeetingLink = application.VirtualMeetingLink,
+                    InterviewDateTime = application.InterviewDateTime,
+                    InterviewMode = application.InterviewMode,
+                    InterviewLink = application.InterviewLink,
+                    InterviewAddress = application.InterviewAddress,
+                    InterviewAttendanceConfirmed = application.InterviewAttendanceConfirmed
                 };
 
                 return CreatedAtAction(nameof(CreateApplication), new { id = applicationResponse.Id }, applicationResponse);
@@ -170,7 +180,12 @@ namespace AuthECAPI.Controllers
                         CVFilePath = ia.CVFilePath,
                         ReviewDate = ia.ReviewDate,
                         ReviewNotes = ia.ReviewNotes,
-                        VirtualMeetingLink = ia.VirtualMeetingLink
+                        VirtualMeetingLink = ia.VirtualMeetingLink,
+                        InterviewDateTime = ia.InterviewDateTime,
+                        InterviewMode = ia.InterviewMode,
+                        InterviewLink = ia.InterviewLink,
+                        InterviewAddress = ia.InterviewAddress,
+                        InterviewAttendanceConfirmed = ia.InterviewAttendanceConfirmed
                     })
                     .ToListAsync();
 
@@ -227,7 +242,12 @@ namespace AuthECAPI.Controllers
                         CVFilePath = ia.CVFilePath,
                         ReviewDate = ia.ReviewDate,
                         ReviewNotes = ia.ReviewNotes,
-                        VirtualMeetingLink = ia.VirtualMeetingLink
+                        VirtualMeetingLink = ia.VirtualMeetingLink,
+                        InterviewDateTime = ia.InterviewDateTime,
+                        InterviewMode = ia.InterviewMode,
+                        InterviewLink = ia.InterviewLink,
+                        InterviewAddress = ia.InterviewAddress,
+                        InterviewAttendanceConfirmed = ia.InterviewAttendanceConfirmed
                     })
                     .ToListAsync();
 
@@ -268,11 +288,60 @@ namespace AuthECAPI.Controllers
                 }
 
                 application.Status = reviewRequest.Status;
-                application.ReviewDate = DateTime.UtcNow;
+                application.ReviewDate = DateTimeHelper.ToUtc(DateTimeHelper.Now);
                 application.ReviewNotes = reviewRequest.ReviewNotes;
                 application.VirtualMeetingLink = reviewRequest.VirtualMeetingLink;
+                
+                // Guardar detalles de la entrevista si el estado es ENTREVISTA
+                if (reviewRequest.Status == "ENTREVISTA")
+                {
+                    application.InterviewDateTime = reviewRequest.InterviewDateTime;
+                    application.InterviewMode = reviewRequest.InterviewMode;
+                    application.InterviewLink = reviewRequest.InterviewLink;
+                    application.InterviewAddress = reviewRequest.InterviewAddress;
+                }
+                else
+                {
+                    // Limpiar campos de entrevista si el estado cambia a otro que no sea ENTREVISTA
+                    application.InterviewDateTime = null;
+                    application.InterviewMode = null;
+                    application.InterviewLink = null;
+                    application.InterviewAddress = null;
+                }
 
                 await _context.SaveChangesAsync();
+
+                // Enviar notificación en tiempo real al estudiante
+                if (reviewRequest.Status == "ENTREVISTA")
+                {
+                    await _hubContext.Clients.Group($"user_{application.StudentId}").SendAsync("InterviewScheduled", new
+                    {
+                        applicationId = application.Id,
+                        offerTitle = application.InternshipOffer.Title,
+                        interviewDateTime = application.InterviewDateTime,
+                        interviewMode = application.InterviewMode,
+                        interviewLink = application.InterviewLink,
+                        interviewAddress = application.InterviewAddress
+                    });
+                }
+                else if (reviewRequest.Status == "ACEPTADA")
+                {
+                    await _hubContext.Clients.Group($"user_{application.StudentId}").SendAsync("ApplicationStatusChanged", new
+                    {
+                        applicationId = application.Id,
+                        offerTitle = application.InternshipOffer.Title,
+                        status = "ACEPTADA"
+                    });
+                }
+                else if (reviewRequest.Status == "RECHAZADA")
+                {
+                    await _hubContext.Clients.Group($"user_{application.StudentId}").SendAsync("ApplicationStatusChanged", new
+                    {
+                        applicationId = application.Id,
+                        offerTitle = application.InternshipOffer.Title,
+                        status = "RECHAZADA"
+                    });
+                }
 
                 return NoContent();
             }
@@ -323,6 +392,69 @@ namespace AuthECAPI.Controllers
 
                 var fileBytes = await System.IO.File.ReadAllBytesAsync(filePath);
                 return File(fileBytes, "application/pdf", $"CV_{application.StudentId}_{application.InternshipOfferId}.pdf");
+            }
+            catch (InvalidOperationException)
+            {
+                return Unauthorized("Token inválido o malformado. No se encontró el claim 'userID'.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error interno del servidor: {ex.Message}");
+            }
+        }
+
+        // PUT: api/InternshipApplication/{id}/confirm-attendance
+        [HttpPut("{id}/confirm-attendance")]
+        [Authorize(Roles = "Student")]
+        public async Task<IActionResult> ConfirmInterviewAttendance(int id, [FromBody] ConfirmAttendanceRequest request)
+        {
+            try
+            {
+                var userId = User.Claims.First(c => c.Type == "userID").Value;
+
+                var application = await _context.InternshipApplications
+                    .FirstOrDefaultAsync(ia => ia.Id == id);
+
+                if (application == null)
+                {
+                    return NotFound("No se encontró la aplicación");
+                }
+
+                // Verificar que la aplicación pertenece al estudiante actual
+                if (application.StudentId != userId)
+                {
+                    return Forbid("No tienes permisos para confirmar asistencia a esta entrevista");
+                }
+
+                // Verificar que la aplicación está en estado ENTREVISTA
+                if (application.Status != "ENTREVISTA")
+                {
+                    return BadRequest("Solo se puede confirmar asistencia para aplicaciones en estado ENTREVISTA");
+                }
+
+                application.InterviewAttendanceConfirmed = request.WillAttend;
+
+                await _context.SaveChangesAsync();
+
+                // Enviar notificación en tiempo real a la organización
+                var offer = await _context.InternshipOffers
+                    .FirstOrDefaultAsync(io => io.Id == application.InternshipOfferId);
+
+                if (offer != null)
+                {
+                    await _hubContext.Clients.Group($"user_{offer.OrganizationId}").SendAsync("AttendanceConfirmed", new
+                    {
+                        applicationId = application.Id,
+                        studentId = application.StudentId,
+                        studentName = (await _context.Students
+                            .Include(s => s.AppUser)
+                            .FirstOrDefaultAsync(s => s.Id == application.StudentId))?.AppUser?.FullName ?? "Estudiante",
+                        offerTitle = offer.Title,
+                        willAttend = request.WillAttend
+                    });
+                }
+
+                return NoContent();
             }
             catch (InvalidOperationException)
             {
@@ -394,5 +526,17 @@ namespace AuthECAPI.Controllers
 
         [StringLength(500, ErrorMessage = "El enlace de reunión virtual no puede exceder 500 caracteres")]
         public string? VirtualMeetingLink { get; set; }
+
+        // Campos de entrevista
+        public DateTime? InterviewDateTime { get; set; }
+        public string? InterviewMode { get; set; }
+        public string? InterviewLink { get; set; }
+        public string? InterviewAddress { get; set; }
+    }
+
+    public class ConfirmAttendanceRequest
+    {
+        [Required]
+        public bool WillAttend { get; set; }
     }
 } 

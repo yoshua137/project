@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using AuthECAPI.Models;
+using AuthECAPI.Helpers;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
@@ -40,12 +41,13 @@ namespace AuthECAPI.Controllers
                 var token = GenerateUniqueToken();
 
                 // Crear la invitación
+                var nowUtc = DateTimeHelper.ToUtc(DateTimeHelper.Now);
                 var invitation = new RegistrationInvitation
                 {
                     Token = token,
                     Role = request.Role,
-                    CreatedAt = DateTime.UtcNow,
-                    ExpiresAt = DateTime.UtcNow.AddDays(1), // Expira en 1 día
+                    CreatedAt = nowUtc,
+                    ExpiresAt = nowUtc.AddDays(1), // Expira en 1 día
                     CreatedByUserId = adminUserId
                 };
 
@@ -88,7 +90,8 @@ namespace AuthECAPI.Controllers
                 return BadRequest("Este token ya ha sido utilizado");
             }
 
-            if (DateTime.UtcNow > invitation.ExpiresAt)
+            var nowUtc = DateTimeHelper.ToUtc(DateTimeHelper.Now);
+            if (nowUtc > invitation.ExpiresAt)
             {
                 return BadRequest("Este token ha expirado");
             }

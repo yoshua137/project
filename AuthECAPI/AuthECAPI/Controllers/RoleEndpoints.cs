@@ -1,4 +1,5 @@
 using AuthECAPI.Models;
+using AuthECAPI.Helpers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -92,7 +93,8 @@ namespace AuthECAPI.Controllers
                 return Results.BadRequest("Este token ya ha sido utilizado");
             }
 
-            if (DateTime.UtcNow > invitation.ExpiresAt)
+            var nowUtc = DateTimeHelper.ToUtc(DateTimeHelper.Now);
+            if (nowUtc > invitation.ExpiresAt)
             {
                 return Results.BadRequest("Este token ha expirado");
             }
@@ -118,7 +120,7 @@ namespace AuthECAPI.Controllers
 
             // Marcar invitación como usada
             invitation.IsUsed = true;
-            invitation.UsedAt = DateTime.UtcNow;
+            invitation.UsedAt = nowUtc;
             invitation.UsedByUserId = user.Id;
 
             await dbContext.SaveChangesAsync();
@@ -146,7 +148,8 @@ namespace AuthECAPI.Controllers
                 return Results.BadRequest("Este token ya ha sido utilizado");
             }
 
-            if (DateTime.UtcNow > invitation.ExpiresAt)
+            var nowUtc = DateTimeHelper.ToUtc(DateTimeHelper.Now);
+            if (nowUtc > invitation.ExpiresAt)
             {
                 return Results.BadRequest("Este token ha expirado");
             }
@@ -172,7 +175,7 @@ namespace AuthECAPI.Controllers
 
             // Marcar invitación como usada
             invitation.IsUsed = true;
-            invitation.UsedAt = DateTime.UtcNow;
+            invitation.UsedAt = nowUtc;
             invitation.UsedByUserId = user.Id;
 
             await dbContext.SaveChangesAsync();

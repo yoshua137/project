@@ -18,5 +18,10 @@ namespace AuthECAPI.Models
         public DateTime? ReviewDate { get; set; }
         public string? ReviewNotes { get; set; }
         public string? VirtualMeetingLink { get; set; }
+        public DateTime? InterviewDateTime { get; set; }
+        public string? InterviewMode { get; set; }
+        public string? InterviewLink { get; set; }
+        public string? InterviewAddress { get; set; }
+        public bool? InterviewAttendanceConfirmed { get; set; }
     }
 } 

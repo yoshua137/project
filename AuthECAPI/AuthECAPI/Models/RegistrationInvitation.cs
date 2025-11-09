@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace AuthECAPI.Models
@@ -11,7 +12,7 @@ namespace AuthECAPI.Models
         public string Role { get; set; } = string.Empty; // "Teacher" or "Director"
         
         [Required]
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; }
         
         [Required]
         public DateTime ExpiresAt { get; set; }

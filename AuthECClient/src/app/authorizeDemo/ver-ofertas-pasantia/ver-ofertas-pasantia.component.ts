@@ -115,12 +115,13 @@ export class VerOfertasPasantiaComponent implements OnInit {
 
   onApplicationSubmitted(): void {
     if (this.selectedOffer) {
-      this.appliedOffers.add(this.selectedOffer.id);
       this.toastr.success(`Aplicación enviada exitosamente a "${this.selectedOffer.title}"`, 'Éxito');
     }
     this.closeApplyModal();
-    // Refresh the applied offers list
-    this.checkAppliedOffers();
+    // Refresh the page to reload all data from server
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000);
   }
 
   checkAppliedOffers(): void {

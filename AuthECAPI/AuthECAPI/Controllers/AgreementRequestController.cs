@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using AuthECAPI.Models;
+using AuthECAPI.Helpers;
 using System.Security.Claims;
 using System.IO;
 
@@ -75,7 +76,7 @@ namespace AuthECAPI.Controllers
                 }
 
                 // Generar nombre único para el archivo
-                var fileName = $"{Guid.NewGuid()}_{DateTime.UtcNow:yyyyMMddHHmmss}.pdf";
+                var fileName = $"{Guid.NewGuid()}_{DateTimeHelper.Now:yyyyMMddHHmmss}.pdf";
                 var filePath = Path.Combine(uploadsPath, fileName);
 
                 // Guardar el archivo
@@ -88,7 +89,7 @@ namespace AuthECAPI.Controllers
                 {
                     OrganizationId = userId,
                     DirectorId = request.DirectorId,
-                    RequestDate = DateTime.UtcNow,
+                    RequestDate = DateTimeHelper.ToUtc(DateTimeHelper.Now),
                     Status = "Pending", // Estado inicial
                     Description = request.Description,
                     PdfFilePath = fileName // Guardar solo el nombre del archivo
@@ -217,7 +218,7 @@ namespace AuthECAPI.Controllers
 
                 // Actualizar la solicitud
                 agreementRequest.Status = request.Decision;
-                agreementRequest.ReviewDate = DateTime.UtcNow;
+                agreementRequest.ReviewDate = DateTimeHelper.ToUtc(DateTimeHelper.Now);
 
                 // Si se acepta, actualizar el estado a "Accepted"
                 // Si se rechaza, actualizar el estado a "Rejected"

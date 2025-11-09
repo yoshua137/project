@@ -12,7 +12,8 @@ namespace AuthECAPI.Extensions
       app.UseCors(options =>
       options.WithOrigins("http://localhost:4200")
       .AllowAnyMethod()
-      .AllowAnyHeader());
+      .AllowAnyHeader()
+      .AllowCredentials()); // Necesario para SignalR
       return app;
     }
 
