@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
@@ -63,6 +63,8 @@ export class MisOfertasPasantiaComponent implements OnInit {
   editLoading = false;
   editError = '';
   editSuccess = '';
+  hasApplicants = false;
+  checkingApplicants = false;
   
   // Propiedades para el modal de eliminación
   deletingOffer: InternshipOffer | null = null;
@@ -95,10 +97,19 @@ export class MisOfertasPasantiaComponent implements OnInit {
   showingInterviewDetails: InternshipApplication | null = null;
   private subscriptions: Subscription[] = [];
 
+  // Propiedades para el sistema de requisitos
+  selectedRequirements: string[] = [];
+  customRequirementInput: string = '';
+  canAddCustomRequirementFlag: boolean = false;
+  editingRequirementIndex: number | null = null;
+  editingRequirementValue: string = '';
+  predefinedRequirements = ['Hoja de vida(Curriculum Vitae)', 'Entrevistas'];
+
   constructor(
     private http: HttpClient,
     private signalRService: SignalRService,
-    private toastr: ToastrService
+    private toastr: ToastrService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -255,6 +266,26 @@ export class MisOfertasPasantiaComponent implements OnInit {
     this.editError = '';
     this.editSuccess = '';
     this.editLoading = false;
+    this.hasApplicants = false;
+    this.checkingApplicants = true;
+    
+    // Inicializar requisitos desde el string
+    this.initializeRequirements(offer.requirements);
+    
+    // Verificar si hay postulantes para esta oferta
+    this.http.get<InternshipApplication[]>(`${environment.apiBaseUrl}/InternshipApplication/offer/${offer.id}`)
+      .subscribe({
+        next: (applications) => {
+          this.hasApplicants = applications.length > 0;
+          this.checkingApplicants = false;
+        },
+        error: (err) => {
+          console.error('Error checking applicants:', err);
+          // En caso de error, asumimos que no hay postulantes para permitir la edición
+          this.hasApplicants = false;
+          this.checkingApplicants = false;
+        }
+      });
   }
 
   closeEditModal(): void {
@@ -263,6 +294,13 @@ export class MisOfertasPasantiaComponent implements OnInit {
     this.editError = '';
     this.editSuccess = '';
     this.editLoading = false;
+    this.hasApplicants = false;
+    this.checkingApplicants = false;
+    // Limpiar requisitos
+    this.selectedRequirements = [];
+    this.customRequirementInput = '';
+    this.canAddCustomRequirementFlag = false;
+    this.cancelEditRequirement();
   }
 
   submitEdit(): void {
@@ -270,18 +308,35 @@ export class MisOfertasPasantiaComponent implements OnInit {
     this.editLoading = true;
     this.editError = '';
     this.editSuccess = '';
-    const body = {
-      title: this.editForm.title,
-      description: this.editForm.description,
-      requirements: this.editForm.requirements,
-      startDate: new Date(this.editForm.startDate).toISOString(),
-      endDate: new Date(this.editForm.endDate).toISOString(),
-      mode: this.editForm.mode,
-      career: this.editForm.career,
-      contactEmail: this.editForm.contactEmail,
-      contactPhone: this.editForm.contactPhone,
-      vacancies: this.editForm.vacancies
-    };
+    
+    // Si hay postulantes, solo enviar el campo de vacantes
+    // Si no hay postulantes, enviar todos los campos
+    const body: any = this.hasApplicants 
+      ? {
+          title: this.editingOffer.title,
+          description: this.editingOffer.description,
+          requirements: this.editingOffer.requirements,
+          startDate: new Date(this.editingOffer.startDate).toISOString(),
+          endDate: new Date(this.editingOffer.endDate).toISOString(),
+          mode: this.editingOffer.mode,
+          career: this.editingOffer.career,
+          contactEmail: this.editingOffer.contactEmail,
+          contactPhone: this.editingOffer.contactPhone,
+          vacancies: this.editForm.vacancies
+        }
+      : {
+          title: this.editForm.title,
+          description: this.editForm.description,
+          requirements: this.getRequirementsString(),
+          startDate: new Date(this.editForm.startDate).toISOString(),
+          endDate: new Date(this.editForm.endDate).toISOString(),
+          mode: this.editForm.mode,
+          career: this.editForm.career,
+          contactEmail: this.editForm.contactEmail,
+          contactPhone: this.editForm.contactPhone,
+          vacancies: this.editForm.vacancies
+        };
+    
     this.http.put(`${environment.apiBaseUrl}/InternshipOffer/${this.editingOffer.id}`, body)
       .subscribe({
         next: () => {
@@ -289,7 +344,13 @@ export class MisOfertasPasantiaComponent implements OnInit {
           // Actualizar la oferta en la lista local
           const idx = this.offers.findIndex(o => o.id === this.editingOffer!.id);
           if (idx !== -1) {
-            this.offers[idx] = { ...this.editForm };
+            if (this.hasApplicants) {
+              // Solo actualizar vacantes si hay postulantes
+              this.offers[idx].vacancies = this.editForm.vacancies;
+            } else {
+              // Actualizar todos los campos si no hay postulantes
+              this.offers[idx] = { ...this.editForm };
+            }
           }
           setTimeout(() => this.closeEditModal(), 1000);
         },
@@ -518,5 +579,148 @@ export class MisOfertasPasantiaComponent implements OnInit {
       hour: '2-digit',
       minute: '2-digit'
     });
+  }
+
+  // Métodos para el sistema de requisitos
+  initializeRequirements(requirementsString: string): void {
+    if (!requirementsString) {
+      this.selectedRequirements = [];
+      return;
+    }
+    // Dividir por comas y limpiar espacios
+    this.selectedRequirements = requirementsString
+      .split(',')
+      .map(req => req.trim())
+      .filter(req => req.length > 0);
+  }
+
+  getRequirementsString(): string {
+    return this.selectedRequirements.join(', ');
+  }
+
+  insertRequirement(text: string): void {
+    if (this.selectedRequirements.includes(text)) {
+      return;
+    }
+    this.selectedRequirements.push(text);
+    this.updateEditFormRequirements();
+  }
+
+  addCustomRequirement(): void {
+    const trimmed = this.customRequirementInput.trim();
+    if (trimmed.length === 0) return;
+    
+    if (this.selectedRequirements.includes(trimmed)) {
+      this.customRequirementInput = '';
+      return;
+    }
+    
+    this.selectedRequirements.push(trimmed);
+    this.customRequirementInput = '';
+    this.canAddCustomRequirementFlag = false;
+    this.updateEditFormRequirements();
+  }
+
+  removeRequirement(text: string): void {
+    if (this.editingRequirementIndex !== null) {
+      const requirementBeingEdited = this.selectedRequirements[this.editingRequirementIndex];
+      if (requirementBeingEdited === text) {
+        this.cancelEditRequirement();
+      }
+    }
+    
+    this.selectedRequirements = this.selectedRequirements.filter(req => req !== text);
+    this.updateEditFormRequirements();
+    
+    if (this.editingRequirementIndex !== null && this.editingRequirementIndex >= this.selectedRequirements.length) {
+      this.cancelEditRequirement();
+    }
+  }
+
+  startEditRequirement(index: number): void {
+    const requirement = this.selectedRequirements[index];
+    if (this.predefinedRequirements.includes(requirement)) {
+      return;
+    }
+    this.editingRequirementIndex = index;
+    this.editingRequirementValue = requirement;
+  }
+
+  saveEditRequirement(): void {
+    if (this.editingRequirementIndex === null) return;
+    
+    const trimmed = this.editingRequirementValue.trim();
+    if (trimmed.length === 0) {
+      this.removeRequirement(this.selectedRequirements[this.editingRequirementIndex]);
+      this.cancelEditRequirement();
+      return;
+    }
+    
+    const exists = this.selectedRequirements.some((req, idx) => 
+      req === trimmed && idx !== this.editingRequirementIndex
+    );
+    
+    if (exists) {
+      this.cancelEditRequirement();
+      return;
+    }
+    
+    this.selectedRequirements[this.editingRequirementIndex] = trimmed;
+    this.updateEditFormRequirements();
+    this.cancelEditRequirement();
+  }
+
+  cancelEditRequirement(): void {
+    this.editingRequirementIndex = null;
+    this.editingRequirementValue = '';
+  }
+
+  isCustomRequirement(requirement: string): boolean {
+    return !this.predefinedRequirements.includes(requirement);
+  }
+
+  isEditingRequirement(index: number): boolean {
+    return this.editingRequirementIndex === index;
+  }
+
+  isRequirementSelected(text: string): boolean {
+    return this.selectedRequirements.includes(text);
+  }
+
+  hasCustomRequirements(): boolean {
+    return this.selectedRequirements.some(req => this.isCustomRequirement(req));
+  }
+
+  canAddCustomRequirement(): boolean {
+    return this.canAddCustomRequirementFlag;
+  }
+
+  onCustomRequirementInput(event: Event): void {
+    const target = event.target as HTMLInputElement;
+    const newValue = target.value || '';
+    this.customRequirementInput = newValue;
+    this.canAddCustomRequirementFlag = !!(newValue && newValue.trim().length > 0);
+    this.cdr.detectChanges();
+  }
+
+  onCustomRequirementKeyDown(event: KeyboardEvent): void {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      this.addCustomRequirement();
+    }
+  }
+
+  onEditRequirementKeyDown(event: KeyboardEvent): void {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      this.saveEditRequirement();
+    } else if (event.key === 'Escape') {
+      event.preventDefault();
+      this.cancelEditRequirement();
+    }
+  }
+
+  updateEditFormRequirements(): void {
+    this.editForm.requirements = this.getRequirementsString();
   }
 } 

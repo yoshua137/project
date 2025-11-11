@@ -87,11 +87,63 @@
       </div>
       <div>
         <label class="block font-semibold mb-1">Requisitos</label>
-        <textarea class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400" formControlName="requirements" rows="2" required placeholder="Ej: Hoja de vida, CV, portafolio, entrevistas..."></textarea>
-        <div *ngIf="form.get('requirements')?.invalid && form.get('requirements')?.touched" class="text-red-600 text-sm mt-1">Requisitos requeridos (mín 10 caracteres).</div>
-        <div class="mt-2 flex flex-wrap gap-2">
-          <button type="button" class="px-3 py-1 text-sm border rounded hover:bg-blue-100" (click)="insertRequirement('Hoja de vida(Curriculum Vitae)')">Hoja de vida(Curriculum Vitae)</button>
-          <button type="button" class="px-3 py-1 text-sm border rounded hover:bg-blue-100" (click)="insertRequirement('Entrevistas')">Entrevistas</button>
+        <!-- Campo oculto para el formulario -->
+        <textarea formControlName="requirements" class="hidden"></textarea>
+        <!-- Contenedor de chips -->
+        <div class="w-full min-h-[60px] px-3 py-2 border rounded bg-gray-100 flex flex-wrap gap-2 items-center">
+          <ng-container *ngFor="let req of selectedRequirements; let i = index">
+            <!-- Chip en modo edición -->
+            <div *ngIf="isEditingRequirement(i)" class="inline-flex items-center gap-1 bg-blue-200 text-blue-900 px-2 py-1 rounded text-sm border-2 border-blue-400">
+              <input 
+                type="text" 
+                [(ngModel)]="editingRequirementValue"
+                (keydown)="onEditRequirementKeyDown($event)"
+                (blur)="saveEditRequirement()"
+                class="bg-transparent border-none outline-none text-blue-900 text-sm min-w-[150px]"
+                autofocus
+              />
+            </div>
+            <!-- Chip normal -->
+            <div *ngIf="!isEditingRequirement(i)" 
+                 class="inline-flex items-center gap-1 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm"
+                 [class.cursor-pointer]="isCustomRequirement(req)"
+                 [class.hover:bg-blue-200]="isCustomRequirement(req)"
+                 (dblclick)="startEditRequirement(i)">
+              <span>{{ req }}</span>
+              <button type="button" class="text-blue-600 hover:text-blue-800 font-bold ml-1" (click)="removeRequirement(req)" title="Eliminar">
+                ×
+              </button>
+            </div>
+          </ng-container>
+          <span *ngIf="selectedRequirements.length === 0" class="text-gray-400 text-sm">Selecciona requisitos usando los botones</span>
+        </div>
+        <div class="mt-2 flex flex-wrap gap-2 items-center">
+          <button *ngIf="!isRequirementSelected('Hoja de vida(Curriculum Vitae)')" type="button" class="px-3 py-1 text-sm border rounded hover:bg-blue-100" (click)="insertRequirement('Hoja de vida(Curriculum Vitae)')">Hoja de vida(Curriculum Vitae)</button>
+          <button *ngIf="!isRequirementSelected('Entrevistas')" type="button" class="px-3 py-1 text-sm border rounded hover:bg-blue-100" (click)="insertRequirement('Entrevistas')">Entrevistas</button>
+          <!-- Input para requisitos personalizados -->
+          <div class="flex flex-col gap-1">
+            <div class="flex items-center gap-2">
+              <input 
+                type="text" 
+                [value]="customRequirementInput"
+                (input)="onCustomRequirementInput($event)"
+                (keydown)="onCustomRequirementKeyDown($event)"
+                placeholder="Otros requisitos..."
+                class="px-3 py-1 text-sm border rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+              />
+              <button 
+                type="button" 
+                class="px-3 py-1 text-sm border rounded hover:bg-blue-100 bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+                (click)="addCustomRequirement(); $event.preventDefault(); $event.stopPropagation()"
+                [disabled]="!canAddCustomRequirementFlag">
+                Agregar
+              </button>
+            </div>
+            <div *ngIf="form.get('requirements')?.invalid && form.get('requirements')?.touched" class="text-red-600 text-sm">Requisitos requeridos.</div>
+          </div>
+        </div>
+        <div *ngIf="hasCustomRequirements()" class="text-xs text-gray-500 mt-1">
+          💡 Haz doble clic en un requisito personalizado para editarlo
         </div>
       </div>
       <div>

@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -8,7 +9,7 @@ import { environment } from '../../environments/environment';
 @Component({
   selector: 'app-publicar-pasantia',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule],
   templateUrl: './publicar-pasantia.component.html',
   styles: ''
 })
@@ -24,6 +25,12 @@ export class PublicarPasantiaComponent implements OnInit {
   searchTerm: string = '';
   filteredCareers: string[] = [];
   showCareerDropdown: boolean = false;
+  selectedRequirements: string[] = [];
+  customRequirementInput: string = '';
+  canAddCustomRequirementFlag: boolean = false;
+  editingRequirementIndex: number | null = null;
+  editingRequirementValue: string = '';
+  predefinedRequirements = ['Hoja de vida(Curriculum Vitae)', 'Entrevistas'];
   modalidades = [
     { value: 'Virtual', label: 'Virtual' },
     { value: 'Presencial', label: 'Presencial' },
@@ -60,7 +67,8 @@ export class PublicarPasantiaComponent implements OnInit {
     private fb: FormBuilder, 
     private http: HttpClient, 
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {
     this.form = this.fb.group({
       title: ['', [Validators.required, Validators.maxLength(100)]],
@@ -212,15 +220,161 @@ export class PublicarPasantiaComponent implements OnInit {
 
   // Inserta texto de requisito predefinido en el campo requirements
   insertRequirement(text: string) {
+    // Verificar si el requisito ya está seleccionado
+    if (this.selectedRequirements.includes(text)) {
+      return;
+    }
+    
+    // Agregar al array de requisitos seleccionados
+    this.selectedRequirements.push(text);
+    this.updateRequirementsField();
+  }
+
+  // Agrega un requisito personalizado
+  addCustomRequirement() {
+    const trimmed = this.customRequirementInput.trim();
+    if (trimmed.length === 0) return;
+    
+    // Verificar si el requisito ya está seleccionado
+    if (this.selectedRequirements.includes(trimmed)) {
+      this.customRequirementInput = '';
+      return;
+    }
+    
+    // Agregar al array de requisitos seleccionados
+    this.selectedRequirements.push(trimmed);
+    this.customRequirementInput = '';
+    this.updateRequirementsField();
+  }
+
+  // Elimina un requisito del array
+  removeRequirement(text: string) {
+    // Si estaba editando este requisito, cancelar la edición primero
+    if (this.editingRequirementIndex !== null) {
+      const requirementBeingEdited = this.selectedRequirements[this.editingRequirementIndex];
+      if (requirementBeingEdited === text) {
+        this.cancelEditRequirement();
+      }
+    }
+    
+    this.selectedRequirements = this.selectedRequirements.filter(req => req !== text);
+    this.updateRequirementsField();
+    
+    // Ajustar el índice de edición si es necesario
+    if (this.editingRequirementIndex !== null && this.editingRequirementIndex >= this.selectedRequirements.length) {
+      this.cancelEditRequirement();
+    }
+  }
+
+  // Inicia la edición de un requisito personalizado
+  startEditRequirement(index: number) {
+    const requirement = this.selectedRequirements[index];
+    // Solo permitir editar requisitos personalizados (no predefinidos)
+    if (this.predefinedRequirements.includes(requirement)) {
+      return;
+    }
+    this.editingRequirementIndex = index;
+    this.editingRequirementValue = requirement;
+  }
+
+  // Guarda la edición de un requisito
+  saveEditRequirement() {
+    if (this.editingRequirementIndex === null) return;
+    
+    const trimmed = this.editingRequirementValue.trim();
+    if (trimmed.length === 0) {
+      // Si está vacío, eliminar el requisito
+      this.removeRequirement(this.selectedRequirements[this.editingRequirementIndex]);
+      this.cancelEditRequirement();
+      return;
+    }
+    
+    // Verificar si el nuevo texto ya existe (excepto el que estamos editando)
+    const exists = this.selectedRequirements.some((req, idx) => 
+      req === trimmed && idx !== this.editingRequirementIndex
+    );
+    
+    if (exists) {
+      this.cancelEditRequirement();
+      return;
+    }
+    
+    // Actualizar el requisito
+    this.selectedRequirements[this.editingRequirementIndex] = trimmed;
+    this.updateRequirementsField();
+    this.cancelEditRequirement();
+  }
+
+  // Cancela la edición de un requisito
+  cancelEditRequirement() {
+    this.editingRequirementIndex = null;
+    this.editingRequirementValue = '';
+  }
+
+  // Verifica si un requisito es personalizado (editable)
+  isCustomRequirement(requirement: string): boolean {
+    return !this.predefinedRequirements.includes(requirement);
+  }
+
+  // Verifica si un requisito está siendo editado
+  isEditingRequirement(index: number): boolean {
+    return this.editingRequirementIndex === index;
+  }
+
+  // Actualiza el campo del formulario con los requisitos seleccionados
+  updateRequirementsField() {
     const control = this.form.get('requirements');
     if (!control) return;
-    const current = (control.value || '').toString();
-    const trimmed = current.trim();
-    const needsComma = trimmed.length > 0 && !trimmed.endsWith(',');
-    const prefix = trimmed.length > 0 ? (needsComma ? ', ' : ' ') : '';
-    const updated = (trimmed + prefix + text + ', ').trimStart();
-    control.setValue(updated);
+    
+    // Formatear los requisitos como texto separado por comas
+    const formatted = this.selectedRequirements.join(', ');
+    control.setValue(formatted);
     control.markAsTouched();
+  }
+
+  // Verifica si un requisito está seleccionado
+  isRequirementSelected(text: string): boolean {
+    return this.selectedRequirements.includes(text);
+  }
+
+  // Verifica si hay requisitos personalizados seleccionados
+  hasCustomRequirements(): boolean {
+    return this.selectedRequirements.some(req => this.isCustomRequirement(req));
+  }
+
+  // Verifica si el input de requisito personalizado tiene contenido válido
+  canAddCustomRequirement(): boolean {
+    return this.canAddCustomRequirementFlag;
+  }
+
+  // Maneja los cambios en el input de requisito personalizado
+  onCustomRequirementInput(event: Event) {
+    const target = event.target as HTMLInputElement;
+    const newValue = target.value || '';
+    this.customRequirementInput = newValue;
+    // Actualizar el flag basado en si hay contenido válido
+    this.canAddCustomRequirementFlag = !!(newValue && newValue.trim().length > 0);
+    // Forzar detección de cambios inmediata
+    this.cdr.detectChanges();
+  }
+
+  // Maneja la tecla Enter en el input de requisito personalizado
+  onCustomRequirementKeyDown(event: KeyboardEvent) {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      this.addCustomRequirement();
+    }
+  }
+
+  // Maneja la tecla Enter en el input de edición
+  onEditRequirementKeyDown(event: KeyboardEvent) {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      this.saveEditRequirement();
+    } else if (event.key === 'Escape') {
+      event.preventDefault();
+      this.cancelEditRequirement();
+    }
   }
 
   onSubmit() {
@@ -232,6 +386,10 @@ export class PublicarPasantiaComponent implements OnInit {
       next: () => {
         this.successMsg = '¡Oferta de pasantía publicada exitosamente!';
         this.form.reset();
+        this.selectedRequirements = [];
+        this.customRequirementInput = '';
+        this.canAddCustomRequirementFlag = false;
+        this.cancelEditRequirement();
         this.loading = false;
       },
       error: (err) => {

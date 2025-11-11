@@ -220,32 +220,72 @@ namespace AuthECAPI.Controllers
                 if (internshipOffer.OrganizationId != userId)
                     return Forbid("No tienes permisos para editar esta oferta de pasantía");
 
-                // Validar fechas
-                if (offerRequest.StartDate >= offerRequest.EndDate)
-                    return BadRequest("La fecha de inicio debe ser anterior a la fecha de fin");
+                // Verificar si hay postulantes para esta oferta
+                var hasApplicants = await _context.InternshipApplications
+                    .AnyAsync(ia => ia.InternshipOfferId == id);
 
-                if (offerRequest.StartDate.Date < DateTime.Today)
-                    return BadRequest("La fecha de inicio no puede ser en el pasado");
-
-                // Validar vacantes
-                if (!string.IsNullOrEmpty(offerRequest.Vacancies) && 
-                    offerRequest.Vacancies != "DISPONIBLES" && 
-                    offerRequest.Vacancies != "AGOTADAS")
+                // Si hay postulantes, solo se permite editar el campo de vacantes
+                if (hasApplicants)
                 {
-                    return BadRequest("El estado de vacantes debe ser 'DISPONIBLES' o 'AGOTADAS'");
-                }
+                    // Validar que solo se intente cambiar las vacantes
+                    // Comparar fechas solo por fecha (sin hora)
+                    bool onlyVacanciesChanged = 
+                        internshipOffer.Title == offerRequest.Title &&
+                        internshipOffer.Description == offerRequest.Description &&
+                        internshipOffer.Requirements == offerRequest.Requirements &&
+                        internshipOffer.StartDate.Date == offerRequest.StartDate.Date &&
+                        internshipOffer.EndDate.Date == offerRequest.EndDate.Date &&
+                        internshipOffer.Mode == offerRequest.Mode &&
+                        internshipOffer.Career == offerRequest.Career &&
+                        (internshipOffer.ContactEmail ?? "") == (offerRequest.ContactEmail ?? "") &&
+                        (internshipOffer.ContactPhone ?? "") == (offerRequest.ContactPhone ?? "");
 
-                // Actualizar campos
-                internshipOffer.Title = offerRequest.Title;
-                internshipOffer.Description = offerRequest.Description;
-                internshipOffer.Requirements = offerRequest.Requirements;
-                internshipOffer.StartDate = offerRequest.StartDate;
-                internshipOffer.EndDate = offerRequest.EndDate;
-                internshipOffer.Mode = offerRequest.Mode;
-                internshipOffer.Career = offerRequest.Career;
-                internshipOffer.ContactEmail = offerRequest.ContactEmail;
-                internshipOffer.ContactPhone = offerRequest.ContactPhone;
-                internshipOffer.Vacancies = string.IsNullOrEmpty(offerRequest.Vacancies) ? internshipOffer.Vacancies : offerRequest.Vacancies;
+                    if (!onlyVacanciesChanged)
+                    {
+                        return BadRequest("No se pueden editar los campos de la oferta cuando hay estudiantes postulados. Solo se puede modificar el estado de las vacantes.");
+                    }
+
+                    // Validar vacantes
+                    if (!string.IsNullOrEmpty(offerRequest.Vacancies) && 
+                        offerRequest.Vacancies != "DISPONIBLES" && 
+                        offerRequest.Vacancies != "AGOTADAS")
+                    {
+                        return BadRequest("El estado de vacantes debe ser 'DISPONIBLES' o 'AGOTADAS'");
+                    }
+
+                    // Solo actualizar vacantes
+                    internshipOffer.Vacancies = string.IsNullOrEmpty(offerRequest.Vacancies) ? internshipOffer.Vacancies : offerRequest.Vacancies;
+                }
+                else
+                {
+                    // Si no hay postulantes, se pueden editar todos los campos
+                    // Validar fechas
+                    if (offerRequest.StartDate >= offerRequest.EndDate)
+                        return BadRequest("La fecha de inicio debe ser anterior a la fecha de fin");
+
+                    if (offerRequest.StartDate.Date < DateTime.Today)
+                        return BadRequest("La fecha de inicio no puede ser en el pasado");
+
+                    // Validar vacantes
+                    if (!string.IsNullOrEmpty(offerRequest.Vacancies) && 
+                        offerRequest.Vacancies != "DISPONIBLES" && 
+                        offerRequest.Vacancies != "AGOTADAS")
+                    {
+                        return BadRequest("El estado de vacantes debe ser 'DISPONIBLES' o 'AGOTADAS'");
+                    }
+
+                    // Actualizar todos los campos
+                    internshipOffer.Title = offerRequest.Title;
+                    internshipOffer.Description = offerRequest.Description;
+                    internshipOffer.Requirements = offerRequest.Requirements;
+                    internshipOffer.StartDate = offerRequest.StartDate;
+                    internshipOffer.EndDate = offerRequest.EndDate;
+                    internshipOffer.Mode = offerRequest.Mode;
+                    internshipOffer.Career = offerRequest.Career;
+                    internshipOffer.ContactEmail = offerRequest.ContactEmail;
+                    internshipOffer.ContactPhone = offerRequest.ContactPhone;
+                    internshipOffer.Vacancies = string.IsNullOrEmpty(offerRequest.Vacancies) ? internshipOffer.Vacancies : offerRequest.Vacancies;
+                }
 
                 await _context.SaveChangesAsync();
 
