@@ -17,6 +17,7 @@ namespace AuthECAPI.Models
         public DbSet<InternshipOffer> InternshipOffers { get; set; }
         public DbSet<InternshipApplication> InternshipApplications { get; set; }
         public DbSet<RegistrationInvitation> RegistrationInvitations { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -75,6 +76,13 @@ namespace AuthECAPI.Models
                 .WithMany()
                 .HasForeignKey(ia => ia.StudentId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // Notification relationships
+            builder.Entity<Notification>()
+                .HasOne(n => n.User)
+                .WithMany()
+                .HasForeignKey(n => n.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

@@ -58,12 +58,19 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
           }
           // Error interno del servidor
           else if (err.status >= 500 && err.status < 600) {
+            // No mostrar error para endpoints de notificaciones si la tabla no existe
+            // Esto evita mostrar errores cuando la migración no se ha aplicado
+            if (req.url.includes('/Notification')) {
+              console.warn('⚠️ Tabla de notificaciones no disponible (migración pendiente):', req.url);
+              // No mostrar toast para errores de notificaciones
+            } else {
             console.error('🔴 Error del servidor:', err.status, err.message);
             toastr.error(
               'Ocurrió un error en el servidor. Por favor, intenta más tarde.',
               'Error del Servidor',
               { timeOut: 6000 }
             );
+            }
           }
         }
       }),

@@ -6,11 +6,12 @@ import { claimReq } from "../../shared/utils/claimReq-utils";
 import { CommonModule } from '@angular/common';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { BackendStatusBannerComponent } from '../../shared/components/backend-status-banner.component';
+import { NotificationBellComponent } from '../../shared/components/notification-bell.component';
 
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, HideIfClaimsNotMetDirective, CommonModule, BackendStatusBannerComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, HideIfClaimsNotMetDirective, CommonModule, BackendStatusBannerComponent, NotificationBellComponent],
   templateUrl: './main-layout.component.html',
   styles: ``,
   animations: [

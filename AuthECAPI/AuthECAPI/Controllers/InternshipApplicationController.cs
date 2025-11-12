@@ -18,12 +18,14 @@ namespace AuthECAPI.Controllers
         private readonly AppDbContext _context;
         private readonly IHubContext<InternshipNotificationHub> _hubContext;
         private readonly ICloudTimeService _cloudTimeService;
+        private readonly INotificationService _notificationService;
 
-        public InternshipApplicationController(AppDbContext context, IHubContext<InternshipNotificationHub> hubContext, ICloudTimeService cloudTimeService)
+        public InternshipApplicationController(AppDbContext context, IHubContext<InternshipNotificationHub> hubContext, ICloudTimeService cloudTimeService, INotificationService notificationService)
         {
             _context = context;
             _hubContext = hubContext;
             _cloudTimeService = cloudTimeService;
+            _notificationService = notificationService;
         }
 
         // POST: api/InternshipApplication
@@ -313,9 +315,19 @@ namespace AuthECAPI.Controllers
 
                 await _context.SaveChangesAsync();
 
-                // Enviar notificación en tiempo real al estudiante
+                // Crear notificación persistente y enviar notificación en tiempo real al estudiante
                 if (reviewRequest.Status == "ENTREVISTA")
                 {
+                    var interviewDateStr = application.InterviewDateTime?.ToString("dd/MM/yyyy HH:mm") ?? "Fecha por confirmar";
+                    await _notificationService.CreateNotificationAsync(
+                        application.StudentId,
+                        "Entrevista Programada",
+                        $"Se ha programado una entrevista para la oferta '{application.InternshipOffer.Title}' el {interviewDateStr}.",
+                        "INTERVIEW_SCHEDULED",
+                        application.Id,
+                        "InternshipApplication"
+                    );
+
                     await _hubContext.Clients.Group($"user_{application.StudentId}").SendAsync("InterviewScheduled", new
                     {
                         applicationId = application.Id,
@@ -328,6 +340,15 @@ namespace AuthECAPI.Controllers
                 }
                 else if (reviewRequest.Status == "ACEPTADA")
                 {
+                    await _notificationService.CreateNotificationAsync(
+                        application.StudentId,
+                        "Aplicación Aceptada",
+                        $"Tu aplicación para la oferta '{application.InternshipOffer.Title}' ha sido aceptada. ¡Felicidades!",
+                        "APPLICATION_ACCEPTED",
+                        application.Id,
+                        "InternshipApplication"
+                    );
+
                     await _hubContext.Clients.Group($"user_{application.StudentId}").SendAsync("ApplicationStatusChanged", new
                     {
                         applicationId = application.Id,
@@ -337,6 +358,15 @@ namespace AuthECAPI.Controllers
                 }
                 else if (reviewRequest.Status == "RECHAZADA")
                 {
+                    await _notificationService.CreateNotificationAsync(
+                        application.StudentId,
+                        "Aplicación Rechazada",
+                        $"Tu aplicación para la oferta '{application.InternshipOffer.Title}' ha sido rechazada.",
+                        "APPLICATION_REJECTED",
+                        application.Id,
+                        "InternshipApplication"
+                    );
+
                     await _hubContext.Clients.Group($"user_{application.StudentId}").SendAsync("ApplicationStatusChanged", new
                     {
                         applicationId = application.Id,
@@ -438,12 +468,30 @@ namespace AuthECAPI.Controllers
 
                 await _context.SaveChangesAsync();
 
-                // Enviar notificación en tiempo real a la organización
+                // Enviar notificación en tiempo real a la organización y crear notificación persistente
                 var offer = await _context.InternshipOffers
+                    .Include(io => io.Organization)
+                    .ThenInclude(o => o.AppUser)
                     .FirstOrDefaultAsync(io => io.Id == application.InternshipOfferId);
 
                 if (offer != null)
                 {
+                    var student = await _context.Students
+                        .Include(s => s.AppUser)
+                        .FirstOrDefaultAsync(s => s.Id == application.StudentId);
+
+                    var studentName = student?.AppUser?.FullName ?? "Un estudiante";
+                    var attendanceStatus = request.WillAttend ? "aceptará" : "no aceptará";
+
+                    await _notificationService.CreateNotificationAsync(
+                        offer.OrganizationId,
+                        request.WillAttend ? "Confirmación de Asistencia a Entrevista" : "Rechazo de Asistencia a Entrevista",
+                        $"{studentName} {attendanceStatus} asistir a la entrevista para la oferta '{offer.Title}'.",
+                        "ATTENDANCE_CONFIRMED",
+                        application.Id,
+                        "InternshipApplication"
+                    );
+
                     await _hubContext.Clients.Group($"user_{offer.OrganizationId}").SendAsync("AttendanceConfirmed", new
                     {
                         applicationId = application.Id,

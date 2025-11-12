@@ -1,5 +1,5 @@
-<div class="bg-blue-50 p-8 rounded-2xl max-w-xl mx-auto mt-8 shadow-lg">
-  <h2 class="mb-6 text-2xl font-bold text-blue-900">Publicar Oferta de Pasantía</h2>
+<div class="bg-blue-50 p-4 sm:p-6 md:p-8 lg:p-10 rounded-2xl w-full max-w-7xl mx-auto shadow-lg">
+  <h2 class="mb-6 text-2xl md:text-3xl lg:text-4xl font-bold text-blue-900">Publicar Oferta de Pasantía</h2>
   <!-- Estado de carga -->
   <div *ngIf="loadingDepartments" class="text-center text-blue-700 mb-4">
     <p>Cargando información de convenios...</p>
@@ -14,11 +14,11 @@
   </div>
   <!-- Selección de departamentos -->
   <div *ngIf="!loadingDepartments && hasApprovedAgreements && !selectedDepartment">
-    <p class="mb-4 text-blue-900 font-medium">Selecciona el departamento para el cual quieres publicar la pasantía:</p>
-    <div class="flex flex-wrap gap-4 justify-center">
-      <div *ngFor="let dept of availableDepartments" class="bg-white rounded-lg shadow-md p-4 min-w-[250px] cursor-pointer hover:bg-blue-100 transition" (click)="selectDepartment(dept.value)">
-        <h5 class="font-bold text-blue-800 mb-2">{{ dept.name }}</h5>
-        <p class="text-sm text-gray-700">
+    <p class="mb-6 text-blue-900 font-medium text-lg md:text-xl">Selecciona el departamento para el cual quieres publicar la pasantía:</p>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-4 md:gap-6">
+      <div *ngFor="let dept of availableDepartments" (click)="selectDepartment(dept.value)" class="bg-white rounded-lg shadow-md p-5 md:p-6 cursor-pointer hover:bg-blue-100 hover:shadow-lg transition transform hover:scale-105">
+        <h5 class="font-bold text-blue-800 mb-3 text-lg">{{ dept.name }}</h5>
+        <p class="text-sm md:text-base text-gray-700">
           <span class="font-semibold">Carreras:</span><br>
             <span *ngFor="let career of dept.careers; let last = last">
               • {{ career }}<br *ngIf="!last">
@@ -29,111 +29,117 @@
     </div>
   <!-- Formulario de publicación -->
   <div *ngIf="!loadingDepartments && hasApprovedAgreements && selectedDepartment">
-    <div class="mb-3">
-      <button (click)="selectedDepartment = ''" class="text-blue-700 border border-blue-700 rounded px-3 py-1 mb-3 hover:bg-blue-100 transition">&larr; Cambiar departamento</button>
+    <div class="mb-4 md:mb-6">
+      <button (click)="selectedDepartment = ''" class="text-blue-700 border border-blue-700 rounded px-4 py-2 mb-4 hover:bg-blue-100 transition text-sm md:text-base">&larr; Cambiar departamento</button>
     </div>
-    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4">
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4 md:space-y-6">
+      <!-- Título - Ancho completo -->
       <div>
-        <label class="block font-semibold mb-1">Título</label>
-        <input class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400" formControlName="title" maxlength="100" required placeholder="Ej: Pasantía en desarrollo web" />
+        <label class="block font-semibold mb-2 text-base md:text-lg">Título</label>
+        <input class="w-full px-4 py-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 text-base" formControlName="title" maxlength="100" required placeholder="Ej: Pasantía en desarrollo web" />
         <div *ngIf="form.get('title')?.invalid && form.get('title')?.touched" class="text-red-600 text-sm mt-1">Título requerido (máx 100 caracteres).</div>
       </div>
-      <div>
-        <label class="block font-semibold mb-1">Departamento</label>
-        <input class="w-full px-3 py-2 border rounded bg-gray-100" [value]="selectedDepartment" readonly />
-        <span class="text-xs text-gray-500">Departamento seleccionado con convenio aprobado</span>
-      </div>
-      <div>
-        <label class="block font-semibold mb-1">Carrera</label>
-        <div class="relative">
-          <div class="flex">
-            <input 
-              class="w-full px-3 py-2 border rounded-l focus:outline-none focus:ring-2 focus:ring-blue-400"
-              [class.border-red-500]="(form.get('career')?.hasError('invalidCareer') && searchTerm.trim() !== '') || (form.get('career')?.hasError('required') && form.get('career')?.touched)"
-              [class.border-green-500]="isCareerValid() && searchTerm.trim() !== ''"
-              [value]="searchTerm"
-              (input)="onCareerSearch($event)"
-              (focus)="onCareerInputFocus()"
-              (blur)="onCareerInputBlur()"
-              placeholder="Escribe o selecciona una carrera..."
-              required />
-            <button type="button" class="px-3 py-2 border border-l-0 rounded-r bg-gray-100 hover:bg-blue-100 transition" (click)="toggleCareerDropdown()">
-              <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                <path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/>
-              </svg>
-            </button>
-          </div>
-          <div *ngIf="showCareerDropdown && filteredCareers.length > 0" class="absolute w-full bg-white border rounded-b shadow z-10 max-h-52 overflow-y-auto">
-            <div *ngFor="let career of filteredCareers" class="px-4 py-2 cursor-pointer hover:bg-blue-100" (click)="selectCareer(career)">
-              {{ career }}
+      <!-- Departamento y Carrera - Grid de 2 columnas en pantallas grandes -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+        <div>
+          <label class="block font-semibold mb-2 text-base md:text-lg">Departamento</label>
+          <input class="w-full px-4 py-3 border rounded-md bg-gray-100 text-base" [value]="selectedDepartment" readonly />
+          <span class="text-xs text-gray-500 mt-1 block">Departamento seleccionado con convenio aprobado</span>
+        </div>
+        <div>
+          <label class="block font-semibold mb-2 text-base md:text-lg">Carrera</label>
+          <div class="relative">
+            <div class="flex">
+              <input 
+                class="w-full px-4 py-3 border rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-400 text-base"
+                [class.border-red-500]="(form.get('career')?.hasError('invalidCareer') && searchTerm.trim() !== '') || (form.get('career')?.hasError('required') && form.get('career')?.touched)"
+                [class.border-green-500]="isCareerValid() && searchTerm.trim() !== ''"
+                [value]="searchTerm"
+                (input)="onCareerSearch($event)"
+                (focus)="onCareerInputFocus()"
+                (blur)="onCareerInputBlur()"
+                placeholder="Escribe o selecciona una carrera..."
+                required />
+              <button type="button" class="px-4 py-3 border border-l-0 rounded-r-md bg-gray-100 hover:bg-blue-100 transition" (click)="toggleCareerDropdown()">
+                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/>
+                </svg>
+              </button>
+            </div>
+            <div *ngIf="showCareerDropdown && filteredCareers.length > 0" class="absolute w-full bg-white border rounded-b-md shadow-lg z-10 max-h-52 overflow-y-auto">
+              <div *ngFor="let career of filteredCareers" class="px-4 py-2 cursor-pointer hover:bg-blue-100" (click)="selectCareer(career)">
+                {{ career }}
+              </div>
             </div>
           </div>
+          <div *ngIf="form.get('career')?.hasError('invalidCareer') && searchTerm.trim() !== ''" class="text-red-600 text-sm mt-1">
+            {{ getCareerErrorMessage() }}
+          </div>
+          <div *ngIf="form.get('career')?.hasError('required') && form.get('career')?.touched" class="text-red-600 text-sm mt-1">
+            La carrera es requerida.
+          </div>
+          <div *ngIf="isCareerValid() && searchTerm.trim() !== ''" class="text-green-600 text-sm mt-1">
+            ✓ Carrera válida
+          </div>
+          <span class="text-xs text-gray-500 mt-1 block">Carreras disponibles en {{ selectedDepartment }}</span>
         </div>
-        <div *ngIf="form.get('career')?.hasError('invalidCareer') && searchTerm.trim() !== ''" class="text-red-600 text-sm mt-1">
-          {{ getCareerErrorMessage() }}
-        </div>
-        <div *ngIf="form.get('career')?.hasError('required') && form.get('career')?.touched" class="text-red-600 text-sm mt-1">
-          La carrera es requerida.
-        </div>
-        <div *ngIf="isCareerValid() && searchTerm.trim() !== ''" class="text-green-600 text-sm mt-1">
-          ✓ Carrera válida
-        </div>
-        <span class="text-xs text-gray-500">Carreras disponibles en {{ selectedDepartment }}</span>
       </div>
+      <!-- Descripción - Ancho completo -->
       <div>
-        <label class="block font-semibold mb-1">Descripción</label>
-        <textarea class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400" formControlName="description" rows="3" required placeholder="Ej: Apoyar en el área de marketing digital, manejo de redes sociales, desarrollo de Software para una Landing Page..."></textarea>
+        <label class="block font-semibold mb-2 text-base md:text-lg">Descripción</label>
+        <textarea class="w-full px-4 py-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 text-base" formControlName="description" rows="4" required placeholder="Ej: Apoyar en el área de marketing digital, manejo de redes sociales, desarrollo de Software para una Landing Page..."></textarea>
         <div *ngIf="form.get('description')?.invalid && form.get('description')?.touched" class="text-red-600 text-sm mt-1">Descripción requerida (mín 20 caracteres).</div>
       </div>
+      <!-- Requisitos - Ancho completo -->
       <div>
-        <label class="block font-semibold mb-1">Requisitos</label>
+        <label class="block font-semibold mb-2 text-base md:text-lg">Requisitos</label>
         <!-- Campo oculto para el formulario -->
         <textarea formControlName="requirements" class="hidden"></textarea>
         <!-- Contenedor de chips -->
-        <div class="w-full min-h-[60px] px-3 py-2 border rounded bg-gray-100 flex flex-wrap gap-2 items-center">
+        <div class="w-full min-h-[80px] md:min-h-[100px] px-4 py-3 border rounded-md bg-gray-100 flex flex-wrap gap-2 md:gap-3 items-center">
           <ng-container *ngFor="let req of selectedRequirements; let i = index">
             <!-- Chip en modo edición -->
-            <div *ngIf="isEditingRequirement(i)" class="inline-flex items-center gap-1 bg-blue-200 text-blue-900 px-2 py-1 rounded text-sm border-2 border-blue-400">
+            <div *ngIf="isEditingRequirement(i)" class="inline-flex items-center gap-1 bg-blue-200 text-blue-900 px-3 py-2 rounded-md text-sm md:text-base border-2 border-blue-400">
               <input 
                 type="text" 
                 [(ngModel)]="editingRequirementValue"
                 (keydown)="onEditRequirementKeyDown($event)"
                 (blur)="saveEditRequirement()"
-                class="bg-transparent border-none outline-none text-blue-900 text-sm min-w-[150px]"
+                class="bg-transparent border-none outline-none text-blue-900 text-sm md:text-base min-w-[150px] md:min-w-[200px]"
                 autofocus
               />
             </div>
             <!-- Chip normal -->
             <div *ngIf="!isEditingRequirement(i)" 
-                 class="inline-flex items-center gap-1 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm"
+                 class="inline-flex items-center gap-1 bg-blue-100 text-blue-800 px-3 py-2 rounded-full text-sm md:text-base"
                  [class.cursor-pointer]="isCustomRequirement(req)"
                  [class.hover:bg-blue-200]="isCustomRequirement(req)"
                  (dblclick)="startEditRequirement(i)">
               <span>{{ req }}</span>
-              <button type="button" class="text-blue-600 hover:text-blue-800 font-bold ml-1" (click)="removeRequirement(req)" title="Eliminar">
+              <button type="button" class="text-blue-600 hover:text-blue-800 font-bold ml-1 text-lg" (click)="removeRequirement(req)" title="Eliminar">
                 ×
               </button>
             </div>
           </ng-container>
-          <span *ngIf="selectedRequirements.length === 0" class="text-gray-400 text-sm">Selecciona requisitos usando los botones</span>
+          <span *ngIf="selectedRequirements.length === 0" class="text-gray-400 text-sm md:text-base">Selecciona requisitos usando los botones</span>
         </div>
-        <div class="mt-2 flex flex-wrap gap-2 items-center">
-          <button *ngIf="!isRequirementSelected('Hoja de vida(Curriculum Vitae)')" type="button" class="px-3 py-1 text-sm border rounded hover:bg-blue-100" (click)="insertRequirement('Hoja de vida(Curriculum Vitae)')">Hoja de vida(Curriculum Vitae)</button>
-          <button *ngIf="!isRequirementSelected('Entrevistas')" type="button" class="px-3 py-1 text-sm border rounded hover:bg-blue-100" (click)="insertRequirement('Entrevistas')">Entrevistas</button>
+        <div class="mt-3 flex flex-wrap gap-2 md:gap-3 items-center">
+          <button *ngIf="!isRequirementSelected('Hoja de vida(Curriculum Vitae)')" type="button" class="px-4 py-2 text-sm md:text-base border rounded-md hover:bg-blue-100 transition" (click)="insertRequirement('Hoja de vida(Curriculum Vitae)')">Hoja de vida(Curriculum Vitae)</button>
+          <button *ngIf="!isRequirementSelected('Entrevistas')" type="button" class="px-4 py-2 text-sm md:text-base border rounded-md hover:bg-blue-100 transition" (click)="insertRequirement('Entrevistas')">Entrevistas</button>
           <!-- Input para requisitos personalizados -->
-          <div class="flex flex-col gap-1">
-            <div class="flex items-center gap-2">
+          <div class="flex flex-col gap-1 w-full md:w-auto">
+            <div class="flex items-center gap-2 flex-1">
               <input 
                 type="text" 
                 [value]="customRequirementInput"
                 (input)="onCustomRequirementInput($event)"
                 (keydown)="onCustomRequirementKeyDown($event)"
                 placeholder="Otros requisitos..."
-                class="px-3 py-1 text-sm border rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+                class="flex-1 px-4 py-2 text-sm md:text-base border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
               />
               <button 
                 type="button" 
-                class="px-3 py-1 text-sm border rounded hover:bg-blue-100 bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+                class="px-4 py-2 text-sm md:text-base border rounded-md hover:bg-blue-100 bg-white disabled:opacity-50 disabled:cursor-not-allowed transition"
                 (click)="addCustomRequirement(); $event.preventDefault(); $event.stopPropagation()"
                 [disabled]="!canAddCustomRequirementFlag">
                 Agregar
@@ -142,43 +148,50 @@
             <div *ngIf="form.get('requirements')?.invalid && form.get('requirements')?.touched" class="text-red-600 text-sm">Requisitos requeridos.</div>
           </div>
         </div>
-        <div *ngIf="hasCustomRequirements()" class="text-xs text-gray-500 mt-1">
+        <div *ngIf="hasCustomRequirements()" class="text-xs md:text-sm text-gray-500 mt-2">
           💡 Haz doble clic en un requisito personalizado para editarlo
         </div>
       </div>
-      <div>
-        <label class="block font-semibold mb-1">Fecha de Inicio</label>
-        <input type="date" class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400" formControlName="startDate" required />
-      </div>
-      <div>
-        <label class="block font-semibold mb-1">Fecha de Fin</label>
-        <input type="date" class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400" formControlName="endDate" required />
-      </div>
-      <div>
-        <label class="block font-semibold mb-1">Modalidad</label>
-        <select class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400" formControlName="mode" required>
-          <option value="" disabled selected>Selecciona modalidad</option>
-          <option *ngFor="let m of modalidades" [value]="m.value">{{ m.label }}</option>
-        </select>
-        <div *ngIf="form.get('mode')?.invalid && form.get('mode')?.touched" class="text-red-600 text-sm mt-1">La modalidad es requerida.</div>
-      </div>
-      <div>
-        <label class="block font-semibold mb-1">Correo de contacto</label>
-        <input class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400" formControlName="contactEmail" type="email" placeholder="ejemplo@correo.com" required />
-        <div *ngIf="form.get('contactEmail')?.invalid && form.get('contactEmail')?.touched" class="text-red-600 text-sm mt-1">
-          El correo es requerido y debe ser válido.
+      <!-- Fechas y Modalidad - Grid de 2 columnas en pantallas grandes -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+        <div>
+          <label class="block font-semibold mb-2 text-base md:text-lg">Fecha de Inicio</label>
+          <input type="date" class="w-full px-4 py-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 text-base" formControlName="startDate" required />
+        </div>
+        <div>
+          <label class="block font-semibold mb-2 text-base md:text-lg">Fecha de Fin</label>
+          <input type="date" class="w-full px-4 py-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 text-base" formControlName="endDate" required />
+        </div>
+        <div>
+          <label class="block font-semibold mb-2 text-base md:text-lg">Modalidad</label>
+          <select class="w-full px-4 py-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 text-base" formControlName="mode" required>
+            <option value="" disabled selected>Selecciona modalidad</option>
+            <option *ngFor="let m of modalidades" [value]="m.value">{{ m.label }}</option>
+          </select>
+          <div *ngIf="form.get('mode')?.invalid && form.get('mode')?.touched" class="text-red-600 text-sm mt-1">La modalidad es requerida.</div>
         </div>
       </div>
-      <div>
-        <label class="block font-semibold mb-1">Número de contacto</label>
-        <input class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400" formControlName="contactPhone" type="text" placeholder="Ej: 71234567" required />
-        <div *ngIf="form.get('contactPhone')?.invalid && form.get('contactPhone')?.touched" class="text-red-600 text-sm mt-1">
-          El número de contacto es requerido.
+      <!-- Contacto - Grid de 2 columnas en pantallas grandes -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+        <div>
+          <label class="block font-semibold mb-2 text-base md:text-lg">Correo de contacto</label>
+          <input class="w-full px-4 py-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 text-base" formControlName="contactEmail" type="email" placeholder="ejemplo@correo.com" required />
+          <div *ngIf="form.get('contactEmail')?.invalid && form.get('contactEmail')?.touched" class="text-red-600 text-sm mt-1">
+            El correo es requerido y debe ser válido.
+          </div>
+        </div>
+        <div>
+          <label class="block font-semibold mb-2 text-base md:text-lg">Número de contacto</label>
+          <input class="w-full px-4 py-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 text-base" formControlName="contactPhone" type="text" placeholder="Ej: 71234567" required />
+          <div *ngIf="form.get('contactPhone')?.invalid && form.get('contactPhone')?.touched" class="text-red-600 text-sm mt-1">
+            El número de contacto es requerido.
+          </div>
         </div>
       </div>
-      <div>
-        <label class="block font-semibold mb-1">Vacantes</label>
-        <select class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400" formControlName="vacancies" required>
+      <!-- Vacantes - Ancho completo en móvil, mitad en desktop -->
+      <div class="md:w-1/2">
+        <label class="block font-semibold mb-2 text-base md:text-lg">Vacantes</label>
+        <select class="w-full px-4 py-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 text-base" formControlName="vacancies" required>
           <option value="DISPONIBLES">DISPONIBLES</option>
           <option value="AGOTADAS">AGOTADAS</option>
         </select>
@@ -186,9 +199,13 @@
           El estado de vacantes es requerido.
         </div>
       </div>
-      <button class="w-full bg-blue-700 text-white font-bold py-2 px-4 rounded hover:bg-blue-800 transition disabled:opacity-50" type="submit" [disabled]="form.invalid || loading">{{ loading ? 'Publicando...' : 'Publicar Oferta' }}</button>
+      <!-- Botón de envío -->
+      <div class="pt-4">
+        <button class="w-full md:w-auto md:min-w-[200px] bg-blue-700 text-white font-bold py-3 px-6 rounded-md hover:bg-blue-800 transition disabled:opacity-50 text-base md:text-lg" type="submit" [disabled]="form.invalid || loading">{{ loading ? 'Publicando...' : 'Publicar Oferta' }}</button>
+      </div>
+      <!-- Mensajes de éxito y error -->
+      <div *ngIf="successMsg" class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-md mt-4 text-base">{{ successMsg }}</div>
+      <div *ngIf="errorMsg" class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md mt-4 text-base">{{ errorMsg }}</div>
     </form>
-    <div *ngIf="successMsg" class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded mt-4">{{ successMsg }}</div>
-    <div *ngIf="errorMsg" class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded mt-4">{{ errorMsg }}</div>
   </div>
 </div>

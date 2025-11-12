@@ -16,12 +16,14 @@ namespace AuthECAPI.Controllers
         private readonly AppDbContext _context;
         private readonly IWebHostEnvironment _environment;
         private readonly ICloudTimeService _cloudTimeService;
+        private readonly INotificationService _notificationService;
 
-        public AgreementRequestController(AppDbContext context, IWebHostEnvironment environment, ICloudTimeService cloudTimeService)
+        public AgreementRequestController(AppDbContext context, IWebHostEnvironment environment, ICloudTimeService cloudTimeService, INotificationService notificationService)
         {
             _context = context;
             _environment = environment;
             _cloudTimeService = cloudTimeService;
+            _notificationService = notificationService;
         }
 
         // POST: api/AgreementRequest
@@ -225,6 +227,30 @@ namespace AuthECAPI.Controllers
                 // Si se acepta, actualizar el estado a "Accepted"
                 // Si se rechaza, actualizar el estado a "Rejected"
                 await _context.SaveChangesAsync();
+
+                // Crear notificación para la organización
+                if (request.Decision == "Accepted")
+                {
+                    await _notificationService.CreateNotificationAsync(
+                        agreementRequest.OrganizationId,
+                        "Convenio Aprobado",
+                        $"Tu solicitud de convenio con el departamento '{agreementRequest.Director.Department}' ha sido aprobada.",
+                        "AGREEMENT_APPROVED",
+                        agreementRequest.Id,
+                        "AgreementRequest"
+                    );
+                }
+                else if (request.Decision == "Rejected")
+                {
+                    await _notificationService.CreateNotificationAsync(
+                        agreementRequest.OrganizationId,
+                        "Convenio Rechazado",
+                        $"Tu solicitud de convenio con el departamento '{agreementRequest.Director.Department}' ha sido rechazada.",
+                        "AGREEMENT_REJECTED",
+                        agreementRequest.Id,
+                        "AgreementRequest"
+                    );
+                }
 
                 var response = new AgreementRequestResponse
                 {

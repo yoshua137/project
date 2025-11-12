@@ -48,6 +48,9 @@ builder.Services.AddSingleton<ICloudTimeService>(sp =>
     return new CloudTimeService(httpClient);
 });
 
+// Registrar servicio de notificaciones
+builder.Services.AddScoped<INotificationService, NotificationService>();
+
 var app = builder.Build();
 
 // Sincronizar hora con la nube al iniciar la aplicación

@@ -104,3 +104,5 @@ PASFrontend/package-lock.json
 # Cursor IDE rules
 .cursorrules
 **/.cursorrules
+
+*.cmd
