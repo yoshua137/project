@@ -180,9 +180,6 @@ namespace AuthECAPI.Migrations
                     b.Property<int>("InternshipOfferId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("InternshipOfferId1")
-                        .HasColumnType("int");
-
                     b.Property<string>("InterviewAddress")
                         .HasColumnType("nvarchar(max)");
 
@@ -212,9 +209,6 @@ namespace AuthECAPI.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("StudentId1")
-                        .HasColumnType("nvarchar(450)");
-
                     b.Property<string>("VirtualMeetingLink")
                         .HasColumnType("nvarchar(max)");
 
@@ -222,11 +216,7 @@ namespace AuthECAPI.Migrations
 
                     b.HasIndex("InternshipOfferId");
 
-                    b.HasIndex("InternshipOfferId1");
-
                     b.HasIndex("StudentId");
-
-                    b.HasIndex("StudentId1");
 
                     b.ToTable("InternshipApplications");
                 });
@@ -567,24 +557,16 @@ namespace AuthECAPI.Migrations
             modelBuilder.Entity("AuthECAPI.Models.InternshipApplication", b =>
                 {
                     b.HasOne("AuthECAPI.Models.InternshipOffer", "InternshipOffer")
-                        .WithMany()
+                        .WithMany("InternshipApplications")
                         .HasForeignKey("InternshipOfferId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("AuthECAPI.Models.InternshipOffer", null)
-                        .WithMany("InternshipApplications")
-                        .HasForeignKey("InternshipOfferId1");
-
                     b.HasOne("AuthECAPI.Models.Student", "Student")
-                        .WithMany()
+                        .WithMany("InternshipApplications")
                         .HasForeignKey("StudentId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.HasOne("AuthECAPI.Models.Student", null)
-                        .WithMany("InternshipApplications")
-                        .HasForeignKey("StudentId1");
 
                     b.Navigation("InternshipOffer");
 

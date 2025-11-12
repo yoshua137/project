@@ -67,13 +67,13 @@ namespace AuthECAPI.Models
             // InternshipApplication relationships
             builder.Entity<InternshipApplication>()
                 .HasOne(ia => ia.InternshipOffer)
-                .WithMany()
+                .WithMany(io => io.InternshipApplications)
                 .HasForeignKey(ia => ia.InternshipOfferId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<InternshipApplication>()
                 .HasOne(ia => ia.Student)
-                .WithMany()
+                .WithMany(s => s.InternshipApplications)
                 .HasForeignKey(ia => ia.StudentId)
                 .OnDelete(DeleteBehavior.Restrict);
 

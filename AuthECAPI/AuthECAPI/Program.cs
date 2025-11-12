@@ -53,6 +53,53 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 
 var app = builder.Build();
 
+// Aplicar migraciones automáticamente al iniciar la aplicación
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<AppDbContext>();
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        
+        // Intentar aplicar migraciones si existen
+        try
+        {
+            var pendingMigrations = context.Database.GetPendingMigrations().ToList();
+            if (pendingMigrations.Any())
+            {
+                logger.LogInformation("Aplicando {Count} migraciones pendientes...", pendingMigrations.Count);
+                context.Database.Migrate();
+                logger.LogInformation("Migraciones aplicadas correctamente.");
+            }
+            else
+            {
+                logger.LogInformation("La base de datos está actualizada.");
+            }
+        }
+        catch (InvalidOperationException)
+        {
+            // Si no hay migraciones, intentar crear la base de datos directamente
+            logger.LogWarning("No se encontraron migraciones. Intentando crear la base de datos...");
+            if (!context.Database.CanConnect())
+            {
+                context.Database.EnsureCreated();
+                logger.LogInformation("Base de datos creada correctamente.");
+            }
+            else
+            {
+                logger.LogInformation("La base de datos ya existe.");
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Ocurrió un error al aplicar las migraciones de la base de datos: {Message}", ex.Message);
+        // No relanzar la excepción para permitir que la aplicación inicie y muestre el error en los logs
+    }
+}
+
 // Sincronizar hora con la nube al iniciar la aplicación
 var cloudTimeService = app.Services.GetRequiredService<ICloudTimeService>();
 _ = Task.Run(async () => await cloudTimeService.SyncWithCloudAsync());
