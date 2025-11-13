@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NotificationService, Notification } from '../services/notification.service';
 import { Subscription } from 'rxjs';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-notification-bell',
@@ -86,8 +87,9 @@ import { Subscription } from 'rxjs';
           </div>
           <div
             *ngFor="let notification of notifications"
-            class="p-4 border-b hover:bg-gray-50 transition"
+            class="p-4 border-b hover:bg-gray-50 transition cursor-pointer"
             [class.bg-blue-50]="!notification.isRead"
+            (click)="handleNotificationClick(notification)"
           >
             <div class="flex items-start justify-between gap-2">
               <div class="flex-1">
@@ -111,14 +113,14 @@ import { Subscription } from 'rxjs';
               <div class="flex flex-col gap-1">
                 <button
                   *ngIf="!notification.isRead"
-                  (click)="markAsRead(notification.id)"
+                  (click)="markAsRead(notification.id); $event.stopPropagation()"
                   class="text-xs text-blue-600 hover:text-blue-800"
                   title="Marcar como leída"
                 >
                   ✓
                 </button>
                 <button
-                  (click)="deleteNotification(notification.id)"
+                  (click)="deleteNotification(notification.id); $event.stopPropagation()"
                   class="text-xs text-red-600 hover:text-red-800"
                   title="Eliminar"
                 >
@@ -154,7 +156,10 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
   showDropdown = false;
   private subscriptions: Subscription[] = [];
 
-  constructor(private notificationService: NotificationService) {}
+  constructor(
+    private notificationService: NotificationService,
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
     // Suscribirse a las notificaciones
@@ -236,6 +241,28 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
 
   refresh(): void {
     this.notificationService.refresh();
+  }
+
+  handleNotificationClick(notification: Notification): void {
+    this.showDropdown = false;
+    if (!notification.isRead) {
+      this.markAsRead(notification.id);
+    }
+    const { type, relatedEntityId, relatedEntityType } = notification;
+    if (!relatedEntityId || !relatedEntityType) return;
+
+    switch (type) {
+      case 'APPLICATION_RECEIVED':
+      case 'ATTENDANCE_CONFIRMED':
+        if (relatedEntityType === 'InternshipApplication') {
+          this.router.navigate(['/mis-ofertas-pasantia'], {
+            queryParams: { highlightApplicant: relatedEntityId }
+          });
+        }
+        break;
+      default:
+        break;
+    }
   }
 
   formatDate(dateString: string): string {

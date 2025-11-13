@@ -17,7 +17,11 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let req of agreementRequests">
+            <tr *ngFor="let req of agreementRequests" 
+                class="fade-row"
+                [class.highlighted]="highlightedAgreementId === req.id"
+                [class.fade-stopped]="stoppedFadeRows.has(req.id)"
+                (mouseenter)="stopFadeOnHover(req.id)">
               <td class="py-2 px-4">{{ req.directorName }}</td>
               <td class="py-2 px-4">{{ req.directorDepartment }}</td>
               <td class="py-2 px-4">{{ req.requestDate | date:'short' }}</td>

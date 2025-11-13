@@ -78,3 +78,46 @@
   justify-content: center;
   align-items: center;
 } 
+
+/* Animación de fade para postulantes */
+.fade-applicant-row {
+  transition: background-color 0.5s ease-in-out;
+  background-color: white !important;
+  will-change: background-color;
+  animation: hoverFadeApplicant 3s ease-in-out infinite !important;
+}
+
+.fade-applicant-row:not(.fade-stopped):not(.highlighted) {
+  animation: hoverFadeApplicant 3s ease-in-out infinite !important;
+}
+
+.fade-applicant-row:hover {
+  animation: none !important;
+  background-color: rgba(59, 130, 246, 0.15) !important;
+}
+
+.fade-applicant-row.fade-stopped {
+  animation: none !important;
+  background-color: white !important;
+}
+
+.fade-applicant-row.highlighted {
+  background-color: rgba(59, 130, 246, 0.2) !important;
+  animation: none !important;
+}
+
+.fade-applicant-row.highlighted:not(:hover) {
+  animation: none !important;
+}
+
+@keyframes hoverFadeApplicant {
+  0% {
+    background-color: white !important;
+  }
+  50% {
+    background-color: rgba(59, 130, 246, 0.15) !important;
+  }
+  100% {
+    background-color: white !important;
+  }
+}

@@ -4,8 +4,9 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { FormsModule } from '@angular/forms';
 import { SignalRService } from '../../shared/services/signalr.service';
-import { Subscription } from 'rxjs';
+import { Subscription, firstValueFrom } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
+import { ActivatedRoute, Router } from '@angular/router';
 
 interface InternshipOffer {
   id: number;
@@ -77,6 +78,10 @@ export class MisOfertasPasantiaComponent implements OnInit {
   applicants: InternshipApplication[] = [];
   applicantsLoading = false;
   applicantsError = '';
+  highlightedApplicantId: number | null = null;
+  stoppedFadeRows = new Set<number>();
+  private allowFadeStop = false;
+  private pendingHighlightApplicantId: number | null = null;
   
   // Propiedades para el modal de revisión
   reviewingApplication: InternshipApplication | null = null;
@@ -109,11 +114,18 @@ export class MisOfertasPasantiaComponent implements OnInit {
     private http: HttpClient,
     private signalRService: SignalRService,
     private toastr: ToastrService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private route: ActivatedRoute,
+    private router: Router
   ) {}
 
   async ngOnInit(): Promise<void> {
     await this.signalRService.startConnection();
+    this.route.queryParams.subscribe(params => {
+      if (params['highlightApplicant']) {
+        this.pendingHighlightApplicantId = +params['highlightApplicant'];
+      }
+    });
     this.loadMyOffers();
     this.setupSignalRListeners();
   }
@@ -152,9 +164,15 @@ export class MisOfertasPasantiaComponent implements OnInit {
 
     this.http.get<InternshipOffer[]>(`${environment.apiBaseUrl}/InternshipOffer/my-offers`)
       .subscribe({
-        next: (data) => {
+        next: async (data) => {
           this.offers = data;
           this.loading = false;
+          if (this.pendingHighlightApplicantId) {
+            const offer = await this.findOfferByApplicantId(this.pendingHighlightApplicantId);
+            if (offer) {
+              this.openApplicantsModal(offer);
+            }
+          }
         },
         error: (err) => {
           console.error('Error loading offers:', err);
@@ -374,6 +392,9 @@ export class MisOfertasPasantiaComponent implements OnInit {
     this.applicants = [];
     this.applicantsError = '';
     this.applicantsLoading = true;
+    this.highlightedApplicantId = null;
+    this.stoppedFadeRows.clear();
+    this.allowFadeStop = false;
     
     // Cargar postulantes para esta oferta
     this.loadApplicants(offer.id);
@@ -392,11 +413,20 @@ export class MisOfertasPasantiaComponent implements OnInit {
         next: (data) => {
           this.applicants = data;
           this.applicantsLoading = false;
+          // Si venimos de notificación, destacar al postulante
+          if (this.pendingHighlightApplicantId && this.applicants.some(a => a.id === this.pendingHighlightApplicantId)) {
+            this.highlightApplicant(this.pendingHighlightApplicantId);
+            // limpiar query params
+            this.router.navigate([], { relativeTo: this.route, queryParams: {}, replaceUrl: true });
+            this.pendingHighlightApplicantId = null;
+          }
+          setTimeout(() => this.allowFadeStop = true, 200);
         },
         error: (err) => {
           console.error('Error loading applicants:', err);
           this.applicantsError = 'Error al cargar los postulantes';
           this.applicantsLoading = false;
+          setTimeout(() => this.allowFadeStop = true, 200);
         }
       });
   }
@@ -431,6 +461,37 @@ export class MisOfertasPasantiaComponent implements OnInit {
     }
   }
 
+  private async findOfferByApplicantId(applicantId: number): Promise<InternshipOffer | null> {
+    for (const offer of this.offers) {
+      try {
+        const applicants = await firstValueFrom(
+          this.http.get<InternshipApplication[]>(`${environment.apiBaseUrl}/InternshipApplication/offer/${offer.id}`)
+        );
+        if (applicants.some(a => a.id === applicantId)) {
+          return offer;
+        }
+      } catch {
+        // ignore
+      }
+    }
+    return null;
+  }
+
+  private highlightApplicant(applicantId: number): void {
+    this.stoppedFadeRows.delete(applicantId);
+    this.highlightedApplicantId = applicantId;
+    setTimeout(() => {
+      if (this.highlightedApplicantId === applicantId) {
+        this.highlightedApplicantId = null;
+      }
+    }, 3000);
+  }
+
+  stopFadeOnHover(event: MouseEvent, applicantId: number): void {
+    if (!this.allowFadeStop) return;
+    if (this.stoppedFadeRows.has(applicantId)) return;
+    this.stoppedFadeRows.add(applicantId);
+  }
   viewCV(applicationId: number): void {
     this.http.get(`${environment.apiBaseUrl}/InternshipApplication/${applicationId}/cv`, { responseType: 'blob' })
       .subscribe({
