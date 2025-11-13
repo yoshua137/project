@@ -117,6 +117,32 @@ namespace AuthECAPI.Controllers
                 _context.InternshipApplications.Add(application);
                 await _context.SaveChangesAsync();
 
+                // Crear notificación persistente y enviar notificación en tiempo real a la organización
+                var organizationId = internshipOffer.OrganizationId;
+                var studentName = student.AppUser?.FullName ?? "Un estudiante";
+                var studentCareer = student.AppUser?.Career ?? "Estudiante";
+
+                await _notificationService.CreateNotificationAsync(
+                    organizationId,
+                    "Nueva Postulación a Oferta de Pasantía",
+                    $"{studentName} ({studentCareer}) se ha postulado a tu oferta '{internshipOffer.Title}'.",
+                    "APPLICATION_RECEIVED",
+                    application.Id,
+                    "InternshipApplication"
+                );
+
+                // Enviar notificación en tiempo real a la organización
+                await _hubContext.Clients.Group($"user_{organizationId}").SendAsync("ApplicationReceived", new
+                {
+                    applicationId = application.Id,
+                    offerId = internshipOffer.Id,
+                    offerTitle = internshipOffer.Title,
+                    studentId = application.StudentId,
+                    studentName = studentName,
+                    studentCareer = studentCareer,
+                    applicationDate = application.ApplicationDate
+                });
+
                 var applicationResponse = new InternshipApplicationResponse
                 {
                     Id = application.Id,

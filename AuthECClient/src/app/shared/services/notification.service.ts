@@ -65,6 +65,18 @@ export class NotificationService {
         this.refresh();
       }
     });
+
+    this.signalRService.onAgreementRequestReceived().subscribe((notification) => {
+      if (notification) {
+        this.refresh();
+      }
+    });
+
+    this.signalRService.onApplicationReceived().subscribe((notification) => {
+      if (notification) {
+        this.refresh();
+      }
+    });
   }
 
   // Cargar notificaciones

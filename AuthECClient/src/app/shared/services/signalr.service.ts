@@ -27,6 +27,23 @@ export interface AttendanceConfirmedNotification {
   willAttend: boolean;
 }
 
+export interface AgreementRequestReceivedNotification {
+  agreementRequestId: number;
+  organizationName: string;
+  department: string;
+  requestDate: string;
+}
+
+export interface ApplicationReceivedNotification {
+  applicationId: number;
+  offerId: number;
+  offerTitle: string;
+  studentId: string;
+  studentName: string;
+  studentCareer: string;
+  applicationDate: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -36,6 +53,8 @@ export class SignalRService {
   private interviewScheduled$ = new BehaviorSubject<InterviewScheduledNotification | null>(null);
   private applicationStatusChanged$ = new BehaviorSubject<ApplicationStatusChangedNotification | null>(null);
   private attendanceConfirmed$ = new BehaviorSubject<AttendanceConfirmedNotification | null>(null);
+  private agreementRequestReceived$ = new BehaviorSubject<AgreementRequestReceivedNotification | null>(null);
+  private applicationReceived$ = new BehaviorSubject<ApplicationReceivedNotification | null>(null);
 
   constructor(private authService: AuthService) {}
 
@@ -81,6 +100,14 @@ export class SignalRService {
 
     this.hubConnection.on('AttendanceConfirmed', (data: AttendanceConfirmedNotification) => {
       this.attendanceConfirmed$.next(data);
+    });
+
+    this.hubConnection.on('AgreementRequestReceived', (data: AgreementRequestReceivedNotification) => {
+      this.agreementRequestReceived$.next(data);
+    });
+
+    this.hubConnection.on('ApplicationReceived', (data: ApplicationReceivedNotification) => {
+      this.applicationReceived$.next(data);
     });
 
     // Manejar cambios de estado de conexión
@@ -149,12 +176,28 @@ export class SignalRService {
   }
 
   /**
+   * Observable para solicitudes de convenio recibidas (para directores)
+   */
+  onAgreementRequestReceived(): Observable<AgreementRequestReceivedNotification | null> {
+    return this.agreementRequestReceived$.asObservable();
+  }
+
+  /**
+   * Observable para nuevas postulaciones recibidas (para organizaciones)
+   */
+  onApplicationReceived(): Observable<ApplicationReceivedNotification | null> {
+    return this.applicationReceived$.asObservable();
+  }
+
+  /**
    * Limpia las notificaciones actuales
    */
   clearNotifications(): void {
     this.interviewScheduled$.next(null);
     this.applicationStatusChanged$.next(null);
     this.attendanceConfirmed$.next(null);
+    this.agreementRequestReceived$.next(null);
+    this.applicationReceived$.next(null);
   }
 }
 

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 
 namespace AuthECAPI.Controllers
 {
@@ -30,6 +31,20 @@ namespace AuthECAPI.Controllers
         public string? Area { get; set; }
     }
 
+    // Modelo para crear un rol
+    public class CreateRoleModel
+    {
+        public string Name { get; set; } = string.Empty;
+    }
+
+    // Modelo de respuesta para roles
+    public class RoleResponse
+    {
+        public string Id { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string NormalizedName { get; set; } = string.Empty;
+    }
+
     public static class RoleEndpoints
     {
         public static IEndpointRouteBuilder MapRoleEndpoints(this IEndpointRouteBuilder app)
@@ -41,7 +56,117 @@ namespace AuthECAPI.Controllers
             endpoints.MapPost("/director", CreateDirector);
             endpoints.MapPost("/organization", CreateOrganization);
 
+            // Endpoints para gestión de roles
+            var roleEndpoints = app.MapGroup("/roles");
+            roleEndpoints.MapPost("", CreateRole);
+            roleEndpoints.MapGet("", GetAllRoles);
+            roleEndpoints.MapGet("/{roleName}", GetRoleByName);
+            roleEndpoints.MapDelete("/{roleName}", DeleteRole);
+
             return app;
+        }
+
+        /// <summary>
+        /// Crea un nuevo rol en la tabla AspNetRoles
+        /// </summary>
+        [Authorize(Roles = "Admin")]
+        private static async Task<IResult> CreateRole(
+            RoleManager<IdentityRole> roleManager,
+            [FromBody] CreateRoleModel model)
+        {
+            if (string.IsNullOrWhiteSpace(model.Name))
+            {
+                return Results.BadRequest("El nombre del rol es requerido");
+            }
+
+            // Verificar si el rol ya existe
+            var roleExists = await roleManager.RoleExistsAsync(model.Name);
+            if (roleExists)
+            {
+                return Results.BadRequest($"El rol '{model.Name}' ya existe");
+            }
+
+            // Crear el nuevo rol
+            var role = new IdentityRole(model.Name);
+            var result = await roleManager.CreateAsync(role);
+
+            if (result.Succeeded)
+            {
+                var response = new RoleResponse
+                {
+                    Id = role.Id,
+                    Name = role.Name ?? string.Empty,
+                    NormalizedName = role.NormalizedName ?? string.Empty
+                };
+                return Results.Ok(response);
+            }
+
+            return Results.BadRequest(result.Errors);
+        }
+
+        /// <summary>
+        /// Obtiene todos los roles
+        /// </summary>
+        [Authorize(Roles = "Admin")]
+        private static Task<IResult> GetAllRoles(
+            RoleManager<IdentityRole> roleManager)
+        {
+            var roles = roleManager.Roles.ToList();
+            var response = roles.Select(r => new RoleResponse
+            {
+                Id = r.Id,
+                Name = r.Name ?? string.Empty,
+                NormalizedName = r.NormalizedName ?? string.Empty
+            }).ToList();
+
+            return Task.FromResult(Results.Ok(response));
+        }
+
+        /// <summary>
+        /// Obtiene un rol por nombre
+        /// </summary>
+        [Authorize(Roles = "Admin")]
+        private static async Task<IResult> GetRoleByName(
+            RoleManager<IdentityRole> roleManager,
+            string roleName)
+        {
+            var role = await roleManager.FindByNameAsync(roleName);
+            if (role == null)
+            {
+                return Results.NotFound($"El rol '{roleName}' no existe");
+            }
+
+            var response = new RoleResponse
+            {
+                Id = role.Id,
+                Name = role.Name ?? string.Empty,
+                NormalizedName = role.NormalizedName ?? string.Empty
+            };
+
+            return Results.Ok(response);
+        }
+
+        /// <summary>
+        /// Elimina un rol
+        /// </summary>
+        [Authorize(Roles = "Admin")]
+        private static async Task<IResult> DeleteRole(
+            RoleManager<IdentityRole> roleManager,
+            string roleName)
+        {
+            var role = await roleManager.FindByNameAsync(roleName);
+            if (role == null)
+            {
+                return Results.NotFound($"El rol '{roleName}' no existe");
+            }
+
+            var result = await roleManager.DeleteAsync(role);
+            if (result.Succeeded)
+            {
+                return Results.Ok($"Rol '{roleName}' eliminado correctamente");
+            }
+
+            return Results.BadRequest(result.Errors);
         }
 
         [AllowAnonymous]

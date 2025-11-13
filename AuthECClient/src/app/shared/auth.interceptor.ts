@@ -12,9 +12,11 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const toastr = inject(ToastrService)
   const backendHealthService = inject(BackendHealthService)
 
-  if (authService.isLoggedIn()) {
+  // Solo agregar el token si existe, tiene formato válido y no está expirado
+  const token = authService.getToken();
+  if (token && token.trim() !== '' && authService.isLoggedIn() && authService.isTokenValid()) {
     const clonedReq = req.clone({
-      headers: req.headers.set('Authorization', 'Bearer ' + authService.getToken())
+      headers: req.headers.set('Authorization', 'Bearer ' + token)
     })
     return next(clonedReq).pipe(
       tap({

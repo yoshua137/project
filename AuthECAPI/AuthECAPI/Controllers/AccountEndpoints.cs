@@ -18,13 +18,33 @@ namespace AuthECAPI.Controllers
       ClaimsPrincipal user,
       UserManager<AppUser> userManager)
     {
-      string userID = user.Claims.First(x => x.Type == "userID").Value;
+      // Verificar que el usuario esté autenticado
+      if (user?.Identity?.IsAuthenticated != true)
+      {
+        return Results.Unauthorized();
+      }
+
+      // Verificar que exista el claim userID
+      var userIDClaim = user.Claims.FirstOrDefault(x => x.Type == "userID");
+      if (userIDClaim == null || string.IsNullOrEmpty(userIDClaim.Value))
+      {
+        return Results.Unauthorized();
+      }
+
+      string userID = userIDClaim.Value;
       var userDetails = await userManager.FindByIdAsync(userID);
+      
+      // Si el usuario no existe, retornar 401
+      if (userDetails == null)
+      {
+        return Results.Unauthorized();
+      }
+
       return Results.Ok(
         new
         {
-          Email = userDetails?.Email,
-          FullName = userDetails?.FullName,
+          Email = userDetails.Email,
+          FullName = userDetails.FullName,
         });
     }
   }

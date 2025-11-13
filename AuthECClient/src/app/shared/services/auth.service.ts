@@ -38,7 +38,14 @@ export class AuthService {
   }
 
   isLoggedIn() {
-    return this.getToken() != null ? true : false;
+    const token = this.getToken();
+    // Verificar que el token exista, no esté vacío y tenga formato básico válido
+    if (!token || token.trim() === '') {
+      return false;
+    }
+    // Verificar formato JWT básico (debe tener 3 partes separadas por puntos)
+    const parts = token.split('.');
+    return parts.length === 3;
   }
 
   saveToken(token: string) {
@@ -54,7 +61,20 @@ export class AuthService {
   }
 
   getClaims(){
-   return JSON.parse(window.atob(this.getToken()!.split('.')[1]))
+    const token = this.getToken();
+    if (!token) {
+      return null;
+    }
+    try {
+      const parts = token.split('.');
+      if (parts.length !== 3) {
+        return null;
+      }
+      return JSON.parse(window.atob(parts[1]));
+    } catch (error) {
+      console.error('Error al decodificar token:', error);
+      return null;
+    }
   }
 
   /**
@@ -64,12 +84,26 @@ export class AuthService {
   isTokenValid(): boolean {
     const token = this.getToken();
     
-    if (!token) {
+    // Verificar que el token exista y no esté vacío
+    if (!token || token.trim() === '') {
+      return false;
+    }
+
+    // Verificar formato básico del JWT (debe tener 3 partes separadas por puntos)
+    const tokenParts = token.split('.');
+    if (tokenParts.length !== 3) {
+      console.warn('Token con formato inválido');
       return false;
     }
 
     try {
       const claims = this.getClaims();
+      
+      // Verificar que se pudieron decodificar los claims
+      if (!claims) {
+        console.warn('No se pudieron decodificar los claims del token');
+        return false;
+      }
       
       // Verificar si existe el claim 'exp' (expiration)
       if (!claims.exp) {

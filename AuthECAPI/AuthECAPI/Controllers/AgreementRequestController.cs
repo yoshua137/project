@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using AuthECAPI.Models;
 using AuthECAPI.Services;
+using AuthECAPI.Hubs;
 using System.Security.Claims;
 using System.IO;
 
@@ -17,13 +19,15 @@ namespace AuthECAPI.Controllers
         private readonly IWebHostEnvironment _environment;
         private readonly ICloudTimeService _cloudTimeService;
         private readonly INotificationService _notificationService;
+        private readonly IHubContext<InternshipNotificationHub> _hubContext;
 
-        public AgreementRequestController(AppDbContext context, IWebHostEnvironment environment, ICloudTimeService cloudTimeService, INotificationService notificationService)
+        public AgreementRequestController(AppDbContext context, IWebHostEnvironment environment, ICloudTimeService cloudTimeService, INotificationService notificationService, IHubContext<InternshipNotificationHub> hubContext)
         {
             _context = context;
             _environment = environment;
             _cloudTimeService = cloudTimeService;
             _notificationService = notificationService;
+            _hubContext = hubContext;
         }
 
         // POST: api/AgreementRequest
@@ -101,6 +105,25 @@ namespace AuthECAPI.Controllers
 
                 _context.AgreementRequests.Add(agreementRequest);
                 await _context.SaveChangesAsync();
+
+                // Crear notificación persistente y enviar notificación en tiempo real al director
+                await _notificationService.CreateNotificationAsync(
+                    agreementRequest.DirectorId,
+                    "Nueva Solicitud de Convenio",
+                    $"La organización '{organization.AppUser?.FullName ?? "Organización"}' ha enviado una nueva solicitud de convenio para el departamento '{director.Department}'.",
+                    "AGREEMENT_REQUEST_RECEIVED",
+                    agreementRequest.Id,
+                    "AgreementRequest"
+                );
+
+                // Enviar notificación en tiempo real al director
+                await _hubContext.Clients.Group($"user_{agreementRequest.DirectorId}").SendAsync("AgreementRequestReceived", new
+                {
+                    agreementRequestId = agreementRequest.Id,
+                    organizationName = organization.AppUser?.FullName ?? "Organización",
+                    department = director.Department,
+                    requestDate = agreementRequest.RequestDate
+                });
 
                 var response = new AgreementRequestResponse
                 {
