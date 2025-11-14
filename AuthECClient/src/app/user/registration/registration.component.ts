@@ -7,6 +7,7 @@ import { ToastrService } from 'ngx-toastr';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { CareerModalComponent } from './career-modal.component';
+import { RegistrationPrefillService } from '../../shared/services/registration-prefill.service';
 
 @Component({
   selector: 'app-registration',
@@ -19,6 +20,8 @@ export class RegistrationComponent implements OnInit {
 
   isSubmitted: boolean = false;
   showCareerModal = false;
+  isEmailPrefilled = false;
+  isFullNamePrefilled = false;
   
   allDepartments = [
     {
@@ -78,7 +81,8 @@ export class RegistrationComponent implements OnInit {
     private router: Router,
     private route: ActivatedRoute,
     private toastr: ToastrService,
-    private http: HttpClient
+    private http: HttpClient,
+    private prefillService: RegistrationPrefillService
   ) { }
 
   passwordMatchValidator: ValidatorFn = (control: AbstractControl): { [key: string]: any } | null => {
@@ -127,7 +131,7 @@ export class RegistrationComponent implements OnInit {
       
       if (role && (role === 'Student' || role === 'Organization' || role === 'Teacher' || role === 'Director')) {
         this.registrationForm.get('role')?.setValue(role);
-        this.updateValidators(role);
+        this.configureRole(role);
       } else if (!token) {
         // Si no hay token ni rol válido, redirigir a la selección de rol
         this.router.navigate(['/user/select-role']);
@@ -143,7 +147,7 @@ export class RegistrationComponent implements OnInit {
     this.http.get(`${environment.apiBaseUrl}/RegistrationInvitation/validate/${token}`).subscribe({
       next: (response: any) => {
         this.registrationForm.get('role')?.setValue(response.role);
-        this.updateValidators(response.role);
+        this.configureRole(response.role);
         this.toastr.success('Token de invitación válido', 'Validación Exitosa');
       },
       error: (err) => {
@@ -186,6 +190,41 @@ export class RegistrationComponent implements OnInit {
     fullNameControl?.updateValueAndValidity();
     departmentControl?.updateValueAndValidity();
     invitationTokenControl?.updateValueAndValidity();
+  }
+
+  private configureRole(role: string | null) {
+    this.updateValidators(role);
+    if (role) {
+      this.applyPrefillForRole(role);
+    }
+  }
+
+  private applyPrefillForRole(role: string) {
+    const emailControl = this.registrationForm.get('email');
+    const fullNameControl = this.registrationForm.get('fullName');
+
+    if (role === 'Student') {
+      const data = this.prefillService.consumePrefill('Student');
+      if (data) {
+        emailControl?.setValue(data.email);
+        emailControl?.disable({ emitEvent: false });
+        this.isEmailPrefilled = true;
+
+        fullNameControl?.setValue(data.fullName);
+        fullNameControl?.disable({ emitEvent: false });
+        this.isFullNamePrefilled = true;
+        return;
+      }
+    }
+
+    if (emailControl?.disabled) {
+      emailControl.enable({ emitEvent: false });
+    }
+    if (fullNameControl?.disabled) {
+      fullNameControl.enable({ emitEvent: false });
+    }
+    this.isEmailPrefilled = false;
+    this.isFullNamePrefilled = false;
   }
 
   hasDisplayableError(controlName: string): boolean {
@@ -288,20 +327,47 @@ export class RegistrationComponent implements OnInit {
         this.router.navigate(['/user/login']);
       },
       error: (err) => {
+        if (this.handleDuplicateEmailError(err, registrationData.role)) {
+          return;
+        }
         if (err.error && err.error.errors) {
           err.error.errors.forEach((x: any) => {
-            if (x.code === "DuplicateEmail") {
-              this.toastr.error('El correo electrónico ya está en uso.', 'Fallo en el Registro');
-            } else {
-              this.toastr.error(x.description, 'Fallo en el Registro');
-            }
+            this.toastr.error(x.description ?? 'Ocurrió un error en el registro.', 'Fallo en el Registro');
           });
-        } else {
-          this.toastr.error('Ocurrió un error inesperado.', 'Fallo en el Registro');
+          return;
         }
+        if (typeof err.error === 'string' && err.error.trim() !== '') {
+          this.toastr.error(err.error, 'Fallo en el Registro');
+          return;
+        }
+        if (err.error?.message) {
+          this.toastr.error(err.error.message, 'Fallo en el Registro');
+          return;
+        }
+        this.toastr.error('Ocurrió un error inesperado.', 'Fallo en el Registro');
         console.error('API Error:', err);
       }
     });
+  }
+
+  private handleDuplicateEmailError(err: any, role: string | null): boolean {
+    const errors = err?.error?.errors;
+    const normalizedMessage = (err?.error?.message ?? '').toString().toLowerCase();
+    const duplicateCodes = new Set<string>(['DuplicateEmail', 'DuplicateUserName']);
+
+    const hasDuplicateCode = Array.isArray(errors) && errors.some((x: any) => duplicateCodes.has(x?.code));
+    const hasDuplicateMessage = normalizedMessage.includes('duplicate') || normalizedMessage.includes('ya existe');
+
+    if (role === 'Student' && (hasDuplicateCode || hasDuplicateMessage)) {
+      this.toastr.error('Tu correo institucional ya está registrado. Por favor inicia sesión o usa otro correo.', 'Registro de Estudiante');
+      return true;
+    }
+
+    if (hasDuplicateCode) {
+      this.toastr.error('El correo electrónico ya está en uso.', 'Fallo en el Registro');
+      return true;
+    }
+    return false;
   }
 
   onCareerSelectedFromModal(career: string) {

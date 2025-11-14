@@ -37,6 +37,10 @@ export class AuthService {
     return this.http.post(environment.apiBaseUrl + '/signin', formData);
   }
 
+  signinWithGoogle(credential: string) {
+    return this.http.post(environment.apiBaseUrl + '/signin/google', { credential });
+  }
+
   isLoggedIn() {
     const token = this.getToken();
     // Verificar que el token exista, no esté vacío y tenga formato básico válido

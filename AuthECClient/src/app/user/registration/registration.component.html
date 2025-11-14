@@ -15,6 +15,9 @@
   <div class="mb-3">
     <input type="email" placeholder="Correo Electrónico" formControlName="email"
       class="w-full px-3 py-2 leading-tight text-gray-700 bg-gray-200 border rounded shadow-inner appearance-none focus:outline-none focus:shadow-outline">
+    <p *ngIf="isEmailPrefilled" class="text-xs mt-1 text-blue-ucb">
+      Correo importado desde tu cuenta institucional.
+    </p>
     <div class="error-feedback" *ngIf="hasDisplayableError('email')">
       <div *ngIf="email.hasError('required')">
         El correo electrónico es requerido.
@@ -53,6 +56,9 @@
     <div class="mb-3">
       <input type="text" placeholder="Nombre Completo" formControlName="fullName"
         class="w-full px-3 py-2 leading-tight text-gray-700 bg-gray-200 border rounded shadow-inner appearance-none focus:outline-none focus:shadow-outline">
+      <p *ngIf="isFullNamePrefilled" class="text-xs mt-1 text-blue-ucb">
+        Nombre importado desde tu cuenta institucional.
+      </p>
       <div class="error-feedback" *ngIf="hasDisplayableError('fullName')">
         <div *ngIf="fullName.errors?.['required']">
           El nombre completo es requerido.

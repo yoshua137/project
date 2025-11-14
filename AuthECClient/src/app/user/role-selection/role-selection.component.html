@@ -7,10 +7,13 @@
   </div>
 </div>
 <div class="flex flex-col space-y-4 items-center">
-  <a routerLink="/user/registration" [queryParams]="{ role: 'Student' }"
+  <button type="button" (click)="onStudentRegister()"
     class="w-3/4 max-w-sm font-bold text-blue-ucb bg-yellow-ucb rounded-lg py-4 px-4 border-2 border-transparent hover:border-blue-ucb transition-all duration-300 ease-in-out text-center">
     Registrarse como<br>Estudiante
-  </a>
+    <div class="text-xs font-normal mt-2 text-blue-ucb/80">
+      Se autenticará con tu cuenta &#64;ucb.edu.bo
+    </div>
+  </button>
   <a routerLink="/user/registration" [queryParams]="{ role: 'Organization' }"
     class="w-3/4 max-w-sm font-bold text-yellow-ucb bg-blue-ucb rounded-lg py-4 px-4 border-2 border-transparent hover:border-yellow-ucb transition-all duration-300 ease-in-out text-center">
     Registrarse como<br>Organización

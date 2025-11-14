@@ -1,5 +1,7 @@
 ﻿using AuthECAPI.Models;
+using Google.Apis.Auth;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -28,12 +30,18 @@ namespace AuthECAPI.Controllers
     public string Password { get; set; }
   }
 
+  public class GoogleSignInRequest
+  {
+    public string Credential { get; set; }
+  }
+
   public static class IdentityUserEndpoints
   {
     public static IEndpointRouteBuilder MapIdentityUserEndpoints(this IEndpointRouteBuilder app)
     {
       app.MapPost("/signup", CreateUser);
       app.MapPost("/signin", SignIn);
+      app.MapPost("/signin/google", SignInWithGoogle);
       return app;
     }
 
@@ -72,37 +80,87 @@ namespace AuthECAPI.Controllers
       var user = await userManager.FindByEmailAsync(loginModel.Email);
       if (user != null && await userManager.CheckPasswordAsync(user, loginModel.Password))
       {
-        var roles = await userManager.GetRolesAsync(user);
-        var mainRole = roles.FirstOrDefault() ?? "";
-        var signInKey = new SymmetricSecurityKey(
-                        Encoding.UTF8.GetBytes(appSettings.Value.JWTSecret)
-                        );
-        ClaimsIdentity claims = new ClaimsIdentity(new Claim[]
-        {
+        var token = await CreateTokenAsync(user, userManager, appSettings.Value);
+        return Results.Ok(new { token });
+      }
+      else
+        return Results.BadRequest(new { message = "Username or password is incorrect." });
+    }
+
+    [AllowAnonymous]
+    private static async Task<IResult> SignInWithGoogle(
+        UserManager<AppUser> userManager,
+        [FromBody] GoogleSignInRequest request,
+        IOptions<AppSettings> appSettings)
+    {
+      if (request == null || string.IsNullOrWhiteSpace(request.Credential))
+      {
+        return Results.BadRequest(new { message = "Credencial de Google inválida." });
+      }
+
+      GoogleJsonWebSignature.Payload payload;
+      try
+      {
+        payload = await GoogleJsonWebSignature.ValidateAsync(
+          request.Credential,
+          new GoogleJsonWebSignature.ValidationSettings()
+          {
+            Audience = new[] { appSettings.Value.GoogleClientId }
+          });
+      }
+      catch (InvalidJwtException)
+      {
+        return Results.Json(new { message = "Token de Google inválido." }, statusCode: StatusCodes.Status401Unauthorized);
+      }
+
+      if (string.IsNullOrWhiteSpace(payload.Email) ||
+          !payload.Email.EndsWith("@ucb.edu.bo", StringComparison.OrdinalIgnoreCase))
+      {
+        return Results.Json(new { message = "Solo se permiten cuentas institucionales @ucb.edu.bo." }, statusCode: StatusCodes.Status401Unauthorized);
+      }
+
+      var user = await userManager.FindByEmailAsync(payload.Email);
+      if (user == null)
+      {
+        return Results.BadRequest(new { message = "No existe un usuario registrado con este correo institucional." });
+      }
+
+      var token = await CreateTokenAsync(user, userManager, appSettings.Value);
+      return Results.Ok(new { token });
+    }
+
+    private static async Task<string> CreateTokenAsync(
+        AppUser user,
+        UserManager<AppUser> userManager,
+        AppSettings appSettings)
+    {
+      var roles = await userManager.GetRolesAsync(user);
+      var mainRole = roles.FirstOrDefault() ?? "";
+      var signInKey = new SymmetricSecurityKey(
+                      Encoding.UTF8.GetBytes(appSettings.JWTSecret)
+                      );
+      ClaimsIdentity claims = new ClaimsIdentity(new Claim[]
+      {
           new Claim("userID",user.Id.ToString()),
           new Claim("gender",user.Gender.ToString()),
           new Claim("age",(DateTime.Now.Year - user.DOB.Year).ToString()),
           new Claim(ClaimTypes.Role, mainRole),
           new Claim("role", mainRole),
-        });
-        if (user.LibraryID != null)
-          claims.AddClaim(new Claim("libraryID", user.LibraryID.ToString()!));
-        var tokenDescriptor = new SecurityTokenDescriptor
-        {
-          Subject = claims,
-          Expires = DateTime.UtcNow.AddDays(1),
-          SigningCredentials = new SigningCredentials(
-                signInKey,
-                SecurityAlgorithms.HmacSha256Signature
-                )
-        };
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var securityToken = tokenHandler.CreateToken(tokenDescriptor);
-        var token = tokenHandler.WriteToken(securityToken);
-        return Results.Ok(new { token });
-      }
-      else
-        return Results.BadRequest(new { message = "Username or password is incorrect." });
+      });
+      if (user.LibraryID != null)
+        claims.AddClaim(new Claim("libraryID", user.LibraryID.ToString()!));
+      var tokenDescriptor = new SecurityTokenDescriptor
+      {
+        Subject = claims,
+        Expires = DateTime.UtcNow.AddDays(1),
+        SigningCredentials = new SigningCredentials(
+              signInKey,
+              SecurityAlgorithms.HmacSha256Signature
+              )
+      };
+      var tokenHandler = new JwtSecurityTokenHandler();
+      var securityToken = tokenHandler.CreateToken(tokenDescriptor);
+      return tokenHandler.WriteToken(securityToken);
     }
   }
 }

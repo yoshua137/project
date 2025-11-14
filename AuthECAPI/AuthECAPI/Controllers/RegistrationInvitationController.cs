@@ -7,6 +7,7 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.ComponentModel.DataAnnotations;
+using Microsoft.Extensions.Options;
 
 namespace AuthECAPI.Controllers
 {
@@ -17,11 +18,16 @@ namespace AuthECAPI.Controllers
     {
         private readonly AppDbContext _context;
         private readonly ICloudTimeService _cloudTimeService;
+        private readonly AppSettings _appSettings;
 
-        public RegistrationInvitationController(AppDbContext context, ICloudTimeService cloudTimeService)
+        public RegistrationInvitationController(
+            AppDbContext context,
+            ICloudTimeService cloudTimeService,
+            IOptions<AppSettings> appSettings)
         {
             _context = context;
             _cloudTimeService = cloudTimeService;
+            _appSettings = appSettings.Value;
         }
 
         // POST: api/RegistrationInvitation/generate
@@ -57,8 +63,8 @@ namespace AuthECAPI.Controllers
                 await _context.SaveChangesAsync();
 
                 // Generar la URL de registro
-                var baseUrl = $"{Request.Scheme}://{Request.Host}";
-                var registrationUrl = $"{baseUrl}/user/registration?token={token}&role={request.Role}";
+                var frontendBaseUrl = GetFrontendBaseUrl();
+                var registrationUrl = $"{frontendBaseUrl}/user/registration?token={token}&role={request.Role}";
 
                 return Ok(new
                 {
@@ -72,6 +78,15 @@ namespace AuthECAPI.Controllers
             {
                 return StatusCode(500, $"Error interno del servidor: {ex.Message}");
             }
+        }
+
+        private string GetFrontendBaseUrl()
+        {
+            if (!string.IsNullOrWhiteSpace(_appSettings.FrontendBaseUrl))
+            {
+                return _appSettings.FrontendBaseUrl.TrimEnd('/');
+            }
+            return $"{Request.Scheme}://{Request.Host}";
         }
 
         // GET: api/RegistrationInvitation/validate/{token}
