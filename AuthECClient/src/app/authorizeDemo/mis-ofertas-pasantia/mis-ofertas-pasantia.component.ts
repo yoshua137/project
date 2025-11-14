@@ -82,6 +82,8 @@ export class MisOfertasPasantiaComponent implements OnInit {
   stoppedFadeRows = new Set<number>();
   private allowFadeStop = false;
   private pendingHighlightApplicantId: number | null = null;
+  viewMode: 'grid' | 'list' = 'grid';
+  expandedOffers = new Set<number>();
   
   // Propiedades para el modal de revisión
   reviewingApplication: InternshipApplication | null = null;
@@ -492,6 +494,23 @@ export class MisOfertasPasantiaComponent implements OnInit {
     if (this.stoppedFadeRows.has(applicantId)) return;
     this.stoppedFadeRows.add(applicantId);
   }
+
+  toggleViewMode(): void {
+    this.viewMode = this.viewMode === 'grid' ? 'list' : 'grid';
+  }
+
+  toggleOfferDetails(offerId: number): void {
+    if (this.expandedOffers.has(offerId)) {
+      this.expandedOffers.delete(offerId);
+    } else {
+      this.expandedOffers.add(offerId);
+    }
+  }
+
+  isOfferExpanded(offerId: number): boolean {
+    return this.expandedOffers.has(offerId);
+  }
+
   viewCV(applicationId: number): void {
     this.http.get(`${environment.apiBaseUrl}/InternshipApplication/${applicationId}/cv`, { responseType: 'blob' })
       .subscribe({

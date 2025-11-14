@@ -1,9 +1,29 @@
 <div class="min-h-screen bg-gray-50 py-8">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <!-- Header -->
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-900">Mis Ofertas de Pasantía</h1>
-      <p class="mt-2 text-gray-600">Gestiona todas las ofertas de pasantía de tu organización</p>
+    <div class="mb-8 flex items-start justify-between">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">Mis Ofertas de Pasantía</h1>
+        <p class="mt-2 text-gray-600">Gestiona todas las ofertas de pasantía de tu organización</p>
+      </div>
+      <button
+        (click)="toggleViewMode()"
+        class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        [attr.aria-label]="viewMode === 'grid' ? 'Cambiar a vista en filas' : 'Cambiar a vista en tarjetas'"
+      >
+        <ng-container *ngIf="viewMode === 'grid'; else listViewLabel">
+          <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h4V4H4v2zm6 0h4V4h-4v2zm6 0h4V4h-4v2zM4 12h4v-2H4v2zm6 0h4v-2h-4v2zm6 0h4v-2h-4v2zM4 18h4v-2H4v2zm6 0h4v-2h-4v2zm6 0h4v-2h-4v2z" />
+          </svg>
+          <span>Vista tarjetas</span>
+        </ng-container>
+        <ng-template #listViewLabel>
+          <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+          <span>Vista filas</span>
+        </ng-template>
+      </button>
     </div>
 
     <!-- Loading State -->
@@ -57,7 +77,7 @@
         </div>
 
         <!-- Action Buttons -->
-        <div class="flex gap-3">
+        <div class="flex gap-3 items-center">
           <button
             (click)="loadMyOffers()"
             class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
@@ -85,7 +105,7 @@
       </div>
 
       <!-- Offers Grid -->
-      <div *ngIf="filteredOffers.length > 0" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div *ngIf="filteredOffers.length > 0 && viewMode === 'grid'" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <div *ngFor="let offer of filteredOffers" class="bg-white shadow rounded-lg overflow-hidden hover:shadow-lg transition-shadow duration-300 flex flex-col h-full">
           <!-- Offer Header -->
           <div class="p-6 flex flex-col flex-1">
@@ -204,10 +224,108 @@
           </div>
         </div>
       </div>
+
+      <!-- Offers List -->
+      <div *ngIf="filteredOffers.length > 0 && viewMode === 'list'" class="space-y-4">
+        <div *ngFor="let offer of filteredOffers" class="bg-white shadow rounded-lg overflow-hidden hover:shadow-md transition-shadow duration-300">
+          <div class="p-6 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div class="flex-1 space-y-3">
+              <div class="flex items-start justify-between gap-3">
+                <div class="flex-1">
+                  <h3 class="text-lg font-semibold text-gray-900">{{ offer.title }}</h3>
+                  <p class="text-sm text-gray-500 mt-1">{{ offer.description }}</p>
+                </div>
+                <div class="flex gap-2 items-start">
+                  <button (click)="openEditModal(offer)" class="rounded-full p-2 bg-blue-50 hover:bg-blue-100 text-blue-600 hover:text-blue-800 transition" title="Editar oferta">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-2.828 0L9 13zm-6 6h6v-2a2 2 0 012-2h2v6H3v-2z" />
+                    </svg>
+                  </button>
+                  <button (click)="openDeleteModal(offer)" class="rounded-full p-2 bg-red-50 hover:bg-red-100 text-red-500 hover:text-red-700 transition" title="Eliminar oferta">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <div class="text-sm text-gray-600">
+                <div class="flex items-center gap-4 flex-wrap">
+                  <span class="flex items-center relative group">
+                    <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 012 2v6a2 2 0 01-2 2H8a2 2 0 01-2-2V8a2 2 0 012-2V6" />
+                    </svg>
+                    {{ offer.career }}
+                    <span class="absolute left-1/2 -translate-x-1/2 -top-8 z-10 hidden group-hover:flex px-3 py-1 rounded bg-gray-900 text-white text-xs shadow-lg whitespace-nowrap transition-all duration-200">
+                      Carrera
+                    </span>
+                  </span>
+                  <span class="flex items-center relative group">
+                    <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    {{ offer.mode === 'Mixto' ? 'Virtual/Presencial' : offer.mode }}
+                    <span class="absolute left-1/2 -translate-x-1/2 -top-8 z-10 hidden group-hover:flex px-3 py-1 rounded bg-gray-900 text-white text-xs shadow-lg whitespace-nowrap transition-all duration-200">
+                      Modalidad
+                    </span>
+                  </span>
+                <span class="flex items-center relative group" [ngClass]="offer.vacancies === 'DISPONIBLES' ? 'text-green-700' : 'text-red-600'">
+                    <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none" />
+                      <text x="12" y="16" text-anchor="middle" font-size="10" fill="currentColor">V</text>
+                    </svg>
+                    {{ offer.vacancies }}
+                    <span class="absolute left-1/2 -translate-x-1/2 -top-8 z-10 hidden group-hover:flex px-3 py-1 rounded bg-gray-900 text-white text-xs shadow-lg whitespace-nowrap transition-all duración-200">
+                      Vacantes
+                    </span>
+                    <button type="button" class="text-blue-600 text-sm font-semibold ml-2 flex items-center gap-1" (click)="toggleOfferDetails(offer.id)">
+                      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path *ngIf="!isOfferExpanded(offer.id)" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        <path *ngIf="isOfferExpanded(offer.id)" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
+                      </svg>
+                      <span>... {{ isOfferExpanded(offer.id) ? 'Ver menos' : 'Ver más' }}</span>
+                    </button>
+                  </span>
+                </div>
+              </div>
+
+              <div *ngIf="isOfferExpanded(offer.id)" class="grid gap-2 md:grid-cols-2 text-sm text-gray-600 mt-3">
+                <div>
+                  <span class="font-medium text-gray-700">Inicio:</span>
+                  <span class="ml-1">{{ formatDate(offer.startDate) }}</span>
+                </div>
+                <div>
+                  <span class="font-medium text-gray-700">Fin:</span>
+                  <span class="ml-1">{{ formatDate(offer.endDate) }}</span>
+                </div>
+                <div>
+                  <span class="font-medium text-gray-700">Requisitos:</span>
+                  <span class="ml-1">{{ offer.requirements }}</span>
+                </div>
+                <div *ngIf="offer.contactEmail">
+                  <span class="font-medium text-gray-700">Contacto:</span>
+                  <span class="ml-1">{{ offer.contactEmail }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex flex-col gap-2 md:w-52">
+              <button 
+                (click)="openApplicantsModal(offer)"
+                class="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition font-semibold flex items-center justify-center gap-2">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m9-4a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+                Ver Postulantes
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
-
 <!-- Modal de edición -->
 <div *ngIf="editingOffer" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 bg-opacity-30">
   <div class="bg-white rounded-lg shadow-lg w-full max-w-lg p-8 relative animate-fade-in max-h-[90vh] overflow-y-auto">

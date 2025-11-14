@@ -260,6 +260,14 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
           });
         }
         break;
+      case 'AGREEMENT_APPROVED':
+      case 'AGREEMENT_REJECTED':
+        if (relatedEntityType === 'AgreementRequest') {
+          this.router.navigate(['/mis-convenios'], {
+            queryParams: { highlightAgreement: relatedEntityId }
+          });
+        }
+        break;
       default:
         break;
     }
