@@ -24,10 +24,12 @@ export class RegistrationComponent implements OnInit, OnDestroy {
   showCareerModal = false;
   isEmailPrefilled = false;
   isFullNamePrefilled = false;
-  isDirectorVerificationRequired = false;
-  isDirectorVerified = false;
-  isDirectorVerifying = false;
-  directorVerifiedEmail = '';
+  requiresInstitutionalValidation = false;
+  hasInstitutionalProfile = false;
+  private readonly googleClientId = '200970764916-9da887o8cna39v5ldk3ko0oga9fam96a.apps.googleusercontent.com';
+  private googleTokenClient: any;
+  private googleInitAttempts = 0;
+  private googleInitTimer?: number;
   
   allDepartments = [
     {
@@ -82,11 +84,6 @@ export class RegistrationComponent implements OnInit, OnDestroy {
   filteredCareersWithDisplay: { value: string; display: string; }[] = [];
   allCareers: { value: string; display: string; }[] = [];
   
-  private readonly googleClientId = '200970764916-9da887o8cna39v5ldk3ko0oga9fam96a.apps.googleusercontent.com';
-  private googleInitAttempts = 0;
-  private googleInitTimer?: number;
-  private googleTokenClient: any;
-
   constructor(
     private authService: AuthService,
     private router: Router,
@@ -152,6 +149,7 @@ export class RegistrationComponent implements OnInit, OnDestroy {
     this.registrationForm.get('department')?.valueChanges.subscribe(dept => {
       this.updateCareersForDepartment(dept || '');
     });
+    this.ensureGooglePlatformLoaded();
   }
 
   ngOnDestroy(): void {
@@ -194,7 +192,6 @@ export class RegistrationComponent implements OnInit, OnDestroy {
     } else if (role === 'Teacher') {
       fullNameControl?.setValidators([Validators.required]);
       careerControl?.setValidators([Validators.required]);
-      invitationTokenControl?.setValidators([Validators.required]);
     } else if (role === 'Director') {
       fullNameControl?.setValidators([Validators.required]);
       departmentControl?.setValidators([Validators.required]);
@@ -210,47 +207,53 @@ export class RegistrationComponent implements OnInit, OnDestroy {
   }
 
   private configureRole(role: string | null) {
+    this.requiresInstitutionalValidation = role === 'Teacher' || role === 'Director';
+    if (!this.requiresInstitutionalValidation) {
+      this.hasInstitutionalProfile = false;
+    }
     this.updateValidators(role);
     if (role) {
       this.applyPrefillForRole(role);
     }
-    this.updateRoleSpecificState(role);
   }
 
   private applyPrefillForRole(role: string) {
     const emailControl = this.registrationForm.get('email');
     const fullNameControl = this.registrationForm.get('fullName');
-    this.isEmailPrefilled = false;
-    this.isFullNamePrefilled = false;
 
-    const data = this.prefillService.consumePrefill(role);
-    if (data) {
-      emailControl?.setValue(data.email);
-      fullNameControl?.setValue(data.fullName);
-      this.isEmailPrefilled = true;
-      this.isFullNamePrefilled = true;
+    this.hasInstitutionalProfile = false;
+    if (role === 'Student') {
+      const data = this.prefillService.consumePrefill('Student');
+      if (data) {
+        emailControl?.setValue(data.email);
+        emailControl?.disable({ emitEvent: false });
+        this.isEmailPrefilled = true;
 
-      if (role === 'Director') {
-        this.isDirectorVerified = true;
-        this.directorVerifiedEmail = data.email;
+        fullNameControl?.setValue(data.fullName);
+        fullNameControl?.disable({ emitEvent: false });
+        this.isFullNamePrefilled = true;
+        this.hasInstitutionalProfile = true;
+        return;
       }
+    }
+    if (role === 'Teacher' || role === 'Director') {
+      emailControl?.setValue('');
+      emailControl?.disable({ emitEvent: false });
+      fullNameControl?.setValue('');
+      fullNameControl?.disable({ emitEvent: false });
+      this.isEmailPrefilled = false;
+      this.isFullNamePrefilled = false;
       return;
     }
 
-    if (role === 'Director') {
-      this.isDirectorVerified = false;
-      this.directorVerifiedEmail = '';
+    if (emailControl?.disabled) {
+      emailControl.enable({ emitEvent: false });
     }
-  }
-
-  private updateRoleSpecificState(role: string | null) {
-    this.isDirectorVerificationRequired = role === 'Director';
-    if (role === 'Director') {
-      this.ensureGooglePlatformLoaded();
-    } else {
-      this.isDirectorVerified = false;
-      this.directorVerifiedEmail = '';
+    if (fullNameControl?.disabled) {
+      fullNameControl.enable({ emitEvent: false });
     }
+    this.isEmailPrefilled = false;
+    this.isFullNamePrefilled = false;
   }
 
   hasDisplayableError(controlName: string): boolean {
@@ -300,8 +303,8 @@ export class RegistrationComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (role === 'Director' && !this.isDirectorVerified) {
-      this.toastr.error('Debes validar tu cuenta institucional @ucb.edu.bo antes de crear la cuenta.', 'Registro de Director');
+    if (this.requiresInstitutionalValidation && !this.hasInstitutionalProfile) {
+      this.toastr.error('Debes validar tu cuenta institucional antes de crear la cuenta.', 'Validación requerida');
       return;
     }
 
@@ -415,17 +418,17 @@ export class RegistrationComponent implements OnInit, OnDestroy {
     this.registrationForm.get('career')?.setValue('');
   }
 
-  onDirectorGoogleSignIn() {
-    if (this.role.value !== 'Director') {
-      return;
-    }
+  get shouldShowInstitutionalButton(): boolean {
+    const role = this.registrationForm.get('role')?.value;
+    return role === 'Teacher' || role === 'Director';
+  }
+
+  onValidateInstitutionalAccount() {
     if (!this.isGoogleAvailable()) {
-      this.toastr.warning('Google Sign-In todavía se está cargando. Intenta nuevamente en unos segundos.', 'Cuenta institucional');
-      this.ensureGooglePlatformLoaded();
+      this.toastr.warning('Google Sign-In aún se está cargando. Intenta nuevamente en unos segundos.', 'Validación institucional');
       return;
     }
     this.ensureTokenClient();
-    this.isDirectorVerifying = true;
     this.googleTokenClient.requestAccessToken({ prompt: 'consent' });
   }
 
@@ -434,7 +437,7 @@ export class RegistrationComponent implements OnInit, OnDestroy {
       return;
     }
     if (this.googleInitAttempts >= 20) {
-      this.toastr.error('No se pudo cargar Google Sign-In. Refresca la página e inténtalo otra vez.', 'Cuenta institucional');
+      this.toastr.error('No se pudo inicializar Google Sign-In. Recarga la página o verifica tu conexión.', 'Validación institucional');
       return;
     }
     this.googleInitAttempts++;
@@ -442,7 +445,7 @@ export class RegistrationComponent implements OnInit, OnDestroy {
   }
 
   private isGoogleAvailable(): boolean {
-    return typeof google !== 'undefined' && Boolean(google?.accounts);
+    return typeof google !== 'undefined' && Boolean(google?.accounts?.oauth2);
   }
 
   private ensureTokenClient() {
@@ -454,8 +457,7 @@ export class RegistrationComponent implements OnInit, OnDestroy {
       scope: 'openid email profile',
       callback: async (tokenResponse: any) => {
         if (!tokenResponse || !tokenResponse.access_token) {
-          this.isDirectorVerifying = false;
-          this.toastr.error('No se pudo obtener autorización de Google.', 'Cuenta institucional');
+          this.toastr.error('No se pudo obtener autorización de Google.', 'Validación institucional');
           return;
         }
         await this.handleGoogleAccessToken(tokenResponse.access_token);
@@ -466,34 +468,36 @@ export class RegistrationComponent implements OnInit, OnDestroy {
   private async handleGoogleAccessToken(accessToken: string) {
     try {
       const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-        headers: {
-          Authorization: `Bearer ${accessToken}`
-        }
+        headers: { Authorization: `Bearer ${accessToken}` }
       });
       if (!response.ok) {
         throw new Error('No se pudo obtener la información del perfil.');
       }
       const profile = await response.json();
-      const email: string = profile.email ?? '';
+      const email: string = (profile.email ?? '').toLowerCase();
       const fullName: string = profile.name ?? `${profile.given_name ?? ''} ${profile.family_name ?? ''}`.trim();
 
-      if (!email.toLowerCase().endsWith('@ucb.edu.bo')) {
-        this.toastr.error('Debes usar tu correo institucional @ucb.edu.bo para registrarte.', 'Cuenta institucional');
+      if (!email.endsWith('@ucb.edu.bo')) {
+        this.toastr.error('Debes seleccionar una cuenta institucional @ucb.edu.bo.', 'Validación institucional');
         return;
       }
 
-      this.prefillService.setPrefill({
-        role: 'Director',
-        email,
-        fullName: fullName || email
-      });
-      this.applyPrefillForRole('Director');
-      this.toastr.success('Cuenta institucional verificada correctamente.', 'Registro de Director');
+      const emailControl = this.registrationForm.get('email');
+      const fullNameControl = this.registrationForm.get('fullName');
+
+      emailControl?.setValue(email);
+      emailControl?.disable({ emitEvent: false });
+      this.isEmailPrefilled = true;
+
+      fullNameControl?.setValue(fullName || email);
+      fullNameControl?.disable({ emitEvent: false });
+      this.isFullNamePrefilled = true;
+      this.hasInstitutionalProfile = true;
+
+      this.toastr.success('Datos importados correctamente desde tu cuenta institucional.', 'Validación institucional');
     } catch (error) {
-      console.error('Error obteniendo perfil de Google', error);
-      this.toastr.error('Ocurrió un problema al validar tu cuenta institucional.', 'Registro de Director');
-    } finally {
-      this.isDirectorVerifying = false;
+      console.error('Error al obtener perfil de Google', error);
+      this.toastr.error('Ocurrió un problema al validar tu cuenta institucional.', 'Validación institucional');
     }
   }
 }
