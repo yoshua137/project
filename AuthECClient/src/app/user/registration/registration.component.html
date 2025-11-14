@@ -14,9 +14,13 @@
 <form [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
   <div class="mb-3">
     <input type="email" placeholder="Correo Electrónico" formControlName="email"
+      [readonly]="role.value === 'Director' || isEmailPrefilled"
       class="w-full px-3 py-2 leading-tight text-gray-700 bg-gray-200 border rounded shadow-inner appearance-none focus:outline-none focus:shadow-outline">
     <p *ngIf="isEmailPrefilled" class="text-xs mt-1 text-blue-ucb">
       Correo importado desde tu cuenta institucional.
+    </p>
+    <p *ngIf="role.value === 'Director' && !isDirectorVerified" class="text-xs mt-1 text-blue-ucb">
+      Valida tu cuenta institucional con el botón más abajo para completar el registro.
     </p>
     <div class="error-feedback" *ngIf="hasDisplayableError('email')">
       <div *ngIf="email.hasError('required')">
@@ -55,6 +59,7 @@
   <div *ngIf="role.value === 'Student'">
     <div class="mb-3">
       <input type="text" placeholder="Nombre Completo" formControlName="fullName"
+        [readonly]="isFullNamePrefilled"
         class="w-full px-3 py-2 leading-tight text-gray-700 bg-gray-200 border rounded shadow-inner appearance-none focus:outline-none focus:shadow-outline">
       <p *ngIf="isFullNamePrefilled" class="text-xs mt-1 text-blue-ucb">
         Nombre importado desde tu cuenta institucional.
@@ -94,6 +99,7 @@
   <div *ngIf="role.value === 'Teacher'">
     <div class="mb-3">
       <input type="text" placeholder="Nombre Completo" formControlName="fullName"
+        [readonly]="isFullNamePrefilled"
         class="w-full px-3 py-2 leading-tight text-gray-700 bg-gray-200 border rounded shadow-inner appearance-none focus:outline-none focus:shadow-outline">
       <div class="error-feedback" *ngIf="hasDisplayableError('fullName')">
         <div *ngIf="fullName.errors?.['required']">
@@ -122,9 +128,25 @@
   </div>
 
   <div *ngIf="role.value === 'Director'">
+    <div class="mb-4 space-y-2">
+      <p class="text-sm text-blue-ucb">
+        Verifica tu cuenta institucional &#64;ucb.edu.bo antes de completar el registro.
+      </p>
+      <button type="button" (click)="onDirectorGoogleSignIn()" [disabled]="isDirectorVerifying"
+        class="w-full font-semibold text-white bg-blue-ucb rounded-lg py-2 px-4 border border-transparent hover:border-yellow-ucb transition-all duration-300 ease-in-out disabled:opacity-60 disabled:cursor-not-allowed">
+        {{ isDirectorVerifying ? 'Validando...' : 'Validar cuenta institucional con Google' }}
+      </button>
+      <div class="text-xs" [ngClass]="isDirectorVerified ? 'text-green-600' : 'text-red-600'">
+        {{ isDirectorVerified ? 'Cuenta verificada: ' + directorVerifiedEmail : 'Aún no has verificado tu cuenta.' }}
+      </div>
+    </div>
     <div class="mb-3">
       <input type="text" placeholder="Nombre Completo" formControlName="fullName"
+        [readonly]="true"
         class="w-full px-3 py-2 leading-tight text-gray-700 bg-gray-200 border rounded shadow-inner appearance-none focus:outline-none focus:shadow-outline">
+      <p *ngIf="isFullNamePrefilled" class="text-xs mt-1 text-blue-ucb">
+        Nombre importado desde tu cuenta institucional.
+      </p>
       <div class="error-feedback" *ngIf="hasDisplayableError('fullName')">
         <div *ngIf="fullName.errors?.['required']">
           El nombre completo es requerido.
@@ -159,7 +181,8 @@
 
   <div class="mt-4">
     <button type="submit"
-      class="w-full font-bold text-blue-ucb bg-yellow-ucb rounded-lg py-2 px-4 border-2 border-transparent hover:border-blue-ucb transition-all duration-300 ease-in-out">
+      [disabled]="role.value === 'Director' && !isDirectorVerified"
+      class="w-full font-bold text-blue-ucb bg-yellow-ucb rounded-lg py-2 px-4 border-2 border-transparent hover:border-blue-ucb transition-all duration-300 ease-in-out disabled:opacity-60 disabled:cursor-not-allowed">
       Crear una cuenta
     </button>
   </div>
