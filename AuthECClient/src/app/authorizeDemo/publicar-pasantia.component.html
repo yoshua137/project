@@ -12,25 +12,27 @@
       <p>Ve a la sección <span class="font-semibold">Solicitar Convenio</span> para comenzar el proceso.</p>
     </div>
   </div>
-  <!-- Selección de departamentos -->
-  <div *ngIf="!loadingDepartments && hasApprovedAgreements && !selectedDepartment">
-    <p class="mb-6 text-blue-900 font-medium text-lg md:text-xl">Selecciona el departamento para el cual quieres publicar la pasantía:</p>
+  <!-- Selección de directores -->
+  <div *ngIf="!loadingDepartments && hasApprovedAgreements && !selectedDirector">
+    <p class="mb-6 text-blue-900 font-medium text-lg md:text-xl">Selecciona el director con convenio aprobado para publicar la pasantía:</p>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-4 md:gap-6">
-      <div *ngFor="let dept of availableDepartments" (click)="selectDepartment(dept.value)" class="bg-white rounded-lg shadow-md p-5 md:p-6 cursor-pointer hover:bg-blue-100 hover:shadow-lg transition transform hover:scale-105">
-        <h5 class="font-bold text-blue-800 mb-3 text-lg">{{ dept.name }}</h5>
+      <div *ngFor="let director of approvedDirectors" (click)="selectDirector(director)" class="bg-white rounded-lg shadow-md p-5 md:p-6 cursor-pointer hover:bg-blue-100 hover:shadow-lg transition transform hover:scale-105">
+        <h5 class="font-bold text-blue-800 mb-2 text-lg">{{ director.directorName }}</h5>
+        <p class="text-sm md:text-base text-gray-700 mb-1">
+          <span class="font-semibold">Departamento:</span><br>
+          {{ director.department }}
+        </p>
         <p class="text-sm md:text-base text-gray-700">
-          <span class="font-semibold">Carreras:</span><br>
-            <span *ngFor="let career of dept.careers; let last = last">
-              • {{ career }}<br *ngIf="!last">
-            </span>
-          </p>
-        </div>
+          <span class="font-semibold">Carrera:</span><br>
+          {{ director.career }}
+        </p>
       </div>
     </div>
+  </div>
   <!-- Formulario de publicación -->
-  <div *ngIf="!loadingDepartments && hasApprovedAgreements && selectedDepartment">
+  <div *ngIf="!loadingDepartments && hasApprovedAgreements && selectedDirector">
     <div class="mb-4 md:mb-6">
-      <button (click)="selectedDepartment = ''" class="text-blue-700 border border-blue-700 rounded px-4 py-2 mb-4 hover:bg-blue-100 transition text-sm md:text-base">&larr; Cambiar departamento</button>
+      <button (click)="resetSelection()" class="text-blue-700 border border-blue-700 rounded px-4 py-2 mb-4 hover:bg-blue-100 transition text-sm md:text-base">&larr; Cambiar director</button>
     </div>
     <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4 md:space-y-6">
       <!-- Título - Ancho completo -->
@@ -40,10 +42,15 @@
         <div *ngIf="form.get('title')?.invalid && form.get('title')?.touched" class="text-red-600 text-sm mt-1">Título requerido (máx 100 caracteres).</div>
       </div>
       <!-- Departamento y Carrera - Grid de 2 columnas en pantallas grandes -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+        <div>
+          <label class="block font-semibold mb-2 text-base md:text-lg">Director asignado</label>
+          <input class="w-full px-4 py-3 border rounded-md bg-gray-100 text-base" [value]="selectedDirector!.directorName" readonly />
+          <span class="text-xs text-gray-500 mt-1 block">Director con convenio aprobado</span>
+        </div>
         <div>
           <label class="block font-semibold mb-2 text-base md:text-lg">Departamento</label>
-          <input class="w-full px-4 py-3 border rounded-md bg-gray-100 text-base" [value]="selectedDepartment" readonly />
+          <input class="w-full px-4 py-3 border rounded-md bg-gray-100 text-base" [value]="selectedDepartment || ''" readonly />
           <span class="text-xs text-gray-500 mt-1 block">Departamento seleccionado con convenio aprobado</span>
         </div>
         <div>
@@ -58,9 +65,10 @@
                 (input)="onCareerSearch($event)"
                 (focus)="onCareerInputFocus()"
                 (blur)="onCareerInputBlur()"
+                [readonly]="isCareerReadOnly"
                 placeholder="Escribe o selecciona una carrera..."
                 required />
-              <button type="button" class="px-4 py-3 border border-l-0 rounded-r-md bg-gray-100 hover:bg-blue-100 transition" (click)="toggleCareerDropdown()">
+              <button type="button" class="px-4 py-3 border border-l-0 rounded-r-md bg-gray-100 hover:bg-blue-100 transition disabled:opacity-50" [disabled]="isCareerReadOnly" (click)="toggleCareerDropdown()">
                 <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                   <path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/>
                 </svg>

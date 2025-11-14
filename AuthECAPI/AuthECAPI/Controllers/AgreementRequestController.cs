@@ -488,24 +488,46 @@ namespace AuthECAPI.Controllers
             }
         }
 
-        // GET: api/AgreementRequest/organization/approved-departments
-        [HttpGet("organization/approved-departments")]
+        public class ApprovedDirectorResponse
+        {
+            public string DirectorId { get; set; }
+            public string DirectorName { get; set; }
+            public string Department { get; set; }
+            public string Career { get; set; }
+        }
+
+        // GET: api/AgreementRequest/organization/approved-directors
+        [HttpGet("organization/approved-directors")]
         [Authorize(Roles = "Organization")]
-        public async Task<ActionResult<IEnumerable<string>>> GetApprovedDepartmentsForOrganization()
+        public async Task<ActionResult<IEnumerable<ApprovedDirectorResponse>>> GetApprovedDirectorsForOrganization()
         {
             try
             {
                 var currentUserId = User.Claims.First(c => c.Type == "userID").Value;
-                
-                var approvedDepartments = await _context.AgreementRequests
+
+                var approvedDirectors = await _context.AgreementRequests
                     .Include(ar => ar.Director)
+                        .ThenInclude(d => d.AppUser)
                     .Where(ar => ar.OrganizationId == currentUserId && ar.Status == "Accepted")
-                    .Select(ar => ar.Director.Department)
-                    .Distinct()
-                    .Where(dept => !string.IsNullOrEmpty(dept))
+                    .Select(ar => new
+                    {
+                        DirectorId = ar.DirectorId,
+                        DirectorName = ar.Director.AppUser != null ? ar.Director.AppUser.FullName : null,
+                        Department = ar.Director.Department,
+                        Career = ar.Director.AppUser != null ? ar.Director.AppUser.Career : null
+                    })
+                    .Where(info => !string.IsNullOrEmpty(info.Department) && !string.IsNullOrEmpty(info.Career))
+                    .GroupBy(info => new { info.DirectorId, info.Department, info.Career, info.DirectorName })
+                    .Select(g => new ApprovedDirectorResponse
+                    {
+                        DirectorId = g.Key.DirectorId,
+                        DirectorName = g.Key.DirectorName,
+                        Department = g.Key.Department,
+                        Career = g.Key.Career
+                    })
                     .ToListAsync();
 
-                return Ok(approvedDepartments);
+                return Ok(approvedDirectors);
             }
             catch (InvalidOperationException)
             {

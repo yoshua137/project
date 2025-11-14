@@ -462,13 +462,10 @@
         </div>
         <div class="flex gap-2">
           <div class="flex-1">
-            <label class="block text-sm font-medium text-gray-700" [class.opacity-50]="hasApplicants">Carrera</label>
+            <label class="block text-sm font-medium text-gray-700 opacity-70">Carrera</label>
             <input [(ngModel)]="editForm.career" name="career" 
-                   [disabled]="hasApplicants"
-                   [class.bg-gray-100]="hasApplicants"
-                   [class.cursor-not-allowed]="hasApplicants"
-                   [class.opacity-50]="hasApplicants"
-                   class="w-full border rounded px-3 py-2 mt-1" required />
+                   readonly
+                   class="w-full border rounded px-3 py-2 mt-1 bg-gray-100 cursor-not-allowed opacity-70" required />
           </div>
           <div class="flex-1">
             <label class="block text-sm font-medium text-gray-700" [class.opacity-50]="hasApplicants">Modalidad</label>

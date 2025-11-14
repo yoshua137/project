@@ -1,9 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { environment } from '../../../environments/environment';
 import { Router } from '@angular/router';
+import { ToastrService } from 'ngx-toastr';
 
 interface Director {
   id: string;
@@ -14,6 +15,11 @@ interface Director {
   career: string | null;
 }
 
+interface AgreementSummary {
+  directorId: string | null;
+  status: string;
+}
+
 @Component({
   selector: 'app-agreement-requests',
   standalone: true,
@@ -21,7 +27,7 @@ interface Director {
   templateUrl: './agreement-requests.component.html',
   styles: ''
 })
-export class AgreementRequestsComponent {
+export class AgreementRequestsComponent implements OnInit {
   departments = [
     {
       name: 'Ciencias de la Salud',
@@ -51,8 +57,13 @@ export class AgreementRequestsComponent {
   showRequestForm = false;
   requestDescription = '';
   requestPdfFile: File | null = null;
+  agreements: AgreementSummary[] = [];
 
-  constructor(private http: HttpClient, private router: Router) {}
+  constructor(private http: HttpClient, private router: Router, private toastr: ToastrService) {}
+
+  ngOnInit(): void {
+    this.loadExistingAgreements();
+  }
 
   selectDepartment(dep: string) {
     this.selectedDepartment = dep;
@@ -80,6 +91,11 @@ export class AgreementRequestsComponent {
   }
 
   selectDirector(director: Director) {
+    const existingAccepted = this.agreements.some(ag => ag.directorId === director.id && ag.status === 'Accepted');
+    if (existingAccepted) {
+      this.toastr.warning('Ya tienes un convenio aprobado con este director.', 'Convenio existente');
+      return;
+    }
     this.router.navigate(['/agreement-requests/new', director.id]);
   }
 
@@ -122,5 +138,19 @@ export class AgreementRequestsComponent {
     this.selectedDirector = null;
     this.requestDescription = '';
     this.requestPdfFile = null;
+  }
+
+  private loadExistingAgreements() {
+    this.http.get<AgreementSummary[]>(`${environment.apiBaseUrl}/AgreementRequest/organization/mine`).subscribe({
+      next: (agreements: any[]) => {
+        this.agreements = agreements.map(item => ({
+          directorId: item.directorId,
+          status: item.status
+        }));
+      },
+      error: () => {
+        this.agreements = [];
+      }
+    });
   }
 } 

@@ -6,6 +6,13 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { environment } from '../../environments/environment';
 
+interface ApprovedDirector {
+  directorId: string;
+  directorName: string;
+  department: string;
+  career: string;
+}
+
 @Component({
   selector: 'app-publicar-pasantia',
   standalone: true,
@@ -19,7 +26,7 @@ export class PublicarPasantiaComponent implements OnInit {
   successMsg = '';
   errorMsg = '';
   selectedDepartment: string = '';
-  approvedDepartments: string[] = [];
+  selectedDirector: ApprovedDirector | null = null;
   loadingDepartments = true;
   hasApprovedAgreements = false;
   searchTerm: string = '';
@@ -61,7 +68,8 @@ export class PublicarPasantiaComponent implements OnInit {
     }
   ];
 
-  availableDepartments: any[] = [];
+  approvedDirectors: ApprovedDirector[] = [];
+  isCareerReadOnly = false;
 
   constructor(
     private fb: FormBuilder, 
@@ -85,44 +93,42 @@ export class PublicarPasantiaComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.loadApprovedDepartments();
+    this.loadApprovedDirectors();
   }
 
-  loadApprovedDepartments() {
-    this.http.get<string[]>(`${environment.apiBaseUrl}/AgreementRequest/organization/approved-departments`).subscribe({
-      next: (departments) => {
-        this.approvedDepartments = departments;
-        this.hasApprovedAgreements = departments.length > 0;
+  loadApprovedDirectors() {
+    this.http.get<ApprovedDirector[]>(`${environment.apiBaseUrl}/AgreementRequest/organization/approved-directors`).subscribe({
+      next: (directors) => {
+        this.approvedDirectors = directors;
+        this.hasApprovedAgreements = directors.length > 0;
         this.loadingDepartments = false;
-        
-        // Filtrar departamentos disponibles
-        this.availableDepartments = this.allDepartments.filter(dept => 
-          this.approvedDepartments.includes(dept.value)
-        );
-        
-        // Si hay departamentos aprobados, verificar si hay uno seleccionado en la URL
-        if (this.hasApprovedAgreements) {
-          this.route.queryParams.subscribe(params => {
-            this.selectedDepartment = params['department'] || '';
-          });
-        }
       },
       error: (err) => {
-        console.error('Error loading approved departments:', err);
+        console.error('Error loading approved directors:', err);
         this.loadingDepartments = false;
         this.hasApprovedAgreements = false;
       }
     });
   }
 
-  selectDepartment(department: string) {
-    this.selectedDepartment = department;
-    this.form.patchValue({ career: '' });
-    this.searchTerm = '';
-    this.filteredCareers = [];
-    // Resetear el estado de validación del campo carrera
-    this.form.get('career')?.markAsUntouched();
+  selectDirector(director: ApprovedDirector) {
+    this.selectedDirector = director;
+    this.selectedDepartment = director.department;
+    this.searchTerm = director.career;
+    this.form.patchValue({ career: director.career });
     this.form.get('career')?.setErrors(null);
+    this.form.get('career')?.markAsTouched();
+    this.isCareerReadOnly = true;
+  }
+
+  resetSelection() {
+    this.selectedDirector = null;
+    this.selectedDepartment = '';
+    this.searchTerm = '';
+    this.form.patchValue({ career: '' });
+    this.form.get('career')?.setErrors(null);
+    this.form.get('career')?.markAsUntouched();
+    this.isCareerReadOnly = false;
   }
 
   getDepartmentCareers(departmentValue: string): string[] {
@@ -131,6 +137,9 @@ export class PublicarPasantiaComponent implements OnInit {
   }
 
   onCareerSearch(event: any) {
+    if (this.isCareerReadOnly) {
+      return;
+    }
     this.searchTerm = event.target.value;
     this.showCareerDropdown = true;
     
@@ -165,6 +174,9 @@ export class PublicarPasantiaComponent implements OnInit {
   }
 
   toggleCareerDropdown() {
+    if (this.isCareerReadOnly) {
+      return;
+    }
     this.showCareerDropdown = !this.showCareerDropdown;
     if (this.showCareerDropdown) {
       const careers = this.getDepartmentCareers(this.selectedDepartment);
@@ -182,6 +194,9 @@ export class PublicarPasantiaComponent implements OnInit {
   }
 
   onCareerInputFocus() {
+    if (this.isCareerReadOnly) {
+      return;
+    }
     // Marcar el campo como touched para activar validaciones
     this.form.get('career')?.markAsTouched();
     
@@ -201,6 +216,9 @@ export class PublicarPasantiaComponent implements OnInit {
 
   // Método para validar si la carrera es válida
   isCareerValid(): boolean {
+    if (this.isCareerReadOnly && this.selectedDirector) {
+      return true;
+    }
     if (!this.selectedDepartment || !this.searchTerm.trim()) {
       return false;
     }
