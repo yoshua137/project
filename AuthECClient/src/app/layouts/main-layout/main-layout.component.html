@@ -36,11 +36,32 @@
         </form>
         <!-- Componente de notificaciones -->
         <app-notification-bell></app-notification-bell>
-        <button
-          class="font-bold text-blue-ucb bg-yellow-ucb rounded-lg py-2 px-4 border-2 border-transparent hover:border-blue-ucb transition-all duration-300 ease-in-out shadow-sm"
-          (click)="onLogout()">
-          Cerrar Sesión
-        </button>
+        <div class="relative" (click)="$event.stopPropagation()">
+          <button
+            class="profile-menu-trigger p-2 rounded-full border-2 border-transparent hover:border-blue-ucb hover:bg-white transition duration-200 flex items-center justify-center"
+            title="Menú de perfil" aria-label="Menú de perfil"
+            (click)="toggleProfileMenu($event)">
+            <ng-container *ngIf="profilePhotoUrl; else defaultProfileIcon">
+              <img [src]="profilePhotoUrl" alt="Foto de perfil" class="w-10 h-10 rounded-full object-cover border-2 border-blue-ucb">
+            </ng-container>
+            <ng-template #defaultProfileIcon>
+              <div class="w-10 h-10 rounded-full bg-blue-ucb text-white font-semibold border-2 border-blue-ucb flex items-center justify-center">
+                {{ profileInitials }}
+              </div>
+            </ng-template>
+          </button>
+          <div *ngIf="showProfileMenu"
+            class="profile-dropdown absolute right-0 mt-3 w-60 bg-white rounded-2xl shadow-2xl border border-blue-50 z-50 overflow-hidden">
+            <button (click)="navigateToProfile()" class="profile-menu-item text-left">
+              <span class="menu-title">Ver perfil</span>
+              <span class="menu-subtitle">Consulta tu información</span>
+            </button>
+            <button (click)="logoutFromMenu()" class="profile-menu-item text-left logout">
+              <span class="menu-title">Cerrar sesión</span>
+              <span class="menu-subtitle">Salir de tu cuenta</span>
+            </button>
+          </div>
+        </div>
       </div>
     </header>
   </div>
@@ -115,5 +136,44 @@
   .custom-scrollbar {
     scrollbar-width: thin;
     scrollbar-color: #003366 #ffe066;
+  }
+
+  .profile-dropdown {
+    min-width: 14rem;
+  }
+
+  .profile-menu-item {
+    width: 100%;
+    padding: 0.85rem 1.5rem;
+    border: none;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    color: #0f172a;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+
+  .profile-menu-item:hover {
+    background: #eef5ff;
+  }
+
+  .profile-menu-item.logout {
+    border-top: 1px solid #f1f5f9;
+  }
+
+  .profile-menu-item.logout .menu-title {
+    color: #b91c1c;
+  }
+
+  .menu-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+
+  .menu-subtitle {
+    font-size: 0.78rem;
+    color: #64748b;
   }
 </style>

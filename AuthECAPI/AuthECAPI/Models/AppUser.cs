@@ -23,6 +23,9 @@ namespace AuthECAPI.Models
         [Column(TypeName = "nvarchar(150)")]
         public string? Career { get; set; }
 
+        [Column(TypeName = "nvarchar(260)")]
+        public string? ProfilePhotoPath { get; set; }
+
         public virtual Student Student { get; set; }
         public virtual Teacher Teacher { get; set; }
         public virtual Director Director { get; set; }

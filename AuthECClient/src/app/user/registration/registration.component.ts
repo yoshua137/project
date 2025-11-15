@@ -378,7 +378,7 @@ export class RegistrationComponent implements OnInit, OnDestroy {
           this.toastr.error(err.error.message, 'Fallo en el Registro');
           return;
         }
-        this.toastr.error('Ocurrió un error inesperado.', 'Fallo en el Registro');
+          this.toastr.error('Ocurrió un error inesperado.', 'Fallo en el Registro');
         console.error('API Error:', err);
       }
     });

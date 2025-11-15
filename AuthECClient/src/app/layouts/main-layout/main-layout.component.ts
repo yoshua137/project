@@ -1,4 +1,4 @@
-import { Component, HostListener } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../shared/services/auth.service';
 import { HideIfClaimsNotMetDirective } from '../../directives/hide-if-claims-not-met.directive';
@@ -7,6 +7,7 @@ import { CommonModule } from '@angular/common';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { BackendStatusBannerComponent } from '../../shared/components/backend-status-banner.component';
 import { NotificationBellComponent } from '../../shared/components/notification-bell.component';
+import { UserService } from '../../shared/services/user.service';
 
 @Component({
   selector: 'app-main-layout',
@@ -32,22 +33,86 @@ import { NotificationBellComponent } from '../../shared/components/notification-
     ])
   ]
 })
-export class MainLayoutComponent {
+export class MainLayoutComponent implements OnInit {
   showHeaderMenu = true;
   showHeaderBar = true;
+  profilePhotoUrl: string | null = null;
+  isPhotoLoading = false;
+  profileInitials = '?';
+  showProfileMenu = false;
 
   constructor(private router: Router,
-    private authService: AuthService) { }
+    public authService: AuthService,
+    private userService: UserService) { }
 
   claimReq = claimReq
+
+  ngOnInit(): void {
+    this.loadProfilePhoto();
+  }
 
   @HostListener('window:scroll', [])
   onWindowScroll() {
     this.showHeaderBar = window.scrollY === 0;
   }
 
+  @HostListener('document:click')
+  closeProfileMenu() {
+    this.showProfileMenu = false;
+  }
+
   onLogout() {
     this.authService.deleteToken();
     this.router.navigateByUrl('/user/login');
+  }
+
+  toggleProfileMenu(event: MouseEvent) {
+    event.stopPropagation();
+    this.showProfileMenu = !this.showProfileMenu;
+  }
+
+  navigateToProfile() {
+    this.showProfileMenu = false;
+    this.router.navigate(['/perfil']);
+  }
+
+  logoutFromMenu() {
+    this.showProfileMenu = false;
+    this.onLogout();
+  }
+
+  private loadProfilePhoto() {
+    if (!this.authService.isLoggedIn()) {
+      this.profilePhotoUrl = null;
+      this.profileInitials = '?';
+      return;
+    }
+    this.isPhotoLoading = true;
+    this.userService.getUserProfile().subscribe({
+      next: (profile: any) => {
+        this.profilePhotoUrl = profile.photoUrl ?? profile.PhotoUrl ?? null;
+        this.profileInitials = this.computeInitials(profile.fullName ?? profile.FullName, profile.email ?? profile.Email);
+        this.isPhotoLoading = false;
+      },
+      error: () => {
+        this.profilePhotoUrl = null;
+        this.profileInitials = '?';
+        this.isPhotoLoading = false;
+      }
+    });
+  }
+
+  private computeInitials(fullName?: string, email?: string): string {
+    const source = fullName?.trim();
+    if (source) {
+      const parts = source.split(/\s+/).filter(Boolean);
+      if (parts.length) {
+        return parts.slice(0, 2).map(p => p[0]?.toUpperCase() ?? '').join('') || '?';
+      }
+    }
+    if (email && email.length) {
+      return email[0].toUpperCase();
+    }
+    return '?';
   }
 }

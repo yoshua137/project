@@ -1,0 +1,48 @@
+<section class="profile-wrapper">
+  <div class="card">
+    <div class="card-header">
+      <div class="avatar-container">
+        <img *ngIf="hasPhoto; else defaultAvatar" [src]="profilePhotoUrl" alt="Foto de perfil" />
+        <ng-template #defaultAvatar>
+          <div class="avatar-fallback">
+            <span>{{ initials }}</span>
+          </div>
+        </ng-template>
+        <label class="upload-btn">
+          <input type="file" accept="image/*" (change)="onPhotoSelected($event)" />
+          <span *ngIf="!uploadingPhoto">Cambiar foto</span>
+          <span *ngIf="uploadingPhoto">Subiendo...</span>
+        </label>
+        <small *ngIf="uploadError" class="upload-error">{{ uploadError }}</small>
+      </div>
+      <div>
+        <p class="label">Perfil</p>
+        <h1 *ngIf="profile; else loadingName">{{ profile.fullName || 'Usuario' }}</h1>
+        <ng-template #loadingName>
+          <p class="loading-text">Cargando nombre...</p>
+        </ng-template>
+        <p class="email" *ngIf="profile; else loadingEmail">{{ profile.email }}</p>
+        <ng-template #loadingEmail>
+          <p class="loading-text">Cargando correo...</p>
+        </ng-template>
+      </div>
+    </div>
+
+    <div *ngIf="error" class="error-banner">
+      {{ error }}
+      <button (click)="fetchProfile()" class="retry-btn">Reintentar</button>
+    </div>
+
+    <div *ngIf="!error" class="grid-info">
+      <div class="info-block">
+        <span class="info-label">Rol principal</span>
+        <p class="info-value">{{ roleLabel }}</p>
+      </div>
+      <div class="info-block" *ngIf="showCareerSection">
+        <span class="info-label">Carrera</span>
+        <p class="info-value">{{ career }}</p>
+      </div>
+    </div>
+  </div>
+</section>
+

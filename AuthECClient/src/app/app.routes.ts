@@ -22,6 +22,7 @@ import { PublicarPasantiaComponent } from './authorizeDemo/publicar-pasantia.com
 import { VerOfertasPasantiaComponent } from './authorizeDemo/ver-ofertas-pasantia/ver-ofertas-pasantia.component';
 import { MisOfertasPasantiaComponent } from './authorizeDemo/mis-ofertas-pasantia/mis-ofertas-pasantia.component';
 import { MyApplicationsComponent } from './authorizeDemo/ver-ofertas-pasantia/my-applications.component';
+import { ProfileComponent } from './profile/profile.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/user/login', pathMatch: 'full' },
@@ -98,6 +99,9 @@ export const routes: Routes = [
       {
         path: 'mis-aplicaciones', component: MyApplicationsComponent,
         data: { claimReq: claimReq.studentInternshipOffers }
+      },
+      {
+        path: 'perfil', component: ProfileComponent
       },
     ]
   },
