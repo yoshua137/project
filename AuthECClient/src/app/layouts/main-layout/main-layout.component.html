@@ -28,24 +28,56 @@
         </a>
       </div>
       <div class="flex items-center gap-4">
-        <form class="flex" role="search">
-          <input class="form-input px-2 py-1 rounded-l border border-gray-300 focus:outline-none" type="search"
-            placeholder="¿Qué estás buscando?" aria-label="Search">
-          <button class="bg-blue-ucb text-white px-4 py-1 rounded-r font-semibold hover:bg-blue-800 transition"
-            type="submit">Buscar</button>
-        </form>
+        <div class="relative" (click)="$event.stopPropagation()">
+          <button
+            class="help-trigger focus:outline-none"
+            title="Centro de ayuda"
+            aria-label="Centro de ayuda"
+            (click)="toggleHelpMenu($event)">
+            <div class="help-icon-circle">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-9 w-9 text-slate-800" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M12 2a10 10 0 100 20 10 10 0 000-20Zm-.02 3.5a3 3 0 012.94 2.52c.2 1.18-.25 2.22-1.21 2.9-.74.53-1.21.87-1.21 1.88v.2h-2v-.3c0-1.44.7-2.1 1.42-2.62.6-.43.84-.74.76-1.2A1.05 1.05 0 0011.98 7a1.04 1.04 0 00-1.06 1h-2.06a3.12 3.12 0 013.12-2.5Zm.02 9.5a1.2 1.2 0 11-1.2 1.2 1.2 1.2 0 011.2-1.2Z"/>
+              </svg>
+            </div>
+          </button>
+          <div *ngIf="showHelpMenu"
+            class="absolute right-0 mt-3 w-72 bg-white rounded-2xl shadow-2xl border border-blue-50 z-50 overflow-hidden">
+            <div class="px-4 py-3 border-b border-blue-50 bg-blue-50">
+              <p class="text-sm font-semibold text-blue-900">Centro de ayuda</p>
+              <p class="text-xs text-blue-700">Encuentra recursos y soporte.</p>
+            </div>
+            <div class="py-2">
+              <button
+                class="w-full text-left px-5 py-3 text-sm text-slate-700 hover:bg-blue-50 flex items-center gap-2"
+                (click)="openHelpGuide()">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 6l-2 4h4l-2 4m-6-2V8.5C6 7.12 7.12 6 8.5 6H12m0 12h3.5c1.38 0 2.5-1.12 2.5-2.5V10m-5 8H8.5A2.5 2.5 0 016 15.5V14" />
+                </svg>
+                Ver guías rápidas
+              </button>
+              <button
+                class="w-full text-left px-5 py-3 text-sm text-slate-700 hover:bg-blue-50 flex items-center gap-2"
+                (click)="contactSupport()">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M18 10a6 6 0 00-12 0v3a2 2 0 002 2h1v3l3-3h3a2 2 0 002-2v-3z" />
+                </svg>
+                Contactar soporte
+              </button>
+            </div>
+          </div>
+        </div>
         <!-- Componente de notificaciones -->
         <app-notification-bell></app-notification-bell>
         <div class="relative" (click)="$event.stopPropagation()">
-          <button
-            class="profile-menu-trigger p-2 rounded-full border-2 border-transparent hover:border-blue-ucb hover:bg-white transition duration-200 flex items-center justify-center"
+              <button
+                class="profile-menu-trigger p-2 rounded-full hover:bg-white transition duration-200 transition-transform flex items-center justify-center hover:scale-110 focus:outline-none"
             title="Menú de perfil" aria-label="Menú de perfil"
             (click)="toggleProfileMenu($event)">
             <ng-container *ngIf="profilePhotoUrl; else defaultProfileIcon">
-              <img [src]="profilePhotoUrl" alt="Foto de perfil" class="w-10 h-10 rounded-full object-cover border-2 border-blue-ucb">
+                  <img [src]="profilePhotoUrl" alt="Foto de perfil" class="w-10 h-10 rounded-full object-cover">
             </ng-container>
             <ng-template #defaultProfileIcon>
-              <div class="w-10 h-10 rounded-full bg-blue-ucb text-white font-semibold border-2 border-blue-ucb flex items-center justify-center">
+                  <div class="w-10 h-10 rounded-full bg-blue-ucb text-white font-semibold flex items-center justify-center">
                 {{ profileInitials }}
               </div>
             </ng-template>
@@ -175,5 +207,25 @@
   .menu-subtitle {
     font-size: 0.78rem;
     color: #64748b;
+  }
+
+  .help-trigger {
+    padding: 4px;
+    border-radius: 9999px;
+    background: transparent;
+    border: none;
+  }
+
+  .help-icon-circle {
+    border-radius: 9999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: transform 0.2s ease;
+  }
+
+  .help-trigger:hover .help-icon-circle {
+    transform: scale(1.1);
   }
 </style>

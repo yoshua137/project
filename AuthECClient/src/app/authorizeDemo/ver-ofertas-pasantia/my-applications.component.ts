@@ -6,6 +6,7 @@ import { InternshipInfoModalComponent } from './internship-info-modal.component'
 import { ToastrService } from 'ngx-toastr';
 import { SignalRService } from '../../shared/services/signalr.service';
 import { Subscription } from 'rxjs';
+import { ActivatedRoute } from '@angular/router';
 
 interface InternshipApplication {
   id: number;
@@ -54,7 +55,7 @@ interface InternshipApplication {
           </div>
 
           <!-- Content when loaded -->
-          <div *ngIf="!loading && !error" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div *ngIf="!loading && !error" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <!-- Left Panel - Applications Table -->
             <div class="lg:col-span-2">
               <div class="bg-white rounded-lg shadow-md p-6">
@@ -77,16 +78,15 @@ interface InternshipApplication {
                     </thead>
                     <tbody>
                       <tr *ngFor="let application of applications" 
-                          class="border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
+                          class="border-b border-gray-100 hover:bg-gray-50 cursor-pointer application-row"
+                          [class.highlighted]="highlightedApplicationId === application.id"
+                          [class.fade-stopped]="stoppedFadeRows.has(application.id)"
                           [class.bg-blue-50]="selectedApplication?.id === application.id"
+                          (mouseenter)="stopFadeOnHover(application.id)"
+                          [attr.id]="'application-row-' + application.id"
                           (click)="selectApplication(application)">
                         <td class="py-3 px-4">
-                          <div>
-                            <div class="font-medium text-gray-900">{{ application.internshipOfferTitle }}</div>
-                            <div class="text-sm text-gray-500 truncate max-w-xs">
-                              {{ application.coverLetter || 'Sin nota de postulación' }}
-                            </div>
-                          </div>
+                          <div class="font-medium text-gray-900">{{ application.internshipOfferTitle }}</div>
                         </td>
                         <td class="py-3 px-4 text-gray-700">{{ application.organizationName }}</td>
                         <td class="py-3 px-4 text-sm text-gray-600">{{ formatDate(application.applicationDate) }}</td>
@@ -124,63 +124,34 @@ interface InternshipApplication {
                     </span>
                   </div>
                   
-                  <!-- Application Info - Basic Info (Always Visible) -->
-                  <div class="space-y-3">
+                  <div class="space-y-4">
                     <div>
-                      <h4 class="font-semibold text-gray-900 mb-2">{{ selectedApplication.internshipOfferTitle }}</h4>
-                      <p class="text-gray-600"><strong>Organización:</strong> {{ selectedApplication.organizationName }}</p>
-                      <p class="text-gray-600"><strong>Fecha de postulación:</strong> {{ formatDate(selectedApplication.applicationDate) }}</p>
+                      <h5 class="font-semibold text-gray-900 mb-2">Nota de Postulación</h5>
+                      <div class="bg-gray-50 p-3 rounded text-sm text-gray-700 max-h-32 overflow-y-auto">
+                        {{ selectedApplication.coverLetter || 'No proporcionada' }}
+                      </div>
                     </div>
 
-                    <!-- Show More/Less Button -->
-                    <button 
-                      (click)="toggleDetailsExpansion()"
-                      class="w-full flex items-center justify-center gap-2 px-4 py-2 text-blue-600 hover:bg-blue-50 rounded transition text-sm font-medium border border-blue-200">
-                      <span>{{ isDetailsExpanded ? 'Mostrar menos' : 'Mostrar más' }}</span>
-                      <svg 
-                        xmlns="http://www.w3.org/2000/svg" 
-                        class="h-4 w-4 transition-transform duration-200"
-                        [class.rotate-180]="isDetailsExpanded"
-                        fill="none" 
-                        viewBox="0 0 24 24" 
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </button>
-
-                    <!-- Expanded Details (Hidden by default) -->
-                    <div *ngIf="isDetailsExpanded" class="space-y-3 pt-2 border-t border-gray-200">
-                      <!-- Cover Letter -->
-                      <div>
-                        <h5 class="font-semibold text-gray-900 mb-2">Nota de Postulación</h5>
-                        <div class="bg-gray-50 p-3 rounded text-sm text-gray-700 max-h-32 overflow-y-auto">
-                          {{ selectedApplication.coverLetter || 'No proporcionada' }}
-                        </div>
-                      </div>
-
-                      <!-- CV Status -->
-                      <div>
-                        <h5 class="font-semibold text-gray-900 mb-2">Curriculum Vitae</h5>
-                        <div class="bg-gray-50 p-3 rounded text-sm text-gray-700">
-                          <div *ngIf="selectedApplication.cvFilePath; else noCV">
-                            <div class="flex items-center justify-between">
-                              <span class="text-green-600">CV enviado</span>
-                              <button 
-                                (click)="downloadCV(selectedApplication.id)"
-                                class="bg-gray-100 text-gray-700 px-3 py-1 rounded hover:bg-gray-200 transition text-sm flex items-center gap-1">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h8a2 2 0 002-2v-2M7 10V6a5 5 0 0110 0v4M5 20h14" />
-                                </svg>
-                                PDF
-                              </button>
-                            </div>
+                    <div>
+                      <h5 class="font-semibold text-gray-900 mb-2">Curriculum Vitae</h5>
+                      <div class="bg-gray-50 p-3 rounded text-sm text-gray-700">
+                        <div *ngIf="selectedApplication.cvFilePath; else noCVAlways">
+                          <div class="flex items-center justify-between">
+                            <span class="text-green-600">CV enviado</span>
+                            <button 
+                              (click)="downloadCV(selectedApplication.id)"
+                              class="bg-gray-100 text-gray-700 px-3 py-1 rounded hover:bg-gray-200 transition text-sm flex items-center gap-1">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h8a2 2 0 002-2v-2M7 10V6a5 5 0 0110 0v4M5 20h14" />
+                              </svg>
+                              PDF
+                            </button>
                           </div>
-                          <ng-template #noCV>
-                            <span class="text-gray-500">No proporcionado</span>
-                          </ng-template>
                         </div>
+                        <ng-template #noCVAlways>
+                          <span class="text-gray-500">No proporcionado</span>
+                        </ng-template>
                       </div>
-
                     </div>
                   </div>
 
@@ -188,10 +159,7 @@ interface InternshipApplication {
                   <div class="pt-4 border-t border-gray-200 space-y-2 mt-4">
                       <button 
                         (click)="showInterviewDetails()"
-                        [disabled]="!hasInterviewScheduled()"
-                        [ngClass]="hasInterviewScheduled() ? 
-                          'w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition' :
-                          'w-full bg-gray-300 text-gray-500 px-4 py-2 rounded cursor-not-allowed'">
+                        class="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
                         Ver Detalles de Entrevista
                       </button>
                       <button 
@@ -312,7 +280,47 @@ interface InternshipApplication {
       </div>
     </div>
   `,
-  styles: []
+  styles: [`
+    .application-row {
+      transition: background-color 0.5s ease-in-out;
+    }
+
+    .application-row:not(.fade-stopped) {
+      animation: hoverFade 3s ease-in-out infinite;
+    }
+
+    .application-row:hover {
+      animation: none !important;
+      background-color: rgba(59, 130, 246, 0.15) !important;
+    }
+
+    .application-row.fade-stopped {
+      animation: none !important;
+      background-color: transparent !important;
+    }
+
+    @keyframes hoverFade {
+      0% {
+        background-color: transparent;
+      }
+      50% {
+        background-color: rgba(59, 130, 246, 0.15);
+      }
+      100% {
+        background-color: transparent;
+      }
+    }
+
+    .application-row.highlighted {
+      background-color: rgba(59, 130, 246, 0.2) !important;
+      animation: none !important;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+    }
+
+    .application-row.highlighted:not(:hover) {
+      animation: none !important;
+    }
+  `]
 })
 export class MyApplicationsComponent implements OnInit, OnDestroy {
   applications: InternshipApplication[] = [];
@@ -321,25 +329,34 @@ export class MyApplicationsComponent implements OnInit, OnDestroy {
   showInfoModal = false;
   selectedOfferId: number | null = null;
   selectedApplication: InternshipApplication | null = null;
-  isDetailsExpanded = false;
   showInterviewModal = false;
   confirmingAttendance = false;
   private subscriptions: Subscription[] = [];
+  highlightedApplicationId: number | null = null;
+  private pendingHighlightApplicationId: number | null = null;
+  private highlightTimeoutId: any = null;
+  private pendingShowInterview = false;
+  stoppedFadeRows = new Set<number>();
 
   constructor(
     private http: HttpClient,
     private toastr: ToastrService,
-    private signalRService: SignalRService
+    private signalRService: SignalRService,
+    private route: ActivatedRoute
   ) {}
 
   async ngOnInit(): Promise<void> {
     await this.signalRService.startConnection();
+    this.observeHighlightQueryParam();
     this.loadApplications();
     this.setupSignalRListeners();
   }
 
   ngOnDestroy(): void {
     this.subscriptions.forEach(sub => sub.unsubscribe());
+    if (this.highlightTimeoutId) {
+      clearTimeout(this.highlightTimeoutId);
+    }
   }
 
   setupSignalRListeners(): void {
@@ -404,6 +421,7 @@ export class MyApplicationsComponent implements OnInit, OnDestroy {
           next: (data) => {
             this.applications = data;
             this.loading = false;
+            this.applyHighlightIfNeeded();
             resolve();
           },
           error: (err) => {
@@ -416,13 +434,58 @@ export class MyApplicationsComponent implements OnInit, OnDestroy {
     });
   }
 
-  selectApplication(application: InternshipApplication): void {
-    this.selectedApplication = application;
-    this.isDetailsExpanded = false; // Resetear estado colapsado al seleccionar nueva aplicación
+  private observeHighlightQueryParam(): void {
+    this.route.queryParamMap.subscribe(params => {
+      const highlightParam = params.get('highlightApplication');
+      this.pendingHighlightApplicationId = highlightParam ? +highlightParam : null;
+      this.pendingShowInterview = params.get('showInterview') === 'true';
+      this.applyHighlightIfNeeded();
+    });
   }
 
-  toggleDetailsExpansion(): void {
-    this.isDetailsExpanded = !this.isDetailsExpanded;
+  private applyHighlightIfNeeded(): void {
+    if (!this.pendingHighlightApplicationId || this.loading || !this.applications.length) {
+      return;
+    }
+
+    const target = this.applications.find(app => app.id === this.pendingHighlightApplicationId);
+    if (!target) {
+      return;
+    }
+
+    this.highlightedApplicationId = target.id;
+    this.selectApplication(target);
+    this.scrollToHighlightedRow(target.id);
+
+    if (this.highlightTimeoutId) {
+      clearTimeout(this.highlightTimeoutId);
+    }
+
+    this.highlightTimeoutId = setTimeout(() => {
+      this.highlightedApplicationId = null;
+      this.highlightTimeoutId = null;
+      this.pendingHighlightApplicationId = null;
+    }, 4000);
+
+    if (this.pendingShowInterview) {
+      this.pendingShowInterview = false;
+      this.showInterviewDetails();
+    }
+  }
+
+  private scrollToHighlightedRow(applicationId: number): void {
+    setTimeout(() => {
+      const element = document.getElementById(`application-row-${applicationId}`);
+      element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 200);
+  }
+
+  stopFadeOnHover(applicationId: number): void {
+    this.stoppedFadeRows.add(applicationId);
+  }
+
+  selectApplication(application: InternshipApplication): void {
+    this.selectedApplication = application;
   }
 
   formatDate(dateString: string): string {
@@ -485,9 +548,20 @@ export class MyApplicationsComponent implements OnInit, OnDestroy {
     this.selectedOfferId = null;
   }
 
+  private hasInterviewInfo(application: InternshipApplication | null | undefined): boolean {
+    if (!application) return false;
+    return !!(
+      application.interviewDateTime ||
+      application.interviewMode ||
+      application.interviewLink ||
+      application.interviewAddress ||
+      application.virtualMeetingLink ||
+      application.reviewNotes
+    );
+  }
+
   hasInterviewScheduled(): boolean {
-    return this.selectedApplication?.status === 'ENTREVISTA' && 
-           (!!this.selectedApplication.interviewDateTime || !!this.selectedApplication.reviewDate);
+    return this.hasInterviewInfo(this.selectedApplication);
   }
 
   hasAttendanceConfirmed(): boolean {
@@ -505,16 +579,20 @@ export class MyApplicationsComponent implements OnInit, OnDestroy {
   }
 
   showInterviewDetails(): void {
-    if (this.hasInterviewScheduled()) {
-      this.showInterviewModal = true;
-      
-      // Mostrar notificación toastr si ya hay confirmación
-      if (this.hasAttendanceConfirmed()) {
-        if (this.isAttendanceConfirmed()) {
-          this.toastr.info('Ya has confirmado que asistirás a la entrevista.', 'Confirmación de Asistencia');
-        } else {
-          this.toastr.info('Ya has indicado que no asistirás a la entrevista.', 'Confirmación de Asistencia');
-        }
+    if (!this.selectedApplication) return;
+    if (!this.hasInterviewInfo(this.selectedApplication)) {
+      this.toastr.info('Aún no tienes entrevista programada.', 'Sin entrevista');
+      return;
+    }
+
+    this.showInterviewModal = true;
+    
+    // Mostrar notificación toastr si ya hay confirmación
+    if (this.hasAttendanceConfirmed()) {
+      if (this.isAttendanceConfirmed()) {
+        this.toastr.info('Ya has confirmado que asistirás a la entrevista.', 'Confirmación de Asistencia');
+      } else {
+        this.toastr.info('Ya has indicado que no asistirás a la entrevista.', 'Confirmación de Asistencia');
       }
     }
   }

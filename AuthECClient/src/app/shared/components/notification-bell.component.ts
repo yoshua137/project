@@ -13,7 +13,7 @@ import { Router } from '@angular/router';
       <!-- Campanita con badge -->
       <button
         (click)="toggleDropdown()"
-        class="relative p-2 text-blue-ucb hover:bg-blue-50 rounded-full transition"
+        class="relative p-2 text-blue-ucb hover:bg-blue-50 rounded-full transition transition-transform transform hover:scale-110 focus:outline-none"
         [class.bg-blue-50]="showDropdown"
         title="Notificaciones"
       >
@@ -257,6 +257,29 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
         if (relatedEntityType === 'InternshipApplication') {
           this.router.navigate(['/mis-ofertas-pasantia'], {
             queryParams: { highlightApplicant: relatedEntityId }
+          });
+        }
+        break;
+      case 'APPLICATION_ACCEPTED':
+      case 'APPLICATION_STATUS_CHANGED':
+        if (
+          relatedEntityType === 'InternshipApplication' &&
+          relatedEntityId
+        ) {
+          const message = notification.message?.toLowerCase() ?? '';
+          const isAccepted =
+            type === 'APPLICATION_ACCEPTED' || message.includes('acept');
+          if (isAccepted) {
+            this.router.navigate(['/mis-aplicaciones'], {
+              queryParams: { highlightApplication: relatedEntityId }
+            });
+          }
+        }
+        break;
+      case 'INTERVIEW_SCHEDULED':
+        if (relatedEntityType === 'InternshipApplication' && relatedEntityId) {
+          this.router.navigate(['/mis-aplicaciones'], {
+            queryParams: { highlightApplication: relatedEntityId, showInterview: true }
           });
         }
         break;

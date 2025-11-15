@@ -595,8 +595,7 @@ export class MisOfertasPasantiaComponent implements OnInit {
 
     const body: any = { 
       status: this.reviewAction, 
-      reviewNotes: this.reviewNotes,
-      virtualMeetingLink: this.virtualMeetingLink || null
+      reviewNotes: this.reviewNotes
     };
 
     if (this.reviewAction === 'ENTREVISTA') {
@@ -604,6 +603,7 @@ export class MisOfertasPasantiaComponent implements OnInit {
       body.interviewMode = this.interviewMode;
       body.interviewLink = this.interviewMode === 'Virtual' ? this.interviewLink : null;
       body.interviewAddress = this.interviewMode === 'Presencial' ? this.interviewAddress : null;
+      body.virtualMeetingLink = this.virtualMeetingLink || null;
     }
     
     this.http.put(`${environment.apiBaseUrl}/InternshipApplication/${this.reviewingApplication.id}/review`, body)

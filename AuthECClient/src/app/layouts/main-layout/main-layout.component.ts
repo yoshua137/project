@@ -40,6 +40,7 @@ export class MainLayoutComponent implements OnInit {
   isPhotoLoading = false;
   profileInitials = '?';
   showProfileMenu = false;
+  showHelpMenu = false;
 
   constructor(private router: Router,
     public authService: AuthService,
@@ -57,8 +58,9 @@ export class MainLayoutComponent implements OnInit {
   }
 
   @HostListener('document:click')
-  closeProfileMenu() {
+  closeMenus() {
     this.showProfileMenu = false;
+    this.showHelpMenu = false;
   }
 
   onLogout() {
@@ -70,6 +72,20 @@ export class MainLayoutComponent implements OnInit {
     event.stopPropagation();
     this.showProfileMenu = !this.showProfileMenu;
   }
+
+  toggleHelpMenu(event: MouseEvent) {
+    event.stopPropagation();
+    this.showHelpMenu = !this.showHelpMenu;
+  }
+
+  openHelpGuide() {
+    window.open('https://support.google.com/?hl=es', '_blank');
+  }
+
+  contactSupport() {
+    window.open('mailto:soporte.pasantias@ucb.edu.bo', '_blank');
+  }
+
 
   navigateToProfile() {
     this.showProfileMenu = false;

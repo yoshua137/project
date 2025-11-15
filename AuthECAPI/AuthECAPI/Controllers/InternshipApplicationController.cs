@@ -320,7 +320,12 @@ namespace AuthECAPI.Controllers
                 application.Status = reviewRequest.Status;
                 application.ReviewDate = _cloudTimeService.Now;
                 application.ReviewNotes = reviewRequest.ReviewNotes;
-                application.VirtualMeetingLink = reviewRequest.VirtualMeetingLink;
+                if (reviewRequest.VirtualMeetingLink != null)
+                {
+                    application.VirtualMeetingLink = string.IsNullOrWhiteSpace(reviewRequest.VirtualMeetingLink)
+                        ? null
+                        : reviewRequest.VirtualMeetingLink;
+                }
                 
                 // Guardar detalles de la entrevista si el estado es ENTREVISTA
                 if (reviewRequest.Status == "ENTREVISTA")
@@ -330,14 +335,7 @@ namespace AuthECAPI.Controllers
                     application.InterviewLink = reviewRequest.InterviewLink;
                     application.InterviewAddress = reviewRequest.InterviewAddress;
                 }
-                else
-                {
-                    // Limpiar campos de entrevista si el estado cambia a otro que no sea ENTREVISTA
-                    application.InterviewDateTime = null;
-                    application.InterviewMode = null;
-                    application.InterviewLink = null;
-                    application.InterviewAddress = null;
-                }
+                // No limpiar información de entrevista cuando se acepta/rechaza para mantener el historial
 
                 await _context.SaveChangesAsync();
 
