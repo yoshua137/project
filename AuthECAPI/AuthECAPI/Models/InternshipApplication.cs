@@ -18,10 +18,10 @@ namespace AuthECAPI.Models
         public DateTime ApplicationDate { get; set; }
         
         /// <summary>
-        /// Estado de la aplicación: 'PENDIENTE', 'ENTREVISTA', 'APROBADA', 'RECHAZADA'
+        /// Estado de la aplicación: 'PENDIENTE', 'ENTREVISTA', 'APROBADA', 'RECHAZADA', 'REVISION'
         /// </summary>
         [Required]
-        [RegularExpression("PENDIENTE|ENTREVISTA|APROBADA|RECHAZADA", ErrorMessage = "Status solo puede ser 'PENDIENTE', 'ENTREVISTA', 'APROBADA' o 'RECHAZADA'")]
+        [RegularExpression("PENDIENTE|ENTREVISTA|APROBADA|RECHAZADA|REVISION", ErrorMessage = "Status solo puede ser 'PENDIENTE', 'ENTREVISTA', 'APROBADA', 'RECHAZADA' o 'REVISION'")]
         public string Status { get; set; } = "PENDIENTE";
 
         public string? CoverLetter { get; set; }
@@ -39,5 +39,14 @@ namespace AuthECAPI.Models
         
         // Confirmación de asistencia a entrevista
         public bool? InterviewAttendanceConfirmed { get; set; }
+        
+        // Carta de aceptación
+        public string? AcceptanceLetterFilePath { get; set; }
+        public string? AcceptanceNotes { get; set; }
+        public DateTime? AcceptanceDate { get; set; }
+        
+        // Confirmación del estudiante de realizar la pasantía
+        public bool? StudentAcceptanceConfirmed { get; set; }
+        public DateTime? StudentAcceptanceConfirmedDate { get; set; }
     }
 } 

@@ -171,6 +171,15 @@ namespace AuthECAPI.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<DateTime?>("AcceptanceDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("AcceptanceLetterFilePath")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AcceptanceNotes")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime>("ApplicationDate")
                         .HasColumnType("datetime2");
 
@@ -210,6 +219,12 @@ namespace AuthECAPI.Migrations
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool?>("StudentAcceptanceConfirmed")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("StudentAcceptanceConfirmedDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("StudentId")
                         .IsRequired()

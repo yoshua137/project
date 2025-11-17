@@ -188,7 +188,12 @@ namespace AuthECAPI.Controllers
                     InterviewLink = application.InterviewLink,
                     InterviewAddress = application.InterviewAddress,
                     InterviewNotes = application.InterviewNotes,
-                    InterviewAttendanceConfirmed = application.InterviewAttendanceConfirmed
+                    InterviewAttendanceConfirmed = application.InterviewAttendanceConfirmed,
+                    AcceptanceLetterFilePath = application.AcceptanceLetterFilePath,
+                    AcceptanceNotes = application.AcceptanceNotes,
+                    AcceptanceDate = application.AcceptanceDate,
+                    StudentAcceptanceConfirmed = application.StudentAcceptanceConfirmed,
+                    StudentAcceptanceConfirmedDate = application.StudentAcceptanceConfirmedDate
                 };
 
                 return CreatedAtAction(nameof(CreateApplication), new { id = applicationResponse.Id }, applicationResponse);
@@ -241,7 +246,12 @@ namespace AuthECAPI.Controllers
                         InterviewLink = ia.InterviewLink,
                         InterviewAddress = ia.InterviewAddress,
                         InterviewNotes = ia.InterviewNotes,
-                        InterviewAttendanceConfirmed = ia.InterviewAttendanceConfirmed
+                        InterviewAttendanceConfirmed = ia.InterviewAttendanceConfirmed,
+                        AcceptanceLetterFilePath = ia.AcceptanceLetterFilePath,
+                        AcceptanceNotes = ia.AcceptanceNotes,
+                        AcceptanceDate = ia.AcceptanceDate,
+                        StudentAcceptanceConfirmed = ia.StudentAcceptanceConfirmed,
+                        StudentAcceptanceConfirmedDate = ia.StudentAcceptanceConfirmedDate
                     })
                     .ToListAsync();
 
@@ -304,7 +314,12 @@ namespace AuthECAPI.Controllers
                         InterviewLink = ia.InterviewLink,
                         InterviewAddress = ia.InterviewAddress,
                         InterviewNotes = ia.InterviewNotes,
-                        InterviewAttendanceConfirmed = ia.InterviewAttendanceConfirmed
+                        InterviewAttendanceConfirmed = ia.InterviewAttendanceConfirmed,
+                        AcceptanceLetterFilePath = ia.AcceptanceLetterFilePath,
+                        AcceptanceNotes = ia.AcceptanceNotes,
+                        AcceptanceDate = ia.AcceptanceDate,
+                        StudentAcceptanceConfirmed = ia.StudentAcceptanceConfirmed,
+                        StudentAcceptanceConfirmedDate = ia.StudentAcceptanceConfirmedDate
                     })
                     .ToListAsync();
 
@@ -426,8 +441,8 @@ namespace AuthECAPI.Controllers
                 {
                     await _notificationService.CreateNotificationAsync(
                         application.StudentId,
-                        "Aplicación Aprobada",
-                        $"Tu aplicación para la oferta '{application.InternshipOffer.Title}' ha sido aprobada. ¡Felicidades!",
+                        "Evaluación Aprobada",
+                        $"Tu evaluación para la oferta '{application.InternshipOffer.Title}' ha sido aprobada. ¡Felicidades!",
                         "APPLICATION_ACCEPTED",
                         application.Id,
                         "InternshipApplication"
@@ -604,15 +619,103 @@ namespace AuthECAPI.Controllers
                     {
                         applicationId = application.Id,
                         studentId = application.StudentId,
-                        studentName = (await _context.Students
-                            .Include(s => s.AppUser)
-                            .FirstOrDefaultAsync(s => s.Id == application.StudentId))?.AppUser?.FullName ?? "Estudiante",
+                        studentName = student?.AppUser?.FullName ?? "Estudiante",
                         offerTitle = offer.Title,
                         willAttend = request.WillAttend
                     });
                 }
 
-                return NoContent();
+                return Ok(new { message = "Asistencia confirmada correctamente" });
+            }
+            catch (InvalidOperationException)
+            {
+                return Unauthorized("Token inválido o malformado. No se encontró el claim 'userID'.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error interno del servidor: {ex.Message}");
+            }
+        }
+
+        // PUT: api/InternshipApplication/{id}/consolidate-acceptance
+        [HttpPut("{id}/consolidate-acceptance")]
+        [Authorize(Roles = "Organization")]
+        public async Task<IActionResult> ConsolidateAcceptance(int id, [FromForm] ConsolidateAcceptanceRequest request)
+        {
+            try
+            {
+                var userId = User.Claims.First(c => c.Type == "userID").Value;
+
+                var application = await _context.InternshipApplications
+                    .Include(ia => ia.InternshipOffer)
+                    .ThenInclude(io => io.Organization)
+                    .FirstOrDefaultAsync(ia => ia.Id == id);
+
+                if (application == null)
+                {
+                    return NotFound("No se encontró la aplicación");
+                }
+
+                // Verificar que la aplicación pertenece a una oferta de la organización actual
+                if (application.InternshipOffer.OrganizationId != userId)
+                {
+                    return Forbid("No tienes permisos para consolidar la aceptación de esta aplicación");
+                }
+
+                // Verificar que la aplicación está en estado APROBADA
+                if (application.Status != "APROBADA")
+                {
+                    return BadRequest("Solo se puede consolidar la aceptación para aplicaciones en estado APROBADA");
+                }
+
+                // Validar y guardar el archivo PDF
+                string? acceptanceLetterFilePath = null;
+                if (request.AcceptanceLetter != null)
+                {
+                    if (request.AcceptanceLetter.Length > 10 * 1024 * 1024) // 10MB máximo
+                    {
+                        return BadRequest("El archivo de carta de aceptación no puede exceder 10MB");
+                    }
+
+                    if (!request.AcceptanceLetter.ContentType.Equals("application/pdf", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return BadRequest("Solo se permiten archivos PDF para la carta de aceptación");
+                    }
+
+                    var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "Uploads", "AcceptanceLetters");
+                    if (!Directory.Exists(uploadsFolder))
+                    {
+                        Directory.CreateDirectory(uploadsFolder);
+                    }
+
+                    var fileName = $"{Guid.NewGuid()}_{_cloudTimeService.Now:yyyyMMddHHmmss}.pdf";
+                    var filePath = Path.Combine(uploadsFolder, fileName);
+
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await request.AcceptanceLetter.CopyToAsync(stream);
+                    }
+
+                    acceptanceLetterFilePath = fileName;
+                }
+
+                // Actualizar la aplicación
+                application.AcceptanceLetterFilePath = acceptanceLetterFilePath;
+                application.AcceptanceNotes = request.AcceptanceNotes;
+                application.AcceptanceDate = _cloudTimeService.Now;
+                // Cambiar el estado a REVISION cuando se consolida la aceptación
+                application.Status = "REVISION";
+
+                await _context.SaveChangesAsync();
+
+                return Ok(new 
+                { 
+                    message = "Aceptación consolidada correctamente",
+                    acceptanceLetterFilePath = acceptanceLetterFilePath,
+                    acceptanceNotes = application.AcceptanceNotes,
+                    acceptanceDate = application.AcceptanceDate,
+                    status = application.Status
+                });
             }
             catch (InvalidOperationException)
             {
@@ -671,6 +774,141 @@ namespace AuthECAPI.Controllers
                 return StatusCode(500, $"Error interno del servidor: {ex.Message}");
             }
         }
+
+        // GET: api/InternshipApplication/{id}/acceptance-letter
+        [HttpGet("{id}/acceptance-letter")]
+        [Authorize(Roles = "Organization,Student")]
+        public async Task<IActionResult> DownloadAcceptanceLetter(int id)
+        {
+            try
+            {
+                var userId = User.Claims.First(c => c.Type == "userID").Value;
+                var userRole = User.Claims.FirstOrDefault(c => c.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role")?.Value;
+
+                var application = await _context.InternshipApplications
+                    .Include(ia => ia.InternshipOffer)
+                    .ThenInclude(io => io.Organization)
+                    .FirstOrDefaultAsync(ia => ia.Id == id);
+
+                if (application == null)
+                {
+                    return NotFound("No se encontró la aplicación");
+                }
+
+                // Verificar permisos según el rol
+                if (userRole == "Student")
+                {
+                    if (application.StudentId != userId)
+                    {
+                        return Forbid("No tienes permisos para descargar esta carta de aceptación");
+                    }
+                }
+                else if (userRole == "Organization")
+                {
+                    if (application.InternshipOffer.OrganizationId != userId)
+                    {
+                        return Forbid("No tienes permisos para descargar esta carta de aceptación");
+                    }
+                }
+
+                if (string.IsNullOrEmpty(application.AcceptanceLetterFilePath))
+                {
+                    return NotFound("No se encontró el archivo de carta de aceptación");
+                }
+
+                var filePath = Path.Combine(Directory.GetCurrentDirectory(), "Uploads", "AcceptanceLetters", application.AcceptanceLetterFilePath);
+                if (!System.IO.File.Exists(filePath))
+                {
+                    return NotFound("El archivo de carta de aceptación no existe en el servidor");
+                }
+
+                var fileBytes = await System.IO.File.ReadAllBytesAsync(filePath);
+                return File(fileBytes, "application/pdf", $"CartaAceptacion_{application.StudentId}_{application.InternshipOfferId}.pdf");
+            }
+            catch (InvalidOperationException)
+            {
+                return Unauthorized("Token inválido o malformado. No se encontró el claim 'userID'.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error interno del servidor: {ex.Message}");
+            }
+        }
+
+        // PUT: api/InternshipApplication/{id}/confirm-acceptance
+        [HttpPut("{id}/confirm-acceptance")]
+        [Authorize(Roles = "Student")]
+        public async Task<IActionResult> ConfirmStudentAcceptance(int id)
+        {
+            try
+            {
+                var userId = User.Claims.First(c => c.Type == "userID").Value;
+
+                var application = await _context.InternshipApplications
+                    .Include(ia => ia.InternshipOffer)
+                    .ThenInclude(io => io.Organization)
+                    .ThenInclude(o => o.AppUser)
+                    .Include(ia => ia.Student)
+                    .ThenInclude(s => s.AppUser)
+                    .FirstOrDefaultAsync(ia => ia.Id == id);
+
+                if (application == null)
+                {
+                    return NotFound("No se encontró la aplicación");
+                }
+
+                // Verificar que la aplicación pertenece al estudiante
+                if (application.StudentId != userId)
+                {
+                    return Forbid("No tienes permisos para confirmar esta aplicación");
+                }
+
+                // Verificar que el estado sea APROBADA
+                if (application.Status != "APROBADA")
+                {
+                    return BadRequest("Solo se puede confirmar la aceptación cuando el estado es 'APROBADA'");
+                }
+
+                // Confirmar la aceptación del estudiante
+                application.StudentAcceptanceConfirmed = true;
+                application.StudentAcceptanceConfirmedDate = await _cloudTimeService.GetCloudTimeAsync();
+
+                await _context.SaveChangesAsync();
+
+                // Obtener el ID de la organización
+                var organizationId = application.InternshipOffer.OrganizationId;
+
+                // Crear notificación para la organización
+                await _notificationService.CreateNotificationAsync(
+                    organizationId,
+                    "Aceptación Confirmada",
+                    $"El estudiante {application.Student.AppUser?.FullName} ha confirmado su aceptación para la oferta '{application.InternshipOffer.Title}'.",
+                    "STUDENT_ACCEPTANCE_CONFIRMED",
+                    application.Id,
+                    "InternshipApplication"
+                );
+
+                // Enviar notificación SignalR a la organización
+                await _hubContext.Clients.Group($"user_{organizationId}").SendAsync("StudentAcceptanceConfirmed", new
+                {
+                    applicationId = application.Id,
+                    studentId = application.StudentId,
+                    studentName = application.Student.AppUser?.FullName,
+                    offerTitle = application.InternshipOffer.Title,
+                    confirmedDate = application.StudentAcceptanceConfirmedDate
+                });
+
+                return NoContent();
+            }
+            catch (InvalidOperationException)
+            {
+                return Unauthorized("Token inválido o malformado. No se encontró el claim 'userID'.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error interno del servidor: {ex.Message}");
+            }
+        }
     }
 
     public class ReviewApplicationRequest
@@ -699,5 +937,13 @@ namespace AuthECAPI.Controllers
     {
         [Required]
         public bool WillAttend { get; set; }
+    }
+
+    public class ConsolidateAcceptanceRequest
+    {
+        [Required]
+        public IFormFile AcceptanceLetter { get; set; }
+        
+        public string? AcceptanceNotes { get; set; }
     }
 } 

@@ -24,5 +24,10 @@ namespace AuthECAPI.Models
         public string? InterviewAddress { get; set; }
         public string? InterviewNotes { get; set; }
         public bool? InterviewAttendanceConfirmed { get; set; }
+        public string? AcceptanceLetterFilePath { get; set; }
+        public string? AcceptanceNotes { get; set; }
+        public DateTime? AcceptanceDate { get; set; }
+        public bool? StudentAcceptanceConfirmed { get; set; }
+        public DateTime? StudentAcceptanceConfirmedDate { get; set; }
     }
 } 

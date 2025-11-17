@@ -91,6 +91,58 @@
               <h3 class="text-lg font-semibold text-blue-800">Información del Postulante</h3>
             </div>
 
+            <!-- Warning message if interview scheduled but not confirmed -->
+            <div *ngIf="hasInterviewScheduled(selectedApplicant) && !isAttendanceConfirmed(selectedApplicant)" 
+                 class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded mb-4">
+              <div class="flex items-center gap-2">
+                <svg class="w-5 h-5 text-yellow-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <p class="text-yellow-800 font-semibold">
+                  El estudiante tiene que confirmar la asistencia a la entrevista.
+                </p>
+              </div>
+            </div>
+
+            <!-- Warning message if attendance confirmed but not evaluated -->
+            <div *ngIf="hasInterviewScheduled(selectedApplicant) && isAttendanceConfirmed(selectedApplicant) && selectedApplicant.status !== 'APROBADA' && selectedApplicant.status !== 'RECHAZADA'" 
+                 class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded mb-4">
+              <div class="flex items-center gap-2">
+                <svg class="w-5 h-5 text-yellow-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <p class="text-yellow-800 font-semibold">
+                  Por favor, evalúe al postulante considerando su desempeño en la entrevista y la revisión de su curriculum vitae para completar el proceso de selección.
+                </p>
+              </div>
+            </div>
+
+            <!-- Warning message about sending acceptance letter to director -->
+            <div *ngIf="selectedApplicant.studentAcceptanceConfirmed && assignedDirector && selectedApplicant.status !== 'REVISION'" 
+                 class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded mb-4">
+              <div class="flex items-center gap-2">
+                <svg class="w-5 h-5 text-yellow-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <p class="text-yellow-800 font-semibold">
+                  Debe enviar la carta de aceptación dirigido al Director(a) Mgtr: <strong>{{ assignedDirector.name }}</strong>
+                </p>
+              </div>
+            </div>
+
+            <!-- Warning message if status is REVISION -->
+            <div *ngIf="selectedApplicant.status === 'REVISION'" 
+                 class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded mb-4">
+              <div class="flex items-center gap-2">
+                <svg class="w-5 h-5 text-yellow-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <p class="text-yellow-800 font-semibold">
+                  El director está de acuerdo con la carta de aceptación.
+                </p>
+              </div>
+            </div>
+
             <!-- Action Buttons -->
             <div class="pt-4 border-t border-gray-200 space-y-2 mt-4">
               <button 
@@ -104,9 +156,12 @@
               </button>
               <button 
                 (click)="openInterviewDetailsModal(selectedApplicant)"
-                *ngIf="hasInterviewScheduled(selectedApplicant) || selectedApplicant.status === 'APROBADA' || selectedApplicant.status === 'RECHAZADA'"
+                *ngIf="hasInterviewScheduled(selectedApplicant) || selectedApplicant.status === 'APROBADA' || selectedApplicant.status === 'RECHAZADA' || selectedApplicant.status === 'REVISION'"
                 class="w-full px-4 py-2 rounded transition flex items-center gap-2 text-gray-700 hover:text-gray-900">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <svg *ngIf="hasInterviewScheduled(selectedApplicant) && (selectedApplicant.interviewAttendanceConfirmed === null || selectedApplicant.interviewAttendanceConfirmed === undefined || selectedApplicant.interviewAttendanceConfirmed === false)" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <svg *ngIf="!hasInterviewScheduled(selectedApplicant) || (hasInterviewScheduled(selectedApplicant) && selectedApplicant.interviewAttendanceConfirmed === true)" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 Detalles Entrevista
@@ -115,19 +170,56 @@
                 (click)="openReviewModal(selectedApplicant, 'ENTREVISTA')"
                 *ngIf="selectedApplicant.status === 'PENDIENTE'"
                 class="w-full px-4 py-2 rounded transition flex items-center gap-2 text-gray-700 hover:text-gray-900">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
                 Programar Entrevista
               </button>
+              <div class="flex items-center gap-2 w-full">
+                <button 
+                  (click)="handleEvaluationClick()"
+                  *ngIf="selectedApplicant.status === 'PENDIENTE' || selectedApplicant.status === 'ENTREVISTA' || selectedApplicant.status === 'APROBADA' || selectedApplicant.status === 'RECHAZADA' || selectedApplicant.status === 'REVISION'"
+                  class="flex-1 px-4 py-2 rounded transition flex items-center gap-2 text-gray-700 hover:text-gray-900">
+                  <svg *ngIf="selectedApplicant.status === 'APROBADA' || selectedApplicant.status === 'RECHAZADA'" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <svg *ngIf="(!selectedApplicant.status || (selectedApplicant.status !== 'APROBADA' && selectedApplicant.status !== 'RECHAZADA')) && !hasInterviewScheduled(selectedApplicant)" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <svg *ngIf="(!selectedApplicant.status || (selectedApplicant.status !== 'APROBADA' && selectedApplicant.status !== 'RECHAZADA')) && hasInterviewScheduled(selectedApplicant) && !isAttendanceConfirmed(selectedApplicant)" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <svg *ngIf="(!selectedApplicant.status || (selectedApplicant.status !== 'APROBADA' && selectedApplicant.status !== 'RECHAZADA')) && hasInterviewScheduled(selectedApplicant) && isAttendanceConfirmed(selectedApplicant)" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  Evaluación
+                </button>
+                <span *ngIf="selectedApplicant.status === 'APROBADA'" class="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800 whitespace-nowrap">
+                  Aprobada
+                </span>
+                <span *ngIf="selectedApplicant.status === 'RECHAZADA'" class="px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800 whitespace-nowrap">
+                  Reprobada
+                </span>
+              </div>
               <button 
-                (click)="selectedApplicant.status === 'APROBADA' || selectedApplicant.status === 'RECHAZADA' ? showEvaluationDetailsModal = true : showEvaluationModal = true"
-                *ngIf="selectedApplicant.status === 'PENDIENTE' || selectedApplicant.status === 'ENTREVISTA' || selectedApplicant.status === 'APROBADA' || selectedApplicant.status === 'RECHAZADA'"
+                (click)="selectedApplicant.acceptanceLetterFilePath ? showAcceptanceDetailsModal = true : openConsolidateAcceptanceModal()"
                 class="w-full px-4 py-2 rounded transition flex items-center gap-2 text-gray-700 hover:text-gray-900">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <svg *ngIf="selectedApplicant.status !== 'APROBADA' && selectedApplicant.status !== 'RECHAZADA' && selectedApplicant.status !== 'REVISION'" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <svg *ngIf="selectedApplicant.status === 'APROBADA' && !selectedApplicant.studentAcceptanceConfirmed" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <svg *ngIf="selectedApplicant.status === 'APROBADA' && selectedApplicant.studentAcceptanceConfirmed && !selectedApplicant.acceptanceLetterFilePath" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <svg *ngIf="selectedApplicant.status === 'REVISION' && selectedApplicant.acceptanceLetterFilePath" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <svg *ngIf="selectedApplicant.acceptanceLetterFilePath && selectedApplicant.studentAcceptanceConfirmed && selectedApplicant.status !== 'REVISION'" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                Evaluación
+                {{ selectedApplicant.acceptanceLetterFilePath ? 'Detalles de Aceptación' : 'Consolidar Aceptación' }}
               </button>
             </div>
           </div>
@@ -733,10 +825,10 @@
     </button>
     
     <h2 class="text-xl font-bold mb-4 text-blue-900">
-      {{ reviewAction === 'APROBADA' ? 'Aceptar' : reviewAction === 'RECHAZADA' ? 'Rechazar' : 'Programar Entrevista' }} Postulación
+      {{ reviewAction === 'APROBADA' ? 'Aprobar Evaluación' : reviewAction === 'RECHAZADA' ? 'Reprobar Evaluación' : 'Programar Entrevista' }}
     </h2>
     
-    <div class="mb-4">
+    <div class="mb-4" *ngIf="reviewAction === 'APROBADA' || reviewAction === 'RECHAZADA'">
       <p class="text-sm text-gray-600 mb-2">
         <strong>Estudiante:</strong> {{ reviewingApplication.studentName }}
       </p>
@@ -799,7 +891,7 @@
           name="reviewNotes"
           rows="4"
           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-          [placeholder]="reviewAction === 'APROBADA' ? 'Explica por qué fue aceptado el estudiante...' : 'Explica por qué fue rechazado el estudiante...'"
+          [placeholder]="reviewAction === 'APROBADA' ? 'Explica porque fue aprobado el estudiante...' : 'Explica por qué fue rechazado el estudiante...'"
           required>
         </textarea>
       </div>
@@ -818,7 +910,7 @@
           [ngClass]="reviewAction === 'APROBADA' ? 'bg-green-600 hover:bg-green-700 focus:ring-green-500' : reviewAction === 'RECHAZADA' ? 'bg-red-600 hover:bg-red-700 focus:ring-red-500' : 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500'"
           class="flex-1 px-4 py-2 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition">
           <span *ngIf="!reviewLoading">
-            {{ reviewAction === 'APROBADA' ? 'Aceptar' : reviewAction === 'RECHAZADA' ? 'Rechazar' : 'Programar Entrevista' }}
+            {{ reviewAction === 'APROBADA' ? 'Aprobar' : reviewAction === 'RECHAZADA' ? 'Reprobar' : 'Programar Entrevista' }}
           </span>
           <span *ngIf="reviewLoading" class="flex items-center justify-center">
             <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
@@ -848,6 +940,19 @@
     </button>
     
     <h2 class="text-xl font-bold mb-4 text-blue-900">Detalles de la Entrevista</h2>
+    
+    <!-- Warning message if attendance not confirmed -->
+    <div *ngIf="showingInterviewDetails && (showingInterviewDetails.interviewAttendanceConfirmed === null || showingInterviewDetails.interviewAttendanceConfirmed === undefined || showingInterviewDetails.interviewAttendanceConfirmed === false)" 
+         class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded mb-4">
+      <div class="flex items-center gap-2">
+        <svg class="w-5 h-5 text-yellow-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+        <p class="text-yellow-800 font-semibold">
+          El estudiante tiene que confirmar la asistencia a la entrevista.
+        </p>
+      </div>
+    </div>
     
     <div class="space-y-4">
       <!-- Fecha y Hora -->
@@ -991,6 +1096,18 @@
 
       <!-- Content -->
       <div class="space-y-4 mb-6">
+        <!-- Warning message if attendance confirmed -->
+        <div *ngIf="hasInterviewScheduled(selectedApplicant) && isAttendanceConfirmed(selectedApplicant)" 
+             class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
+          <div class="flex items-center gap-2">
+            <svg class="w-5 h-5 text-yellow-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <p class="text-yellow-800 font-semibold">
+              Por favor, evalúe al postulante considerando su desempeño en la entrevista y la revisión de su curriculum vitae para completar el proceso de selección.
+            </p>
+          </div>
+        </div>
         <p class="text-gray-700">Seleccione una acción para evaluar al postulante:</p>
       </div>
 
@@ -999,12 +1116,12 @@
         <button 
           (click)="showEvaluationModal = false; openReviewModal(selectedApplicant, 'APROBADA')"
           class="flex-1 px-4 py-3 rounded transition bg-green-100 text-green-700 hover:bg-green-200 font-semibold">
-          Aceptar
+          Aprobar
         </button>
         <button 
           (click)="showEvaluationModal = false; openReviewModal(selectedApplicant, 'RECHAZADA')"
           class="flex-1 px-4 py-3 rounded transition bg-red-100 text-red-700 hover:bg-red-200 font-semibold">
-          Rechazar
+          Reprobar
         </button>
       </div>
     </div>
@@ -1034,9 +1151,11 @@
       <div class="space-y-6">
         <!-- Status -->
         <div class="flex justify-end mb-4">
-          <span class="px-3 py-1 rounded-full text-sm font-semibold"
-                [ngClass]="getApplicationStatusClass(selectedApplicant.status)">
-            {{ getApplicationStatusText(selectedApplicant.status) }}
+          <span *ngIf="selectedApplicant.status === 'APROBADA'" class="px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800">
+            Aprobada
+          </span>
+          <span *ngIf="selectedApplicant.status === 'RECHAZADA'" class="px-3 py-1 rounded-full text-sm font-semibold bg-red-100 text-red-800">
+            Reprobada
           </span>
         </div>
 
@@ -1088,3 +1207,186 @@
     </div>
   </div>
 </div>
+
+<!-- Modal de Consolidar Aceptación -->
+<div *ngIf="showConsolidateAcceptanceModal && selectedApplicant" 
+     class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+     (click)="closeConsolidateAcceptanceModal()">
+  <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
+       (click)="$event.stopPropagation()">
+    <div class="p-6">
+      <!-- Header -->
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-gray-900">Consolidar Aceptación</h2>
+        <button 
+          (click)="closeConsolidateAcceptanceModal()"
+          class="text-gray-400 hover:text-gray-600 transition">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Content -->
+      <form (ngSubmit)="submitConsolidateAcceptance()" class="space-y-6">
+        <!-- Mensaje sobre enviar carta al director -->
+        <div *ngIf="selectedApplicant.studentAcceptanceConfirmed && assignedDirector" 
+             class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
+          <div class="flex items-center gap-2">
+            <svg class="w-5 h-5 text-yellow-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <p class="text-yellow-800 font-semibold">
+              Debe enviar la carta de aceptación dirigido al Director(a) Mgtr: <strong>{{ assignedDirector.name }}</strong>
+            </p>
+          </div>
+        </div>
+
+        <!-- Carta de Aceptación PDF -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Carta de Aceptación (PDF)
+          </label>
+          <input 
+            type="file"
+            accept=".pdf"
+            (change)="onAcceptanceLetterFileSelected($event)"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            required>
+          <p class="mt-1 text-sm text-gray-500">Solo archivos PDF. Tamaño máximo: 10MB</p>
+          <p *ngIf="acceptanceLetterFile" class="mt-2 text-sm text-green-600">
+            Archivo seleccionado: {{ acceptanceLetterFile.name }}
+          </p>
+        </div>
+
+        <!-- Nota de Aceptación -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Nota de Aceptación
+          </label>
+          <textarea 
+            [(ngModel)]="acceptanceNotes"
+            name="acceptanceNotes"
+            rows="4"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            placeholder="Ingrese una nota adicional sobre la aceptación (opcional)...">
+          </textarea>
+        </div>
+
+        <!-- Error Message -->
+        <div *ngIf="consolidateError" class="bg-red-50 border border-red-200 rounded-md p-3">
+          <p class="text-sm text-red-800">{{ consolidateError }}</p>
+        </div>
+
+        <!-- Footer -->
+        <div class="flex gap-3 justify-end">
+          <button 
+            type="button"
+            (click)="closeConsolidateAcceptanceModal()"
+            class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition">
+            Cancelar
+          </button>
+          <button 
+            type="submit"
+            [disabled]="consolidatingAcceptance || !acceptanceLetterFile"
+            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition">
+            <span *ngIf="!consolidatingAcceptance">Guardar</span>
+            <span *ngIf="consolidatingAcceptance" class="flex items-center">
+              <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Guardando...
+            </span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Detalles de Aceptación -->
+<div *ngIf="showAcceptanceDetailsModal && selectedApplicant && selectedApplicant.acceptanceLetterFilePath" 
+     class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+     (click)="showAcceptanceDetailsModal = false">
+  <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
+       (click)="$event.stopPropagation()">
+    <div class="p-6">
+      <!-- Header -->
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-gray-900">Detalles de Aceptación</h2>
+        <button 
+          (click)="showAcceptanceDetailsModal = false"
+          class="text-gray-400 hover:text-gray-600 transition">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Content -->
+      <div class="space-y-6">
+        <!-- Warning message if status is REVISION -->
+        <div *ngIf="selectedApplicant.status === 'REVISION'" 
+             class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
+          <div class="flex items-center gap-2">
+            <svg class="w-5 h-5 text-yellow-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <p class="text-yellow-800 font-semibold">
+              El director está de acuerdo con la carta de aceptación.
+            </p>
+          </div>
+        </div>
+
+        <!-- Fecha de Aceptación -->
+        <div class="bg-blue-50 p-4 rounded-lg" *ngIf="selectedApplicant.acceptanceDate">
+          <h3 class="font-semibold text-gray-900 mb-2">Fecha de Aceptación</h3>
+          <p class="text-gray-700">{{ formatDate(selectedApplicant.acceptanceDate) }}</p>
+        </div>
+        <div class="bg-gray-50 p-4 rounded-lg" *ngIf="!selectedApplicant.acceptanceDate">
+          <h3 class="font-semibold text-gray-900 mb-2">Fecha de Aceptación</h3>
+          <p class="text-gray-500 italic">Fecha no disponible</p>
+        </div>
+
+        <!-- Nota de Aceptación -->
+        <div class="bg-gray-50 p-4 rounded-lg">
+          <h3 class="font-semibold text-gray-900 mb-2">Nota de Aceptación</h3>
+          <div class="text-gray-700 max-h-48 overflow-y-auto">
+            <p *ngIf="selectedApplicant.acceptanceNotes; else noAcceptanceNotes">
+              {{ selectedApplicant.acceptanceNotes }}
+            </p>
+            <ng-template #noAcceptanceNotes>
+              <p class="text-gray-500 italic">No hay nota de aceptación disponible</p>
+            </ng-template>
+          </div>
+        </div>
+
+        <!-- Carta de Aceptación -->
+        <div class="bg-gray-50 p-4 rounded-lg">
+          <h3 class="font-semibold text-gray-900 mb-2">Carta de Aceptación</h3>
+          <div class="flex items-center gap-2">
+            <button 
+              (click)="viewAcceptanceLetter(selectedApplicant.id)"
+              class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Ver Carta de Aceptación
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="mt-6 flex justify-end">
+        <button 
+          (click)="showAcceptanceDetailsModal = false"
+          class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition">
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+

@@ -64,6 +64,14 @@ export interface StudentApplicationUpdatedNotification {
   applicationDate?: string;
 }
 
+export interface StudentAcceptanceConfirmedNotification {
+  applicationId: number;
+  studentId: string;
+  studentName: string;
+  offerTitle: string;
+  confirmedDate: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -77,6 +85,7 @@ export class SignalRService {
   private applicationReceived$ = new BehaviorSubject<ApplicationReceivedNotification | null>(null);
   private studentEnrolled$ = new BehaviorSubject<StudentEnrolledNotification | null>(null);
   private studentApplicationUpdated$ = new BehaviorSubject<StudentApplicationUpdatedNotification | null>(null);
+  private studentAcceptanceConfirmed$ = new BehaviorSubject<StudentAcceptanceConfirmedNotification | null>(null);
 
   constructor(private authService: AuthService) {}
 
@@ -138,6 +147,10 @@ export class SignalRService {
 
     this.hubConnection.on('StudentApplicationUpdated', (data: StudentApplicationUpdatedNotification) => {
       this.studentApplicationUpdated$.next(data);
+    });
+
+    this.hubConnection.on('StudentAcceptanceConfirmed', (data: StudentAcceptanceConfirmedNotification) => {
+      this.studentAcceptanceConfirmed$.next(data);
     });
 
     // Manejar cambios de estado de conexión
@@ -234,6 +247,13 @@ export class SignalRService {
   }
 
   /**
+   * Observable para cuando un estudiante confirma su aceptación (para organizaciones)
+   */
+  onStudentAcceptanceConfirmed(): Observable<StudentAcceptanceConfirmedNotification | null> {
+    return this.studentAcceptanceConfirmed$.asObservable();
+  }
+
+  /**
    * Limpia las notificaciones actuales
    */
   clearNotifications(): void {
@@ -244,6 +264,7 @@ export class SignalRService {
     this.applicationReceived$.next(null);
     this.studentEnrolled$.next(null);
     this.studentApplicationUpdated$.next(null);
+    this.studentAcceptanceConfirmed$.next(null);
   }
 }
 

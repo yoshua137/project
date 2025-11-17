@@ -45,6 +45,11 @@ interface InternshipApplication {
   interviewAddress?: string;
   interviewNotes?: string;
   interviewAttendanceConfirmed?: boolean | null;
+  acceptanceLetterFilePath?: string;
+  acceptanceNotes?: string;
+  acceptanceDate?: string;
+  studentAcceptanceConfirmed?: boolean | null;
+  studentAcceptanceConfirmedDate?: string;
 }
 
 @Component({
@@ -55,6 +60,7 @@ interface InternshipApplication {
   styleUrls: ['./mis-ofertas-pasantia.component.css']
 })
 export class MisOfertasPasantiaComponent implements OnInit {
+  environment = environment;
   offers: InternshipOffer[] = [];
   loading = false;
   error = '';
@@ -81,6 +87,14 @@ export class MisOfertasPasantiaComponent implements OnInit {
   showApplicantDetailsModal = false;
   showEvaluationModal = false;
   showEvaluationDetailsModal = false;
+  showConsolidateAcceptanceModal = false;
+  showAcceptanceDetailsModal = false;
+  acceptanceLetterFile: File | null = null;
+  acceptanceNotes: string = '';
+  consolidatingAcceptance = false;
+  consolidateError = '';
+  assignedDirector: { name: string; department: string } | null = null;
+  loadingDirector = false;
   applicantsLoading = false;
   applicantsError = '';
   highlightedApplicantId: number | null = null;
@@ -163,7 +177,37 @@ export class MisOfertasPasantiaComponent implements OnInit {
       }
     });
 
+    // Escuchar cuando un estudiante confirma su aceptación
+    const acceptanceConfirmedSub = this.signalRService.onStudentAcceptanceConfirmed().subscribe((notification: any) => {
+      if (notification) {
+        // Si estamos viendo los postulantes de una oferta, actualizar la lista
+        if (this.viewingApplicants) {
+          const applicant = this.applicants.find(a => a.id === notification.applicationId);
+          if (applicant) {
+            // Actualizar el estado de confirmación del estudiante
+            applicant.studentAcceptanceConfirmed = true;
+            applicant.studentAcceptanceConfirmedDate = notification.confirmedDate;
+            
+            // Si el postulante seleccionado es el mismo, actualizar también
+            if (this.selectedApplicant && this.selectedApplicant.id === notification.applicationId) {
+              this.selectedApplicant.studentAcceptanceConfirmed = true;
+              this.selectedApplicant.studentAcceptanceConfirmedDate = notification.confirmedDate;
+            }
+          }
+        }
+        
+        this.toastr.success(
+          `${notification.studentName} ha confirmado su aceptación para la oferta "${notification.offerTitle}"`,
+          'Aceptación Confirmada',
+          { timeOut: 5000 }
+        );
+        
+        this.signalRService.clearNotifications();
+      }
+    });
+
     this.subscriptions.push(attendanceSub);
+    this.subscriptions.push(acceptanceConfirmedSub);
   }
 
   loadMyOffers(): void {
@@ -423,6 +467,12 @@ export class MisOfertasPasantiaComponent implements OnInit {
 
   selectApplicant(applicant: InternshipApplication): void {
     this.selectedApplicant = applicant;
+    // Cargar información del director si el estudiante ya confirmó su aceptación
+    if (applicant.studentAcceptanceConfirmed) {
+      this.loadAssignedDirector();
+    } else {
+      this.assignedDirector = null;
+    }
   }
 
   loadApplicants(offerId: number): void {
@@ -431,6 +481,13 @@ export class MisOfertasPasantiaComponent implements OnInit {
         next: (data) => {
           this.applicants = data;
           this.applicantsLoading = false;
+          // Actualizar selectedApplicant si existe
+          if (this.selectedApplicant) {
+            const updatedApp = this.applicants.find(a => a.id === this.selectedApplicant!.id);
+            if (updatedApp) {
+              this.selectedApplicant = updatedApp;
+            }
+          }
           // Si venimos de notificación, destacar al postulante
           if (this.pendingHighlightApplicantId && this.applicants.some(a => a.id === this.pendingHighlightApplicantId)) {
             this.highlightApplicant(this.pendingHighlightApplicantId);
@@ -450,6 +507,9 @@ export class MisOfertasPasantiaComponent implements OnInit {
   }
 
   getApplicationStatusClass(status: string): string {
+    if (status === 'REVISION') {
+      return 'bg-yellow-100 text-yellow-800';
+    }
     switch (status) {
       case 'PENDIENTE':
         return 'bg-yellow-100 text-yellow-800';
@@ -474,6 +534,8 @@ export class MisOfertasPasantiaComponent implements OnInit {
         return 'Aprobada';
       case 'RECHAZADA':
         return 'Rechazada';
+      case 'REVISION':
+        return 'Revisión';
       default:
         return status;
     }
@@ -539,6 +601,22 @@ export class MisOfertasPasantiaComponent implements OnInit {
         error: (err) => {
           console.error('Error opening CV:', err);
           alert('Error al abrir el CV');
+        }
+      });
+  }
+
+  viewAcceptanceLetter(applicationId: number): void {
+    this.http.get(`${environment.apiBaseUrl}/InternshipApplication/${applicationId}/acceptance-letter`, { responseType: 'blob' })
+      .subscribe({
+        next: (blob) => {
+          const url = window.URL.createObjectURL(blob);
+          window.open(url, '_blank');
+          // Note: We don't revoke the URL immediately as the new tab needs it
+          // The browser will clean it up when the tab is closed
+        },
+        error: (err) => {
+          console.error('Error opening acceptance letter:', err);
+          this.toastr.error('Error al abrir la carta de aceptación', 'Error');
         }
       });
   }
@@ -643,7 +721,29 @@ export class MisOfertasPasantiaComponent implements OnInit {
               applicant.interviewAddress = this.interviewMode === 'Presencial' ? this.interviewAddress : undefined;
               applicant.interviewNotes = this.interviewNotes;
             }
+            // Si el postulante seleccionado es el que se actualizó, actualizar también selectedApplicant
+            if (this.selectedApplicant?.id === applicant.id) {
+              this.selectedApplicant = { ...applicant };
+            }
           }
+          // Si se aprobó o reprobó, mostrar toastr de confirmación
+          if (this.reviewAction === 'APROBADA' || this.reviewAction === 'RECHAZADA') {
+            if (this.reviewingApplication) {
+              const message = this.reviewAction === 'APROBADA' 
+                ? `Se aprobó al postulante: ${this.reviewingApplication.studentName}`
+                : `Se reprobó al postulante: ${this.reviewingApplication.studentName}`;
+              const title = this.reviewAction === 'APROBADA' 
+                ? 'Evaluación Aprobada'
+                : 'Evaluación Reprobada';
+              
+              if (this.reviewAction === 'APROBADA') {
+                this.toastr.success(message, title, { timeOut: 5000 });
+              } else {
+                this.toastr.error(message, title, { timeOut: 5000 });
+              }
+            }
+          }
+          
           // Recargar los postulantes para obtener datos actualizados
           if (this.viewingApplicants) {
             this.loadApplicants(this.viewingApplicants.id);
@@ -669,6 +769,174 @@ export class MisOfertasPasantiaComponent implements OnInit {
 
   hasInterviewScheduled(applicant: InternshipApplication): boolean {
     return applicant.status === 'ENTREVISTA' && !!applicant.interviewDateTime;
+  }
+
+  isAttendanceConfirmed(applicant: InternshipApplication): boolean {
+    return applicant.interviewAttendanceConfirmed === true || 
+           (typeof applicant.interviewAttendanceConfirmed === 'number' && applicant.interviewAttendanceConfirmed === 1);
+  }
+
+  handleEvaluationClick(): void {
+    if (!this.selectedApplicant) return;
+
+    // Si está en estado PENDIENTE o ENTREVISTA, verificar que haya entrevista programada
+    if ((this.selectedApplicant.status === 'PENDIENTE' || this.selectedApplicant.status === 'ENTREVISTA') && 
+        !this.hasInterviewScheduled(this.selectedApplicant)) {
+      this.toastr.warning('Primero debe programar una entrevista antes de evaluar', 'Entrevista Requerida');
+      return;
+    }
+
+    // Si hay entrevista programada, verificar que el estudiante haya confirmado la asistencia
+    if (this.hasInterviewScheduled(this.selectedApplicant)) {
+      if (!this.isAttendanceConfirmed(this.selectedApplicant)) {
+        this.toastr.warning('El estudiante debe confirmar su asistencia a la entrevista antes de poder evaluar', 'Confirmación Requerida');
+        return;
+      }
+    }
+
+    // Si ya tiene evaluación (aprobado o rechazado), mostrar detalles de evaluación
+    if (this.selectedApplicant.status === 'APROBADA' || this.selectedApplicant.status === 'RECHAZADA') {
+      this.showEvaluationDetailsModal = true;
+    } else {
+      // Si está en ENTREVISTA y tiene entrevista programada y confirmada, mostrar modal de evaluación
+      this.showEvaluationModal = true;
+    }
+  }
+
+  // Métodos para consolidar aceptación
+  openConsolidateAcceptanceModal(): void {
+    if (!this.selectedApplicant) return;
+    
+    // Verificar que el estado sea APROBADA antes de permitir consolidar
+    if (this.selectedApplicant.status !== 'APROBADA') {
+      this.toastr.warning('Solo se puede consolidar la aceptación cuando el estado es "Aprobada"', 'Estado Requerido');
+      return;
+    }
+    
+    // Verificar que el estudiante haya confirmado su aceptación
+    if (!this.selectedApplicant.studentAcceptanceConfirmed) {
+      this.toastr.warning('El estudiante debe confirmar su aceptación antes de consolidar', 'Confirmación Requerida');
+      return;
+    }
+    
+    this.showConsolidateAcceptanceModal = true;
+    this.acceptanceLetterFile = null;
+    this.acceptanceNotes = '';
+    this.consolidateError = '';
+    this.consolidatingAcceptance = false;
+    this.assignedDirector = null;
+    
+    // Obtener el director asignado a la organización
+    this.loadAssignedDirector();
+  }
+
+  loadAssignedDirector(): void {
+    this.loadingDirector = true;
+    this.http.get<any[]>(`${environment.apiBaseUrl}/AgreementRequest/organization/mine`)
+      .subscribe({
+        next: (requests) => {
+          // Buscar el primer AgreementRequest aprobado o activo para obtener el director
+          const activeRequest = requests.find(req => req.status === 'APROBADA' || req.status === 'PENDIENTE');
+          if (activeRequest && activeRequest.directorName) {
+            this.assignedDirector = {
+              name: activeRequest.directorName,
+              department: activeRequest.directorDepartment || 'Mgtr'
+            };
+          } else {
+            // Si no hay un request activo, usar el más reciente
+            if (requests.length > 0) {
+              const latestRequest = requests[0];
+              this.assignedDirector = {
+                name: latestRequest.directorName || 'Director',
+                department: latestRequest.directorDepartment || 'Mgtr'
+              };
+            }
+          }
+          this.loadingDirector = false;
+        },
+        error: (err) => {
+          console.error('Error loading assigned director:', err);
+          this.loadingDirector = false;
+          // No mostrar error al usuario, simplemente no mostrar el mensaje del director
+        }
+      });
+  }
+
+  closeConsolidateAcceptanceModal(): void {
+    this.showConsolidateAcceptanceModal = false;
+    this.acceptanceLetterFile = null;
+    this.acceptanceNotes = '';
+    this.consolidateError = '';
+    this.consolidatingAcceptance = false;
+  }
+
+
+  onAcceptanceLetterFileSelected(event: any): void {
+    const file = event.target.files[0];
+    if (file) {
+      if (file.type !== 'application/pdf') {
+        this.consolidateError = 'Solo se permiten archivos PDF';
+        event.target.value = '';
+        return;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        this.consolidateError = 'El archivo no puede exceder 10MB';
+        event.target.value = '';
+        return;
+      }
+      this.acceptanceLetterFile = file;
+      this.consolidateError = '';
+    }
+  }
+
+  submitConsolidateAcceptance(): void {
+    if (!this.selectedApplicant || !this.acceptanceLetterFile) return;
+
+    this.consolidatingAcceptance = true;
+    this.consolidateError = '';
+
+    const formData = new FormData();
+    formData.append('acceptanceLetter', this.acceptanceLetterFile);
+    if (this.acceptanceNotes) {
+      formData.append('acceptanceNotes', this.acceptanceNotes);
+    }
+
+    this.http.put(
+      `${environment.apiBaseUrl}/InternshipApplication/${this.selectedApplicant.id}/consolidate-acceptance`,
+      formData
+    ).subscribe({
+      next: (response: any) => {
+        // Actualizar el estado local
+        if (this.selectedApplicant) {
+          this.selectedApplicant.acceptanceLetterFilePath = response.acceptanceLetterFilePath;
+          this.selectedApplicant.acceptanceNotes = response.acceptanceNotes;
+          this.selectedApplicant.acceptanceDate = response.acceptanceDate;
+          this.selectedApplicant.status = response.status || 'REVISION';
+        }
+        
+        // Actualizar en la lista de postulantes
+        const applicant = this.applicants.find(a => a.id === this.selectedApplicant!.id);
+        if (applicant) {
+          applicant.acceptanceLetterFilePath = response.acceptanceLetterFilePath;
+          applicant.acceptanceNotes = response.acceptanceNotes;
+          applicant.acceptanceDate = response.acceptanceDate;
+          applicant.status = response.status || 'REVISION';
+        }
+
+        this.toastr.success('Aceptación consolidada correctamente', 'Éxito');
+        this.closeConsolidateAcceptanceModal();
+        
+        // Recargar los postulantes para obtener datos actualizados
+        if (this.viewingApplicants) {
+          this.loadApplicants(this.viewingApplicants.id);
+        }
+      },
+      error: (err) => {
+        console.error('Error al consolidar aceptación:', err);
+        this.consolidateError = err.error?.message || 'Error al consolidar la aceptación';
+        this.consolidatingAcceptance = false;
+      }
+    });
   }
 
   formatDateTime(dateTimeString: string): string {

@@ -29,6 +29,11 @@ interface InternshipApplication {
   interviewAddress?: string;
   interviewNotes?: string;
   interviewAttendanceConfirmed?: boolean | number | null;
+  acceptanceLetterFilePath?: string;
+  acceptanceNotes?: string;
+  acceptanceDate?: string;
+  studentAcceptanceConfirmed?: boolean | null;
+  studentAcceptanceConfirmedDate?: string;
 }
 
 @Component({
@@ -125,6 +130,45 @@ interface InternshipApplication {
                     <h3 class="text-lg font-semibold text-blue-800">Información de la Postulación</h3>
                   </div>
 
+                  <!-- Warning message if interview scheduled but not confirmed -->
+                  <div *ngIf="hasInterviewScheduled(selectedApplication) && !isAttendanceConfirmed(selectedApplication)" 
+                       class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded mb-4">
+                    <div class="flex items-center gap-2">
+                      <svg class="w-5 h-5 text-yellow-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                      <p class="text-yellow-800 font-semibold">
+                        Debes confirmar la asistencia a la entrevista para continuar el proceso.
+                      </p>
+                    </div>
+                  </div>
+
+                  <!-- Warning message if evaluation approved but student hasn't confirmed acceptance -->
+                  <div *ngIf="selectedApplication.status === 'APROBADA' && !selectedApplication.studentAcceptanceConfirmed" 
+                       class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded mb-4">
+                    <div class="flex items-center gap-2">
+                      <svg class="w-5 h-5 text-yellow-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                      <p class="text-yellow-800 font-semibold">
+                        Debes confirmar tu aceptación para completar el proceso de postulación.
+                      </p>
+                    </div>
+                  </div>
+
+                  <!-- Warning message if student confirmed but organization hasn't consolidated -->
+                  <div *ngIf="selectedApplication.studentAcceptanceConfirmed && !selectedApplication.acceptanceLetterFilePath" 
+                       class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded mb-4">
+                    <div class="flex items-center gap-2">
+                      <svg class="w-5 h-5 text-yellow-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                      <p class="text-yellow-800 font-semibold">
+                        La organización debe enviar una carta de aceptación al director de carrera.
+                      </p>
+                    </div>
+                  </div>
+
                   <!-- Action Buttons (Always Visible) -->
                   <div class="pt-4 border-t border-gray-200 space-y-2 mt-4">
                       <button 
@@ -141,8 +185,11 @@ interface InternshipApplication {
                       <button 
                         (click)="showInterviewDetails()"
                         class="w-full px-4 py-2 rounded transition flex items-center gap-2 text-gray-700 hover:text-gray-900">
-                        <svg *ngIf="hasInterviewScheduled(selectedApplication)" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <svg *ngIf="hasInterviewScheduled(selectedApplication) && isAttendanceConfirmed(selectedApplication)" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                           <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <svg *ngIf="hasInterviewScheduled(selectedApplication) && !isAttendanceConfirmed(selectedApplication)" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                         </svg>
                         <svg *ngIf="!hasInterviewScheduled(selectedApplication)" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                           <path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -168,6 +215,23 @@ interface InternshipApplication {
                           Reprobada
                         </span>
                       </div>
+                      <button 
+                        (click)="selectedApplication.studentAcceptanceConfirmed ? showAcceptanceDetails() : openConfirmAcceptanceModal()"
+                        class="w-full px-4 py-2 rounded transition flex items-center gap-2 text-gray-700 hover:text-gray-900">
+                        <svg *ngIf="selectedApplication.status !== 'APROBADA'" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <svg *ngIf="selectedApplication.status === 'APROBADA' && !selectedApplication.studentAcceptanceConfirmed" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        <svg *ngIf="selectedApplication.studentAcceptanceConfirmed && !selectedApplication.acceptanceLetterFilePath" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        <svg *ngIf="selectedApplication.studentAcceptanceConfirmed && selectedApplication.acceptanceLetterFilePath" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        {{ selectedApplication.studentAcceptanceConfirmed ? 'Detalles Aceptación' : 'Consolidar Aceptación' }}
+                      </button>
                     </div>
                 </div>
               </div>
@@ -367,6 +431,19 @@ interface InternshipApplication {
         <!-- Content -->
         <div class="p-6" *ngIf="selectedApplication">
           <div class="space-y-4">
+            <!-- Warning if attendance not confirmed -->
+            <div *ngIf="hasInterviewScheduled(selectedApplication) && !isAttendanceConfirmed(selectedApplication)" 
+                 class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
+              <div class="flex items-center gap-2">
+                <svg class="w-5 h-5 text-yellow-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <p class="text-yellow-800 font-semibold">
+                  Debes confirmar la asistencia a la entrevista para continuar el proceso.
+                </p>
+              </div>
+            </div>
+
             <!-- Interview Date and Time -->
             <div *ngIf="selectedApplication.interviewDateTime" class="bg-blue-50 p-4 rounded-lg">
               <h3 class="font-semibold text-gray-900 mb-2">Fecha y Hora</h3>
@@ -418,32 +495,136 @@ interface InternshipApplication {
         </div>
 
         <!-- Footer with Action Buttons -->
-        <div class="flex justify-between gap-3 p-6 border-t border-gray-200">
+        <div class="flex justify-end gap-3 p-6 border-t border-gray-200">
           <button 
             (click)="closeInterviewModal()"
             class="bg-gray-500 text-white px-6 py-2 rounded hover:bg-gray-600 transition">
+            <span *ngIf="!hasAttendanceConfirmed()">Cancelar</span>
+            <span *ngIf="hasAttendanceConfirmed()">Cerrar</span>
+          </button>
+          <button 
+            (click)="confirmAttendance(true)"
+            [disabled]="confirmingAttendance || hasAttendanceConfirmed()"
+            [ngClass]="(confirmingAttendance || hasAttendanceConfirmed()) ? 
+              'bg-gray-400 text-white px-6 py-2 rounded cursor-not-allowed' :
+              'bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition'">
+            <span *ngIf="!confirmingAttendance">Sí asistiré</span>
+            <span *ngIf="confirmingAttendance">Guardando...</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Confirm Acceptance Modal -->
+    <div *ngIf="showConfirmAcceptanceModal && selectedApplication" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <!-- Header -->
+        <div class="flex justify-between items-center p-6 border-b border-gray-200">
+          <h2 class="text-xl font-bold text-gray-900">Confirmar Aceptación</h2>
+          <button 
+            (click)="closeConfirmAcceptanceModal()"
+            class="text-gray-400 hover:text-gray-600 transition">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Content -->
+        <div class="p-6">
+          <div class="space-y-4">
+            <div class="bg-blue-50 border-l-4 border-blue-400 p-4 rounded">
+              <p class="text-gray-700 text-base">
+                Para completar el proceso de postulación, debes confirmar si realizarás tu pasantía en <strong>{{ selectedApplication.organizationName }}</strong>.
+              </p>
+            </div>
+            
+            <div class="bg-gray-50 p-4 rounded-lg">
+              <h3 class="font-semibold text-gray-900 mb-2">Oferta de Pasantía</h3>
+              <p class="text-gray-700">{{ selectedApplication.internshipOfferTitle }}</p>
+            </div>
+
+            <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
+              <p class="text-yellow-800 text-sm">
+                <strong>Importante:</strong> Al confirmar, estás aceptando realizar tu pasantía en esta organización. Esta acción es definitiva.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="flex justify-end gap-3 p-6 border-t border-gray-200">
+          <button 
+            (click)="closeConfirmAcceptanceModal()"
+            [disabled]="confirmingAcceptance"
+            class="px-6 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition disabled:bg-gray-400 disabled:cursor-not-allowed">
+            Cancelar
+          </button>
+          <button 
+            (click)="confirmAcceptance()"
+            [disabled]="confirmingAcceptance"
+            class="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition disabled:bg-green-400 disabled:cursor-not-allowed">
+            <span *ngIf="!confirmingAcceptance">Confirmar</span>
+            <span *ngIf="confirmingAcceptance">Confirmando...</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Acceptance Details Modal -->
+    <div *ngIf="showAcceptanceDetailsModal && selectedApplication" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <!-- Header -->
+        <div class="flex justify-between items-center p-6 border-b border-gray-200">
+          <h2 class="text-xl font-bold text-gray-900">Detalles de Aceptación</h2>
+          <button 
+            (click)="closeAcceptanceDetailsModal()"
+            class="text-gray-400 hover:text-gray-600 transition">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Content -->
+        <div class="p-6">
+          <div class="space-y-4">
+            <div class="bg-green-50 border-l-4 border-green-400 p-4 rounded">
+              <p class="text-green-800 font-semibold">✓ Aceptación confirmada</p>
+            </div>
+
+            <!-- Warning message if student confirmed but organization hasn't consolidated -->
+            <div *ngIf="selectedApplication.studentAcceptanceConfirmed && !selectedApplication.acceptanceLetterFilePath" 
+                 class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
+              <div class="flex items-center gap-2">
+                <svg class="w-5 h-5 text-yellow-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <p class="text-yellow-800 font-semibold">
+                  La organización debe enviar una carta de aceptación al director de carrera.
+                </p>
+              </div>
+            </div>
+
+            <div class="bg-blue-50 p-4 rounded-lg" *ngIf="selectedApplication.studentAcceptanceConfirmedDate">
+              <h3 class="font-semibold text-gray-900 mb-2">Fecha de Confirmación</h3>
+              <p class="text-gray-700">{{ formatDate(selectedApplication.studentAcceptanceConfirmedDate) }}</p>
+            </div>
+
+            <div class="bg-gray-50 p-4 rounded-lg" *ngIf="selectedApplication.acceptanceNotes">
+              <h3 class="font-semibold text-gray-900 mb-2">Nota de Aceptación</h3>
+              <p class="text-gray-700">{{ selectedApplication.acceptanceNotes }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="flex justify-end p-6 border-t border-gray-200">
+          <button 
+            (click)="closeAcceptanceDetailsModal()"
+            class="px-6 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition">
             Cerrar
           </button>
-          <div class="flex gap-3">
-            <button 
-              (click)="confirmAttendance(false)"
-              [disabled]="confirmingAttendance || hasAttendanceConfirmed()"
-              [ngClass]="(confirmingAttendance || hasAttendanceConfirmed()) ? 
-                'bg-gray-400 text-white px-6 py-2 rounded cursor-not-allowed' :
-                'bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700 transition'">
-              <span *ngIf="!confirmingAttendance">No asistiré</span>
-              <span *ngIf="confirmingAttendance">Guardando...</span>
-            </button>
-            <button 
-              (click)="confirmAttendance(true)"
-              [disabled]="confirmingAttendance || hasAttendanceConfirmed()"
-              [ngClass]="(confirmingAttendance || hasAttendanceConfirmed()) ? 
-                'bg-gray-400 text-white px-6 py-2 rounded cursor-not-allowed' :
-                'bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition'">
-              <span *ngIf="!confirmingAttendance">Sí asistiré</span>
-              <span *ngIf="confirmingAttendance">Guardando...</span>
-            </button>
-          </div>
         </div>
       </div>
     </div>
@@ -502,6 +683,8 @@ export class MyApplicationsComponent implements OnInit, OnDestroy {
   showEvaluationModal = false;
   showInterviewModal = false;
   confirmingAttendance = false;
+  showConfirmAcceptanceModal = false;
+  confirmingAcceptance = false;
   private subscriptions: Subscription[] = [];
   highlightedApplicationId: number | null = null;
   private pendingHighlightApplicationId: number | null = null;
@@ -736,6 +919,72 @@ export class MyApplicationsComponent implements OnInit, OnDestroy {
     this.showInfoModal = true;
   }
 
+  openConfirmAcceptanceModal(): void {
+    if (!this.selectedApplication) return;
+    
+    // Verificar que el estado sea APROBADA
+    if (this.selectedApplication.status !== 'APROBADA') {
+      this.toastr.warning('Solo se puede consolidar la aceptación cuando el estado es "Aprobada"', 'Estado Requerido');
+      return;
+    }
+    
+    // Abrir el modal siempre que el estado sea APROBADA
+    // El modal mostrará un mensaje si la organización aún no ha consolidado
+    this.showConfirmAcceptanceModal = true;
+  }
+
+  closeConfirmAcceptanceModal(): void {
+    this.showConfirmAcceptanceModal = false;
+  }
+
+  confirmAcceptance(): void {
+    if (!this.selectedApplication || this.confirmingAcceptance) return;
+
+    this.confirmingAcceptance = true;
+
+    this.http.put(
+      `${environment.apiBaseUrl}/InternshipApplication/${this.selectedApplication.id}/confirm-acceptance`,
+      {}
+    ).subscribe({
+      next: () => {
+        this.toastr.success('Aceptación confirmada exitosamente', 'Éxito');
+        this.showConfirmAcceptanceModal = false;
+        
+        // Actualizar la aplicación local
+        if (this.selectedApplication) {
+          this.selectedApplication.studentAcceptanceConfirmed = true;
+          this.selectedApplication.studentAcceptanceConfirmedDate = new Date().toISOString();
+          
+          // Actualizar también en la lista
+          const updatedApp = this.applications.find(a => a.id === this.selectedApplication!.id);
+          if (updatedApp) {
+            updatedApp.studentAcceptanceConfirmed = true;
+            updatedApp.studentAcceptanceConfirmedDate = this.selectedApplication.studentAcceptanceConfirmedDate;
+          }
+        }
+        
+        this.confirmingAcceptance = false;
+      },
+      error: (err) => {
+        console.error('Error confirming acceptance:', err);
+        const errorMessage = err.error?.message || err.message || 'Error al confirmar la aceptación';
+        this.toastr.error(errorMessage, 'Error');
+        this.confirmingAcceptance = false;
+      }
+    });
+  }
+
+  showAcceptanceDetailsModal = false;
+
+  showAcceptanceDetails(): void {
+    if (!this.selectedApplication) return;
+    this.showAcceptanceDetailsModal = true;
+  }
+
+  closeAcceptanceDetailsModal(): void {
+    this.showAcceptanceDetailsModal = false;
+  }
+
   closeInfoModal(): void {
     this.showInfoModal = false;
     this.selectedOfferId = null;
@@ -765,9 +1014,10 @@ export class MyApplicationsComponent implements OnInit, OnDestroy {
     return confirmed === true || confirmed === 1 || confirmed === false || confirmed === 0;
   }
 
-  isAttendanceConfirmed(): boolean {
-    if (!this.selectedApplication) return false;
-    const confirmed = this.selectedApplication.interviewAttendanceConfirmed;
+  isAttendanceConfirmed(application?: InternshipApplication | null): boolean {
+    const app = application ?? this.selectedApplication;
+    if (!app) return false;
+    const confirmed = app.interviewAttendanceConfirmed;
     // Verificar si confirmó asistencia (true o 1)
     return confirmed === true || confirmed === 1;
   }
