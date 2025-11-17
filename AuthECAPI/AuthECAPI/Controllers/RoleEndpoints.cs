@@ -1,8 +1,10 @@
 using AuthECAPI.Models;
 using AuthECAPI.Services;
+using AuthECAPI.Hubs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
@@ -13,6 +15,7 @@ namespace AuthECAPI.Controllers
     public class StudentRegistrationModel : UserRegistrationModel
     {
         public string? CV { get; set; }
+        public string? CourseCode { get; set; }
     }
 
     public class TeacherRegistrationModel : UserRegistrationModel
@@ -174,6 +177,7 @@ namespace AuthECAPI.Controllers
             UserManager<AppUser> userManager,
             AppDbContext dbContext,
             ICloudTimeService cloudTimeService,
+            IHubContext<InternshipNotificationHub> hubContext,
             [FromBody] StudentRegistrationModel model)
         {
             var user = new AppUser
@@ -195,6 +199,41 @@ namespace AuthECAPI.Controllers
             var student = new Student { Id = user.Id, CV = model.CV };
             dbContext.Students.Add(student);
             await dbContext.SaveChangesAsync();
+
+            // Si el estudiante envió un código de curso válido, asignarlo vía EF
+            if (!string.IsNullOrWhiteSpace(model.CourseCode))
+            {
+                var course = await dbContext.TeacherCourses
+                    .Include(c => c.Teacher)
+                    .FirstOrDefaultAsync(c => c.Code == model.CourseCode);
+                if (course != null)
+                {
+                    var exists = await dbContext.StudentCourses
+                        .AnyAsync(sc => sc.StudentId == user.Id && sc.CourseId == course.Id);
+                    if (!exists)
+                    {
+                        dbContext.StudentCourses.Add(new StudentCourse
+                        {
+                            StudentId = user.Id,
+                            CourseId = course.Id,
+                            AssignedAtUtc = DateTime.UtcNow
+                        });
+                        await dbContext.SaveChangesAsync();
+
+                        // Enviar notificación SignalR al profesor cuando un estudiante se inscribe
+                        await hubContext.Clients.Group($"user_{course.TeacherId}").SendAsync("StudentEnrolled", new
+                        {
+                            courseId = course.Id,
+                            courseCode = course.Code,
+                            studentId = user.Id,
+                            studentName = user.FullName,
+                            studentEmail = user.Email,
+                            studentCareer = user.Career,
+                            enrolledAt = DateTime.UtcNow
+                        });
+                    }
+                }
+            }
 
             return Results.Ok(result);
         }

@@ -44,6 +44,26 @@ export interface ApplicationReceivedNotification {
   applicationDate: string;
 }
 
+export interface StudentEnrolledNotification {
+  courseId: string;
+  courseCode: string;
+  studentId: string;
+  studentName: string;
+  studentEmail: string;
+  studentCareer: string | null;
+  enrolledAt: string;
+}
+
+export interface StudentApplicationUpdatedNotification {
+  studentId: string;
+  applicationId: number;
+  offerTitle: string;
+  status: string;
+  interviewDateTime?: string | null;
+  interviewMode?: string | null;
+  applicationDate?: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -55,6 +75,8 @@ export class SignalRService {
   private attendanceConfirmed$ = new BehaviorSubject<AttendanceConfirmedNotification | null>(null);
   private agreementRequestReceived$ = new BehaviorSubject<AgreementRequestReceivedNotification | null>(null);
   private applicationReceived$ = new BehaviorSubject<ApplicationReceivedNotification | null>(null);
+  private studentEnrolled$ = new BehaviorSubject<StudentEnrolledNotification | null>(null);
+  private studentApplicationUpdated$ = new BehaviorSubject<StudentApplicationUpdatedNotification | null>(null);
 
   constructor(private authService: AuthService) {}
 
@@ -108,6 +130,14 @@ export class SignalRService {
 
     this.hubConnection.on('ApplicationReceived', (data: ApplicationReceivedNotification) => {
       this.applicationReceived$.next(data);
+    });
+
+    this.hubConnection.on('StudentEnrolled', (data: StudentEnrolledNotification) => {
+      this.studentEnrolled$.next(data);
+    });
+
+    this.hubConnection.on('StudentApplicationUpdated', (data: StudentApplicationUpdatedNotification) => {
+      this.studentApplicationUpdated$.next(data);
     });
 
     // Manejar cambios de estado de conexión
@@ -190,6 +220,20 @@ export class SignalRService {
   }
 
   /**
+   * Observable para cuando un estudiante se inscribe a un curso (para profesores)
+   */
+  onStudentEnrolled(): Observable<StudentEnrolledNotification | null> {
+    return this.studentEnrolled$.asObservable();
+  }
+
+  /**
+   * Observable para cuando se actualiza una postulación de un estudiante (para profesores)
+   */
+  onStudentApplicationUpdated(): Observable<StudentApplicationUpdatedNotification | null> {
+    return this.studentApplicationUpdated$.asObservable();
+  }
+
+  /**
    * Limpia las notificaciones actuales
    */
   clearNotifications(): void {
@@ -198,6 +242,8 @@ export class SignalRService {
     this.attendanceConfirmed$.next(null);
     this.agreementRequestReceived$.next(null);
     this.applicationReceived$.next(null);
+    this.studentEnrolled$.next(null);
+    this.studentApplicationUpdated$.next(null);
   }
 }
 

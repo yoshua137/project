@@ -198,6 +198,9 @@ namespace AuthECAPI.Migrations
                     b.Property<string>("InterviewMode")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("InterviewNotes")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime?>("ReviewDate")
                         .HasColumnType("datetime2");
 
@@ -384,6 +387,32 @@ namespace AuthECAPI.Migrations
                     b.ToTable("Students");
                 });
 
+            modelBuilder.Entity("AuthECAPI.Models.StudentCourse", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("AssignedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CourseId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("StudentId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CourseId");
+
+                    b.HasIndex("StudentId", "CourseId")
+                        .IsUnique();
+
+                    b.ToTable("StudentCourses");
+                });
+
             modelBuilder.Entity("AuthECAPI.Models.Teacher", b =>
                 {
                     b.Property<string>("Id")
@@ -392,6 +421,39 @@ namespace AuthECAPI.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Teachers");
+                });
+
+            modelBuilder.Entity("AuthECAPI.Models.TeacherCourse", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(6)
+                        .HasColumnType("nvarchar(6)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("TeacherId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Term")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("TeacherId");
+
+                    b.ToTable("TeacherCourses");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -620,6 +682,25 @@ namespace AuthECAPI.Migrations
                     b.Navigation("AppUser");
                 });
 
+            modelBuilder.Entity("AuthECAPI.Models.StudentCourse", b =>
+                {
+                    b.HasOne("AuthECAPI.Models.TeacherCourse", "Course")
+                        .WithMany("StudentCourses")
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AuthECAPI.Models.Student", "Student")
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Course");
+
+                    b.Navigation("Student");
+                });
+
             modelBuilder.Entity("AuthECAPI.Models.Teacher", b =>
                 {
                     b.HasOne("AuthECAPI.Models.AppUser", "AppUser")
@@ -629,6 +710,17 @@ namespace AuthECAPI.Migrations
                         .IsRequired();
 
                     b.Navigation("AppUser");
+                });
+
+            modelBuilder.Entity("AuthECAPI.Models.TeacherCourse", b =>
+                {
+                    b.HasOne("AuthECAPI.Models.AppUser", "Teacher")
+                        .WithMany()
+                        .HasForeignKey("TeacherId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Teacher");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -717,6 +809,11 @@ namespace AuthECAPI.Migrations
             modelBuilder.Entity("AuthECAPI.Models.Student", b =>
                 {
                     b.Navigation("InternshipApplications");
+                });
+
+            modelBuilder.Entity("AuthECAPI.Models.TeacherCourse", b =>
+                {
+                    b.Navigation("StudentCourses");
                 });
 #pragma warning restore 612, 618
         }

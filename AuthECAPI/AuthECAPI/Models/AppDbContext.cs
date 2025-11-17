@@ -18,6 +18,8 @@ namespace AuthECAPI.Models
         public DbSet<InternshipApplication> InternshipApplications { get; set; }
         public DbSet<RegistrationInvitation> RegistrationInvitations { get; set; }
         public DbSet<Notification> Notifications { get; set; }
+        public DbSet<TeacherCourse> TeacherCourses { get; set; }
+        public DbSet<StudentCourse> StudentCourses { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -83,6 +85,34 @@ namespace AuthECAPI.Models
                 .WithMany()
                 .HasForeignKey(n => n.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // TeacherCourse
+            builder.Entity<TeacherCourse>()
+                .HasIndex(c => c.Code)
+                .IsUnique();
+
+            builder.Entity<TeacherCourse>()
+                .HasOne(c => c.Teacher)
+                .WithMany()
+                .HasForeignKey(c => c.TeacherId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // StudentCourse
+            builder.Entity<StudentCourse>()
+                .HasOne(sc => sc.Student)
+                .WithMany()
+                .HasForeignKey(sc => sc.StudentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<StudentCourse>()
+                .HasOne(sc => sc.Course)
+                .WithMany(c => c.StudentCourses)
+                .HasForeignKey(sc => sc.CourseId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<StudentCourse>()
+                .HasIndex(sc => new { sc.StudentId, sc.CourseId })
+                .IsUnique();
         }
     }
 }

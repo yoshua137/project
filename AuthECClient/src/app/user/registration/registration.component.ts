@@ -121,7 +121,8 @@ export class RegistrationComponent implements OnInit, OnDestroy {
     career: new FormControl(""),
     fullName: new FormControl(""),
     department: new FormControl(""),
-    invitationToken: new FormControl("")
+    invitationToken: new FormControl(""),
+    courseCode: new FormControl("")
   }, { validators: this.passwordMatchValidator });
 
   ngOnInit(): void {
@@ -177,16 +178,19 @@ export class RegistrationComponent implements OnInit, OnDestroy {
     const fullNameControl = this.registrationForm.get('fullName');
     const departmentControl = this.registrationForm.get('department');
     const invitationTokenControl = this.registrationForm.get('invitationToken');
+    const courseCodeControl = this.registrationForm.get('courseCode');
 
     // Limpiar validadores existentes
     careerControl?.clearValidators();
     fullNameControl?.clearValidators();
     departmentControl?.clearValidators();
     invitationTokenControl?.clearValidators();
+    courseCodeControl?.clearValidators();
 
     if (role === 'Student') {
       careerControl?.setValidators([Validators.required]);
       fullNameControl?.setValidators([Validators.required]);
+      courseCodeControl?.setValidators([Validators.required, Validators.pattern(/^[0-9]{6}$/)]);
     } else if (role === 'Organization') {
       fullNameControl?.setValidators([Validators.required]);
     } else if (role === 'Teacher') {
@@ -204,6 +208,7 @@ export class RegistrationComponent implements OnInit, OnDestroy {
     fullNameControl?.updateValueAndValidity();
     departmentControl?.updateValueAndValidity();
     invitationTokenControl?.updateValueAndValidity();
+    courseCodeControl?.updateValueAndValidity();
   }
 
   private configureRole(role: string | null) {
@@ -293,6 +298,10 @@ export class RegistrationComponent implements OnInit, OnDestroy {
     return this.registrationForm.get('invitationToken')!;
   }
 
+  get courseCode(): AbstractControl {
+    return this.registrationForm.get('courseCode')!;
+  }
+
   onSubmit() {
     this.isSubmitted = true;
     const role = this.registrationForm.get('role')?.value;
@@ -318,6 +327,35 @@ export class RegistrationComponent implements OnInit, OnDestroy {
     }
     
     const registrationData = this.registrationForm.getRawValue();
+
+    // Validar código de curso antes de enviar para Estudiante
+    if (registrationData.role === 'Student') {
+      const code = (registrationData.courseCode ?? '').toString().trim();
+      if (!/^[0-9]{6}$/.test(code)) {
+        this.toastr.error('El código de curso debe tener 6 dígitos.', 'Código inválido');
+        return;
+      }
+      this.http.get<{ valid: boolean; term?: string; message?: string }>(`${environment.apiBaseUrl}/TeacherCourses/validate/${code}`)
+        .subscribe({
+          next: (res) => {
+            if (!res.valid) {
+              this.toastr.error(res.message || 'Código de curso no encontrado.', 'Código inválido');
+              return;
+            }
+            // Continuar con el submit si el código es válido
+            this.finishSubmit(registrationData);
+          },
+          error: () => {
+            this.toastr.error('No se pudo validar el código de curso. Intenta nuevamente.', 'Error de validación');
+          }
+        });
+      return;
+    }
+
+    this.finishSubmit(registrationData);
+  }
+
+  private finishSubmit(registrationData: any) {
     const payload: any = { 
       email: registrationData.email, 
       password: registrationData.password 
@@ -328,6 +366,7 @@ export class RegistrationComponent implements OnInit, OnDestroy {
       case 'Student':
         payload.career = registrationData.career;
         payload.fullName = registrationData.fullName;
+        payload.courseCode = registrationData.courseCode;
         apiCall = this.authService.registerStudent(payload);
         break;
       case 'Organization':

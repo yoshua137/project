@@ -31,7 +31,7 @@
                     <br>
                   <span class="text-xs text-gray-500">{{ request.description.substring(0, 50) }}...</span>
                   </td>
-                <td class="py-2 px-4">{{ request.requestDate | date:'short' }}</td>
+                <td class="py-2 px-4">{{ request.requestDate | date:'dd/MM/yyyy, HH:mm' }}</td>
                 <td class="py-2 px-4">
                   <span class="px-2 py-1 rounded text-xs font-semibold" [ngClass]="getStatusClass(request.status)">
                       {{ getStatusText(request.status) }}
@@ -69,7 +69,7 @@
           </div>
           <div class="mb-3">
             <strong>Fecha de Solicitud:</strong>
-          <p>{{ selectedRequest.requestDate | date:'short' }}</p>
+          <p>{{ selectedRequest.requestDate | date:'dd/MM/yyyy, HH:mm' }}</p>
           </div>
           <div class="mb-3">
             <strong>Estado Actual:</strong>
@@ -94,7 +94,7 @@
             </button>
           </div>
         <div *ngIf="!canReview(selectedRequest)" class="bg-blue-50 border-l-4 border-blue-400 text-blue-700 p-4 rounded mt-4">
-            <strong>Ya revisada:</strong> Esta solicitud ya fue procesada el {{ selectedRequest.reviewDate | date:'short' }}
+            <strong>Ya revisada:</strong> Esta solicitud ya fue procesada el {{ selectedRequest.reviewDate | date:'dd/MM/yyyy, HH:mm' }}
         </div>
       </div>
       <div *ngIf="!selectedRequest" class="bg-white rounded-xl shadow p-8 text-center text-gray-400 flex flex-col items-center justify-center">

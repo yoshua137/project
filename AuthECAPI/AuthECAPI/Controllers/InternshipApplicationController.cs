@@ -143,6 +143,30 @@ namespace AuthECAPI.Controllers
                     applicationDate = application.ApplicationDate
                 });
 
+                // Notificar a los profesores del estudiante sobre la nueva postulación
+                var studentCourses = await _context.StudentCourses
+                    .Where(sc => sc.StudentId == application.StudentId)
+                    .Select(sc => sc.CourseId)
+                    .ToListAsync();
+
+                var courseTeachers = await _context.TeacherCourses
+                    .Where(tc => studentCourses.Contains(tc.Id))
+                    .Select(tc => tc.TeacherId)
+                    .Distinct()
+                    .ToListAsync();
+
+                foreach (var teacherId in courseTeachers)
+                {
+                    await _hubContext.Clients.Group($"user_{teacherId}").SendAsync("StudentApplicationUpdated", new
+                    {
+                        studentId = application.StudentId,
+                        applicationId = application.Id,
+                        offerTitle = internshipOffer.Title,
+                        status = "PENDIENTE",
+                        applicationDate = application.ApplicationDate
+                    });
+                }
+
                 var applicationResponse = new InternshipApplicationResponse
                 {
                     Id = application.Id,
@@ -163,6 +187,7 @@ namespace AuthECAPI.Controllers
                     InterviewMode = application.InterviewMode,
                     InterviewLink = application.InterviewLink,
                     InterviewAddress = application.InterviewAddress,
+                    InterviewNotes = application.InterviewNotes,
                     InterviewAttendanceConfirmed = application.InterviewAttendanceConfirmed
                 };
 
@@ -215,6 +240,7 @@ namespace AuthECAPI.Controllers
                         InterviewMode = ia.InterviewMode,
                         InterviewLink = ia.InterviewLink,
                         InterviewAddress = ia.InterviewAddress,
+                        InterviewNotes = ia.InterviewNotes,
                         InterviewAttendanceConfirmed = ia.InterviewAttendanceConfirmed
                     })
                     .ToListAsync();
@@ -277,6 +303,7 @@ namespace AuthECAPI.Controllers
                         InterviewMode = ia.InterviewMode,
                         InterviewLink = ia.InterviewLink,
                         InterviewAddress = ia.InterviewAddress,
+                        InterviewNotes = ia.InterviewNotes,
                         InterviewAttendanceConfirmed = ia.InterviewAttendanceConfirmed
                     })
                     .ToListAsync();
@@ -319,13 +346,6 @@ namespace AuthECAPI.Controllers
 
                 application.Status = reviewRequest.Status;
                 application.ReviewDate = _cloudTimeService.Now;
-                application.ReviewNotes = reviewRequest.ReviewNotes;
-                if (reviewRequest.VirtualMeetingLink != null)
-                {
-                    application.VirtualMeetingLink = string.IsNullOrWhiteSpace(reviewRequest.VirtualMeetingLink)
-                        ? null
-                        : reviewRequest.VirtualMeetingLink;
-                }
                 
                 // Guardar detalles de la entrevista si el estado es ENTREVISTA
                 if (reviewRequest.Status == "ENTREVISTA")
@@ -334,10 +354,36 @@ namespace AuthECAPI.Controllers
                     application.InterviewMode = reviewRequest.InterviewMode;
                     application.InterviewLink = reviewRequest.InterviewLink;
                     application.InterviewAddress = reviewRequest.InterviewAddress;
+                    application.InterviewNotes = reviewRequest.InterviewNotes;
+                    // No asignar ReviewNotes cuando se programa entrevista
+                }
+                else if (reviewRequest.Status == "APROBADA" || reviewRequest.Status == "RECHAZADA")
+                {
+                    // ReviewNotes solo se usa para evaluación (aprobación/rechazo)
+                    application.ReviewNotes = reviewRequest.ReviewNotes;
+                }
+                
+                if (reviewRequest.VirtualMeetingLink != null)
+                {
+                    application.VirtualMeetingLink = string.IsNullOrWhiteSpace(reviewRequest.VirtualMeetingLink)
+                        ? null
+                        : reviewRequest.VirtualMeetingLink;
                 }
                 // No limpiar información de entrevista cuando se acepta/rechaza para mantener el historial
 
                 await _context.SaveChangesAsync();
+
+                // Obtener los cursos del estudiante para notificar a los profesores
+                var studentCourses = await _context.StudentCourses
+                    .Where(sc => sc.StudentId == application.StudentId)
+                    .Select(sc => sc.CourseId)
+                    .ToListAsync();
+
+                var courseTeachers = await _context.TeacherCourses
+                    .Where(tc => studentCourses.Contains(tc.Id))
+                    .Select(tc => tc.TeacherId)
+                    .Distinct()
+                    .ToListAsync();
 
                 // Crear notificación persistente y enviar notificación en tiempo real al estudiante
                 if (reviewRequest.Status == "ENTREVISTA")
@@ -361,13 +407,27 @@ namespace AuthECAPI.Controllers
                         interviewLink = application.InterviewLink,
                         interviewAddress = application.InterviewAddress
                     });
+
+                    // Notificar a los profesores del estudiante sobre el cambio en la postulación
+                    foreach (var teacherId in courseTeachers)
+                    {
+                        await _hubContext.Clients.Group($"user_{teacherId}").SendAsync("StudentApplicationUpdated", new
+                        {
+                            studentId = application.StudentId,
+                            applicationId = application.Id,
+                            offerTitle = application.InternshipOffer.Title,
+                            status = reviewRequest.Status,
+                            interviewDateTime = application.InterviewDateTime,
+                            interviewMode = application.InterviewMode
+                        });
+                    }
                 }
-                else if (reviewRequest.Status == "ACEPTADA")
+                else if (reviewRequest.Status == "APROBADA")
                 {
                     await _notificationService.CreateNotificationAsync(
                         application.StudentId,
-                        "Aplicación Aceptada",
-                        $"Tu aplicación para la oferta '{application.InternshipOffer.Title}' ha sido aceptada. ¡Felicidades!",
+                        "Aplicación Aprobada",
+                        $"Tu aplicación para la oferta '{application.InternshipOffer.Title}' ha sido aprobada. ¡Felicidades!",
                         "APPLICATION_ACCEPTED",
                         application.Id,
                         "InternshipApplication"
@@ -377,8 +437,20 @@ namespace AuthECAPI.Controllers
                     {
                         applicationId = application.Id,
                         offerTitle = application.InternshipOffer.Title,
-                        status = "ACEPTADA"
+                        status = "APROBADA"
                     });
+
+                    // Notificar a los profesores del estudiante sobre el cambio en la postulación
+                    foreach (var teacherId in courseTeachers)
+                    {
+                        await _hubContext.Clients.Group($"user_{teacherId}").SendAsync("StudentApplicationUpdated", new
+                        {
+                            studentId = application.StudentId,
+                            applicationId = application.Id,
+                            offerTitle = application.InternshipOffer.Title,
+                            status = "APROBADA"
+                        });
+                    }
                 }
                 else if (reviewRequest.Status == "RECHAZADA")
                 {
@@ -397,6 +469,18 @@ namespace AuthECAPI.Controllers
                         offerTitle = application.InternshipOffer.Title,
                         status = "RECHAZADA"
                     });
+
+                    // Notificar a los profesores del estudiante sobre el cambio en la postulación
+                    foreach (var teacherId in courseTeachers)
+                    {
+                        await _hubContext.Clients.Group($"user_{teacherId}").SendAsync("StudentApplicationUpdated", new
+                        {
+                            studentId = application.StudentId,
+                            applicationId = application.Id,
+                            offerTitle = application.InternshipOffer.Title,
+                            status = "RECHAZADA"
+                        });
+                    }
                 }
 
                 return NoContent();
@@ -592,7 +676,7 @@ namespace AuthECAPI.Controllers
     public class ReviewApplicationRequest
     {
         [Required]
-        [RegularExpression("ENTREVISTA|ACEPTADA|RECHAZADA", ErrorMessage = "Status solo puede ser 'ENTREVISTA', 'ACEPTADA' o 'RECHAZADA'")]
+        [RegularExpression("ENTREVISTA|APROBADA|RECHAZADA", ErrorMessage = "Status solo puede ser 'ENTREVISTA', 'APROBADA' o 'RECHAZADA'")]
         public string Status { get; set; }
 
         [StringLength(1000, ErrorMessage = "Las notas de revisión no pueden exceder 1000 caracteres")]
@@ -606,6 +690,9 @@ namespace AuthECAPI.Controllers
         public string? InterviewMode { get; set; }
         public string? InterviewLink { get; set; }
         public string? InterviewAddress { get; set; }
+        
+        [StringLength(1000, ErrorMessage = "La nota para el estudiante no puede exceder 1000 caracteres")]
+        public string? InterviewNotes { get; set; }
     }
 
     public class ConfirmAttendanceRequest

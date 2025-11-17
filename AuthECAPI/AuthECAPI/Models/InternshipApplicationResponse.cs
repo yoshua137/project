@@ -22,6 +22,7 @@ namespace AuthECAPI.Models
         public string? InterviewMode { get; set; }
         public string? InterviewLink { get; set; }
         public string? InterviewAddress { get; set; }
+        public string? InterviewNotes { get; set; }
         public bool? InterviewAttendanceConfirmed { get; set; }
     }
 } 

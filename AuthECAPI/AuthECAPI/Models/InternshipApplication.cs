@@ -18,10 +18,10 @@ namespace AuthECAPI.Models
         public DateTime ApplicationDate { get; set; }
         
         /// <summary>
-        /// Estado de la aplicación: 'PENDIENTE', 'ENTREVISTA', 'ACEPTADA', 'RECHAZADA'
+        /// Estado de la aplicación: 'PENDIENTE', 'ENTREVISTA', 'APROBADA', 'RECHAZADA'
         /// </summary>
         [Required]
-        [RegularExpression("PENDIENTE|ENTREVISTA|ACEPTADA|RECHAZADA", ErrorMessage = "Status solo puede ser 'PENDIENTE', 'ENTREVISTA', 'ACEPTADA' o 'RECHAZADA'")]
+        [RegularExpression("PENDIENTE|ENTREVISTA|APROBADA|RECHAZADA", ErrorMessage = "Status solo puede ser 'PENDIENTE', 'ENTREVISTA', 'APROBADA' o 'RECHAZADA'")]
         public string Status { get; set; } = "PENDIENTE";
 
         public string? CoverLetter { get; set; }
@@ -35,6 +35,7 @@ namespace AuthECAPI.Models
         public string? InterviewMode { get; set; }
         public string? InterviewLink { get; set; }
         public string? InterviewAddress { get; set; }
+        public string? InterviewNotes { get; set; }
         
         // Confirmación de asistencia a entrevista
         public bool? InterviewAttendanceConfirmed { get; set; }

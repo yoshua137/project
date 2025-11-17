@@ -43,6 +43,7 @@ interface InternshipApplication {
   interviewMode?: string;
   interviewLink?: string;
   interviewAddress?: string;
+  interviewNotes?: string;
   interviewAttendanceConfirmed?: boolean | null;
 }
 
@@ -76,6 +77,10 @@ export class MisOfertasPasantiaComponent implements OnInit {
   // Propiedades para el modal de postulantes
   viewingApplicants: InternshipOffer | null = null;
   applicants: InternshipApplication[] = [];
+  selectedApplicant: InternshipApplication | null = null;
+  showApplicantDetailsModal = false;
+  showEvaluationModal = false;
+  showEvaluationDetailsModal = false;
   applicantsLoading = false;
   applicantsError = '';
   highlightedApplicantId: number | null = null;
@@ -89,6 +94,7 @@ export class MisOfertasPasantiaComponent implements OnInit {
   reviewingApplication: InternshipApplication | null = null;
   reviewAction: string = '';
   reviewNotes: string = '';
+  interviewNotes: string = '';
   virtualMeetingLink: string = '';
   reviewLoading = false;
   reviewError = '';
@@ -201,11 +207,16 @@ export class MisOfertasPasantiaComponent implements OnInit {
     return [...new Set(this.offers.map(offer => offer.career))];
   }
 
-  formatDate(dateString: string): string {
-    return new Date(dateString).toLocaleDateString('es-ES', {
+  formatDate(dateString: string | null | undefined): string {
+    if (!dateString) return '';
+    return new Date(dateString).toLocaleString('es-BO', { 
+      timeZone: 'America/La_Paz',
       year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
     });
   }
 
@@ -405,8 +416,13 @@ export class MisOfertasPasantiaComponent implements OnInit {
   closeApplicantsModal(): void {
     this.viewingApplicants = null;
     this.applicants = [];
+    this.selectedApplicant = null;
     this.applicantsError = '';
     this.applicantsLoading = false;
+  }
+
+  selectApplicant(applicant: InternshipApplication): void {
+    this.selectedApplicant = applicant;
   }
 
   loadApplicants(offerId: number): void {
@@ -439,7 +455,7 @@ export class MisOfertasPasantiaComponent implements OnInit {
         return 'bg-yellow-100 text-yellow-800';
       case 'ENTREVISTA':
         return 'bg-blue-100 text-blue-800';
-      case 'ACEPTADA':
+      case 'APROBADA':
         return 'bg-green-100 text-green-800';
       case 'RECHAZADA':
         return 'bg-red-100 text-red-800';
@@ -454,8 +470,8 @@ export class MisOfertasPasantiaComponent implements OnInit {
         return 'Pendiente';
       case 'ENTREVISTA':
         return 'Entrevista';
-      case 'ACEPTADA':
-        return 'Aceptada';
+      case 'APROBADA':
+        return 'Aprobada';
       case 'RECHAZADA':
         return 'Rechazada';
       default:
@@ -532,6 +548,7 @@ export class MisOfertasPasantiaComponent implements OnInit {
     this.reviewingApplication = { ...applicant };
     this.reviewAction = action;
     this.reviewNotes = '';
+    this.interviewNotes = '';
     this.virtualMeetingLink = '';
     this.interviewDate = '';
     this.interviewTime = '';
@@ -546,6 +563,7 @@ export class MisOfertasPasantiaComponent implements OnInit {
     this.reviewingApplication = null;
     this.reviewAction = '';
     this.reviewNotes = '';
+    this.interviewNotes = '';
     this.virtualMeetingLink = '';
     this.interviewDate = '';
     this.interviewTime = '';
@@ -594,8 +612,7 @@ export class MisOfertasPasantiaComponent implements OnInit {
     }
 
     const body: any = { 
-      status: this.reviewAction, 
-      reviewNotes: this.reviewNotes
+      status: this.reviewAction
     };
 
     if (this.reviewAction === 'ENTREVISTA') {
@@ -604,6 +621,9 @@ export class MisOfertasPasantiaComponent implements OnInit {
       body.interviewLink = this.interviewMode === 'Virtual' ? this.interviewLink : null;
       body.interviewAddress = this.interviewMode === 'Presencial' ? this.interviewAddress : null;
       body.virtualMeetingLink = this.virtualMeetingLink || null;
+      body.interviewNotes = this.interviewNotes;
+    } else if (this.reviewAction === 'APROBADA' || this.reviewAction === 'RECHAZADA') {
+      body.reviewNotes = this.reviewNotes;
     }
     
     this.http.put(`${environment.apiBaseUrl}/InternshipApplication/${this.reviewingApplication.id}/review`, body)
@@ -621,6 +641,7 @@ export class MisOfertasPasantiaComponent implements OnInit {
               applicant.interviewMode = this.interviewMode;
               applicant.interviewLink = this.interviewMode === 'Virtual' ? this.interviewLink : undefined;
               applicant.interviewAddress = this.interviewMode === 'Presencial' ? this.interviewAddress : undefined;
+              applicant.interviewNotes = this.interviewNotes;
             }
           }
           // Recargar los postulantes para obtener datos actualizados

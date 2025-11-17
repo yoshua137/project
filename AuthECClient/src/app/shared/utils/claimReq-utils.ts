@@ -9,5 +9,6 @@ export const claimReq = {
   directorAgreementReviewer: (c: any) => Array.isArray(c.role) ? c.role.includes("Director") : c.role == "Director",
   organizationAgreementList: (c: any) => Array.isArray(c.role) ? c.role.includes("Organization") : c.role == "Organization",
   organizationInternshipOffer: (c: any) => Array.isArray(c.role) ? c.role.includes("Organization") : c.role == "Organization",
-  studentInternshipOffers: (c: any) => Array.isArray(c.role) ? c.role.includes("Student") : c.role == "Student"
+  studentInternshipOffers: (c: any) => Array.isArray(c.role) ? c.role.includes("Student") : c.role == "Student",
+  teacherOnly: (c: any) => Array.isArray(c.role) ? c.role.includes("Teacher") : c.role == "Teacher"
 }

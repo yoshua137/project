@@ -27,6 +27,7 @@ interface InternshipApplication {
   interviewMode?: string;
   interviewLink?: string;
   interviewAddress?: string;
+  interviewNotes?: string;
   interviewAttendanceConfirmed?: boolean | number | null;
 }
 
@@ -86,7 +87,11 @@ interface InternshipApplication {
                           [attr.id]="'application-row-' + application.id"
                           (click)="selectApplication(application)">
                         <td class="py-3 px-4">
-                          <div class="font-medium text-gray-900">{{ application.internshipOfferTitle }}</div>
+                          <button 
+                            (click)="showMoreInfo(application.internshipOfferId); $event.stopPropagation()"
+                            class="text-left font-medium text-blue-600 hover:text-blue-800 hover:underline transition">
+                            {{ application.internshipOfferTitle }}
+                          </button>
                         </td>
                         <td class="py-3 px-4 text-gray-700">{{ application.organizationName }}</td>
                         <td class="py-3 px-4 text-sm text-gray-600">{{ formatDate(application.applicationDate) }}</td>
@@ -116,57 +121,53 @@ interface InternshipApplication {
                 </div>
 
                 <div *ngIf="selectedApplication" class="space-y-4">
-                  <div class="flex justify-between items-start mb-4">
-                    <h3 class="text-lg font-semibold text-blue-800">Detalles de la Postulación</h3>
-                    <span class="px-3 py-1 rounded-full text-sm font-semibold"
-                          [ngClass]="getStatusClass(selectedApplication.status)">
-                      {{ getStatusText(selectedApplication.status) }}
-                    </span>
-                  </div>
-                  
-                  <div class="space-y-4">
-                    <div>
-                      <h5 class="font-semibold text-gray-900 mb-2">Nota de Postulación</h5>
-                      <div class="bg-gray-50 p-3 rounded text-sm text-gray-700 max-h-32 overflow-y-auto">
-                        {{ selectedApplication.coverLetter || 'No proporcionada' }}
-                      </div>
-                    </div>
-
-                    <div>
-                      <h5 class="font-semibold text-gray-900 mb-2">Curriculum Vitae</h5>
-                      <div class="bg-gray-50 p-3 rounded text-sm text-gray-700">
-                        <div *ngIf="selectedApplication.cvFilePath; else noCVAlways">
-                          <div class="flex items-center justify-between">
-                            <span class="text-green-600">CV enviado</span>
-                            <button 
-                              (click)="downloadCV(selectedApplication.id)"
-                              class="bg-gray-100 text-gray-700 px-3 py-1 rounded hover:bg-gray-200 transition text-sm flex items-center gap-1">
-                              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h8a2 2 0 002-2v-2M7 10V6a5 5 0 0110 0v4M5 20h14" />
-                              </svg>
-                              PDF
-                            </button>
-                          </div>
-                        </div>
-                        <ng-template #noCVAlways>
-                          <span class="text-gray-500">No proporcionado</span>
-                        </ng-template>
-                      </div>
-                    </div>
+                  <div class="mb-4">
+                    <h3 class="text-lg font-semibold text-blue-800">Información de la Postulación</h3>
                   </div>
 
                   <!-- Action Buttons (Always Visible) -->
                   <div class="pt-4 border-t border-gray-200 space-y-2 mt-4">
                       <button 
-                        (click)="showInterviewDetails()"
-                        class="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
-                        Ver Detalles de Entrevista
+                        (click)="showApplicationDetails(selectedApplication)"
+                        class="w-full px-4 py-2 rounded transition flex items-center gap-2 text-gray-700 hover:text-gray-900">
+                        <svg *ngIf="hasApplicationDetails(selectedApplication)" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <svg *ngIf="!hasApplicationDetails(selectedApplication)" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Detalles de Postulación
                       </button>
                       <button 
-                        (click)="showMoreInfo(selectedApplication.internshipOfferId)"
-                        class="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
-                        Ver Detalles de la Oferta
+                        (click)="showInterviewDetails()"
+                        class="w-full px-4 py-2 rounded transition flex items-center gap-2 text-gray-700 hover:text-gray-900">
+                        <svg *ngIf="hasInterviewScheduled(selectedApplication)" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <svg *ngIf="!hasInterviewScheduled(selectedApplication)" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Ver Detalles de Entrevista
                       </button>
+                      <div class="flex items-center gap-2 w-full">
+                        <button 
+                          (click)="showEvaluationDetails()"
+                          class="flex-1 px-4 py-2 rounded transition flex items-start gap-2 text-gray-700 hover:text-gray-900 text-left">
+                          <svg *ngIf="selectedApplication.status === 'APROBADA' || selectedApplication.status === 'RECHAZADA'" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <svg *ngIf="selectedApplication.status === 'PENDIENTE' || selectedApplication.status === 'ENTREVISTA'" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span class="break-words">Ver Detalles de Evaluación</span>
+                        </button>
+                        <span *ngIf="selectedApplication.status === 'APROBADA'" class="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800 whitespace-nowrap">
+                          Aprobada
+                        </span>
+                        <span *ngIf="selectedApplication.status === 'RECHAZADA'" class="px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800 whitespace-nowrap">
+                          Reprobada
+                        </span>
+                      </div>
                     </div>
                 </div>
               </div>
@@ -182,6 +183,171 @@ interface InternshipApplication {
       [offerId]="selectedOfferId"
       (closeModal)="closeInfoModal()">
     </app-internship-info-modal>
+
+    <!-- Application Details Modal -->
+    <div *ngIf="showApplicationDetailsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <!-- Header -->
+        <div class="flex justify-between items-center p-6 border-b border-gray-200">
+          <h2 class="text-xl font-bold text-gray-900">Detalles de la Postulación</h2>
+          <button 
+            (click)="closeApplicationDetailsModal()"
+            class="text-gray-400 hover:text-gray-600 transition">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Content -->
+        <div class="p-6" *ngIf="selectedApplicationForDetails">
+          <div class="space-y-4">
+            <!-- Status -->
+            <div class="flex justify-end mb-4">
+              <span class="px-3 py-1 rounded-full text-sm font-semibold"
+                    [ngClass]="getStatusClass(selectedApplicationForDetails.status)">
+                {{ getStatusText(selectedApplicationForDetails.status) }}
+              </span>
+            </div>
+
+            <!-- Application Date -->
+            <div class="bg-blue-50 p-4 rounded-lg">
+              <h3 class="font-semibold text-gray-900 mb-2">Fecha de Postulación</h3>
+              <p class="text-gray-700">{{ formatDate(selectedApplicationForDetails.applicationDate) }}</p>
+            </div>
+
+            <!-- Cover Letter -->
+            <div class="bg-gray-50 p-4 rounded-lg">
+              <h3 class="font-semibold text-gray-900 mb-2">Nota de Postulación</h3>
+              <div class="text-gray-700 max-h-48 overflow-y-auto">
+                <p *ngIf="selectedApplicationForDetails.coverLetter; else noCoverLetter">
+                  {{ selectedApplicationForDetails.coverLetter }}
+                </p>
+                <ng-template #noCoverLetter>
+                  <p class="text-gray-500 italic">No proporcionada</p>
+                </ng-template>
+              </div>
+            </div>
+
+            <!-- CV -->
+            <div class="bg-gray-50 p-4 rounded-lg">
+              <h3 class="font-semibold text-gray-900 mb-2">Curriculum Vitae</h3>
+              <div *ngIf="selectedApplicationForDetails.cvFilePath; else noCV">
+                <div class="flex items-center justify-between">
+                  <span class="text-green-600 font-medium">CV enviado</span>
+                  <button 
+                    (click)="downloadCV(selectedApplicationForDetails.id)"
+                    class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h8a2 2 0 002-2v-2M7 10V6a5 5 0 0110 0v4M5 20h14" />
+                    </svg>
+                    Descargar PDF
+                  </button>
+                </div>
+              </div>
+              <ng-template #noCV>
+                <p class="text-gray-500 italic">No proporcionado</p>
+              </ng-template>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="flex justify-end p-6 border-t border-gray-200">
+          <button 
+            (click)="closeApplicationDetailsModal()"
+            class="bg-gray-500 text-white px-6 py-2 rounded hover:bg-gray-600 transition">
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Evaluation Details Modal -->
+    <div *ngIf="showEvaluationModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <!-- Header -->
+        <div class="flex justify-between items-center p-6 border-b border-gray-200">
+          <h2 class="text-xl font-bold text-gray-900">Detalles de Evaluación</h2>
+          <button 
+            (click)="closeEvaluationModal()"
+            class="text-gray-400 hover:text-gray-600 transition">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Content -->
+        <div class="p-6" *ngIf="selectedApplication">
+          <!-- Si está pendiente o en proceso de entrevista, mostrar mensaje con X -->
+          <div *ngIf="selectedApplication.status === 'PENDIENTE' || selectedApplication.status === 'ENTREVISTA'" class="flex flex-col items-center justify-center py-12">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-red-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p class="text-gray-700 text-lg font-semibold">La evaluación aún no está disponible</p>
+            <p class="text-gray-500 mt-2" *ngIf="selectedApplication.status === 'PENDIENTE'">La aplicación está pendiente de revisión</p>
+            <p class="text-gray-500 mt-2" *ngIf="selectedApplication.status === 'ENTREVISTA'">La aplicación está en proceso de entrevista</p>
+          </div>
+
+          <!-- Si está aprobada o rechazada, mostrar detalles de evaluación -->
+          <div *ngIf="selectedApplication.status === 'APROBADA' || selectedApplication.status === 'RECHAZADA'" class="space-y-4">
+            <!-- Status -->
+            <div class="flex justify-end mb-4">
+              <span class="px-3 py-1 rounded-full text-sm font-semibold"
+                    [ngClass]="getStatusClass(selectedApplication.status)">
+                {{ getStatusText(selectedApplication.status) }}
+              </span>
+            </div>
+
+            <!-- Review Date -->
+            <div class="bg-blue-50 p-4 rounded-lg" *ngIf="selectedApplication.reviewDate">
+              <h3 class="font-semibold text-gray-900 mb-2">Fecha de Revisión</h3>
+              <p class="text-gray-700">{{ formatDate(selectedApplication.reviewDate) }}</p>
+            </div>
+            <div class="bg-gray-50 p-4 rounded-lg" *ngIf="!selectedApplication.reviewDate">
+              <h3 class="font-semibold text-gray-900 mb-2">Fecha de Revisión</h3>
+              <p class="text-gray-500 italic">Aún no ha sido revisada</p>
+            </div>
+
+            <!-- Evaluation Notes -->
+            <div class="bg-gray-50 p-4 rounded-lg">
+              <h3 class="font-semibold text-gray-900 mb-2">Nota de Evaluación</h3>
+              <div class="text-gray-700 max-h-48 overflow-y-auto">
+                <p *ngIf="selectedApplication.reviewNotes; else noReviewNotes">
+                  {{ selectedApplication.reviewNotes }}
+                </p>
+                <ng-template #noReviewNotes>
+                  <p class="text-gray-500 italic">No hay notas de evaluación disponibles</p>
+                </ng-template>
+              </div>
+            </div>
+
+            <!-- Status Result -->
+            <div class="bg-gray-50 p-4 rounded-lg">
+              <h3 class="font-semibold text-gray-900 mb-2">Resultado</h3>
+              <div class="flex items-center gap-2">
+                <span *ngIf="selectedApplication.status === 'APROBADA'" class="px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800">
+                  Aprobado
+                </span>
+                <span *ngIf="selectedApplication.status === 'RECHAZADA'" class="px-3 py-1 rounded-full text-sm font-semibold bg-red-100 text-red-800">
+                  Reprobado
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="flex justify-end p-6 border-t border-gray-200">
+          <button 
+            (click)="closeEvaluationModal()"
+            class="bg-gray-500 text-white px-6 py-2 rounded hover:bg-gray-600 transition">
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
 
     <!-- Interview Details Modal -->
     <div *ngIf="showInterviewModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -227,10 +393,12 @@ interface InternshipApplication {
               <p class="text-gray-700">{{ selectedApplication.interviewAddress }}</p>
             </div>
 
-            <!-- Notes -->
-            <div *ngIf="selectedApplication.reviewNotes" class="bg-gray-50 p-4 rounded-lg">
-              <h3 class="font-semibold text-gray-900 mb-2">Notas</h3>
-              <p class="text-gray-700">{{ selectedApplication.reviewNotes }}</p>
+            <!-- Interview Notes -->
+            <div *ngIf="selectedApplication.interviewNotes" class="bg-gray-50 p-6 rounded-lg">
+              <h3 class="font-semibold text-gray-900 mb-3 text-lg">Nota para el estudiante</h3>
+              <div class="bg-white p-4 rounded border border-gray-200 max-h-64 overflow-y-auto">
+                <p class="text-gray-700 text-base leading-relaxed whitespace-pre-wrap">{{ selectedApplication.interviewNotes }}</p>
+              </div>
             </div>
 
             <!-- Attendance Confirmation Status -->
@@ -329,6 +497,9 @@ export class MyApplicationsComponent implements OnInit, OnDestroy {
   showInfoModal = false;
   selectedOfferId: number | null = null;
   selectedApplication: InternshipApplication | null = null;
+  selectedApplicationForDetails: InternshipApplication | null = null;
+  showApplicationDetailsModal = false;
+  showEvaluationModal = false;
   showInterviewModal = false;
   confirmingAttendance = false;
   private subscriptions: Subscription[] = [];
@@ -389,21 +560,24 @@ export class MyApplicationsComponent implements OnInit, OnDestroy {
     // Escuchar cambios de estado de aplicación
     const statusSub = this.signalRService.onApplicationStatusChanged().subscribe((notification: any) => {
       if (notification) {
-        const application = this.applications.find(a => a.id === notification.applicationId);
-        if (application) {
-          application.status = notification.status;
-          
-          const statusText = notification.status === 'ACEPTADA' ? 'aceptada' : 'rechazada';
-          this.toastr.info(
-            `Tu postulación a "${notification.offerTitle}" ha sido ${statusText}`,
-            'Estado Actualizado',
-            { timeOut: 5000 }
-          );
-          
-          if (this.selectedApplication?.id === application.id) {
-            this.selectedApplication = { ...application };
+        const statusText = notification.status === 'APROBADA' ? 'aprobada' : 'rechazada';
+        this.toastr.info(
+          `Tu postulación a "${notification.offerTitle}" ha sido ${statusText}`,
+          'Estado Actualizado',
+          { timeOut: 5000 }
+        );
+        
+        // Recargar las aplicaciones para obtener todos los campos actualizados, incluyendo reviewNotes
+        this.loadApplications().then(() => {
+          // Mantener la selección después de recargar
+          if (this.selectedApplication) {
+            const updatedApp = this.applications.find(a => a.id === this.selectedApplication!.id);
+            if (updatedApp) {
+              this.selectedApplication = updatedApp;
+            }
           }
-        }
+        });
+        
         this.signalRService.clearNotifications();
       }
     });
@@ -505,7 +679,7 @@ export class MyApplicationsComponent implements OnInit, OnDestroy {
         return 'bg-yellow-100 text-yellow-800';
       case 'ENTREVISTA':
         return 'bg-blue-100 text-blue-800';
-      case 'ACEPTADA':
+      case 'APROBADA':
         return 'bg-green-100 text-green-800';
       case 'RECHAZADA':
         return 'bg-red-100 text-red-800';
@@ -520,13 +694,32 @@ export class MyApplicationsComponent implements OnInit, OnDestroy {
         return 'Pendiente';
       case 'ENTREVISTA':
         return 'Entrevista';
-      case 'ACEPTADA':
-        return 'Aceptada';
+      case 'APROBADA':
+        return 'Aprobada';
       case 'RECHAZADA':
         return 'Rechazada';
       default:
         return status;
     }
+  }
+
+  showApplicationDetails(application: InternshipApplication): void {
+    this.selectedApplicationForDetails = application;
+    this.showApplicationDetailsModal = true;
+  }
+
+  closeApplicationDetailsModal(): void {
+    this.showApplicationDetailsModal = false;
+    this.selectedApplicationForDetails = null;
+  }
+
+  showEvaluationDetails(): void {
+    if (!this.selectedApplication) return;
+    this.showEvaluationModal = true;
+  }
+
+  closeEvaluationModal(): void {
+    this.showEvaluationModal = false;
   }
 
   downloadCV(applicationId: number): void {
@@ -560,8 +753,9 @@ export class MyApplicationsComponent implements OnInit, OnDestroy {
     );
   }
 
-  hasInterviewScheduled(): boolean {
-    return this.hasInterviewInfo(this.selectedApplication);
+  hasInterviewScheduled(application?: InternshipApplication | null): boolean {
+    const app = application ?? this.selectedApplication;
+    return this.hasInterviewInfo(app);
   }
 
   hasAttendanceConfirmed(): boolean {
@@ -644,5 +838,10 @@ export class MyApplicationsComponent implements OnInit, OnDestroy {
         this.confirmingAttendance = false;
       }
     });
+  }
+
+  hasApplicationDetails(application: InternshipApplication | null): boolean {
+    if (!application) return false;
+    return !!(application.coverLetter || application.cvFilePath || application.applicationDate);
   }
 } 

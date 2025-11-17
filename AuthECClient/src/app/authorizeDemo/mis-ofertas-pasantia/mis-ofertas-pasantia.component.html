@@ -1,11 +1,149 @@
 <div class="min-h-screen bg-gray-50 py-8">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <!-- Header -->
-    <div class="mb-8 flex items-start justify-between">
-      <div>
-        <h1 class="text-3xl font-bold text-gray-900">Mis Ofertas de Pasantía</h1>
-        <p class="mt-2 text-gray-600">Gestiona todas las ofertas de pasantía de tu organización</p>
+  <!-- Vista de Postulantes -->
+  <div *ngIf="viewingApplicants" class="w-full px-4 sm:px-6 lg:px-8 py-8">
+          <!-- Header -->
+          <div class="mb-6">
+            <h1 class="text-3xl font-bold text-gray-900">Postulantes</h1>
+            <p class="mt-2 text-gray-600">Postulantes para: {{ viewingApplicants.title }}</p>
+            <button 
+              (click)="closeApplicantsModal()"
+              class="mt-4 flex items-center gap-2 px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Volver a Ofertas
+            </button>
+          </div>
+
+    <!-- Loading State -->
+    <div *ngIf="applicantsLoading" class="flex justify-center items-center py-12">
+      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <span class="ml-2 text-gray-600">Cargando postulantes...</span>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="applicantsError" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4 text-center">
+      {{ applicantsError }}
+      <button class="ml-4 text-red-700 underline" (click)="viewingApplicants && loadApplicants(viewingApplicants.id)">Reintentar</button>
+    </div>
+
+    <!-- Content when loaded -->
+    <div *ngIf="!applicantsLoading && !applicantsError" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Left Panel - Applicants Table -->
+      <div class="lg:col-span-2">
+        <div class="bg-white rounded-lg shadow-md p-6">
+          <h3 class="text-lg font-semibold text-blue-800 mb-4">Postulantes</h3>
+          
+          <div *ngIf="applicants.length === 0" class="bg-blue-50 border-l-4 border-blue-400 text-blue-700 p-4 rounded text-center">
+            <i class="bi bi-info-circle mr-2"></i>
+            No hay postulantes registrados aún.
+          </div>
+
+          <div *ngIf="applicants.length > 0" class="overflow-x-auto">
+            <table class="w-full">
+              <thead>
+                <tr class="border-b border-gray-200">
+                  <th class="text-left py-3 px-4 font-semibold text-gray-700">Estudiante</th>
+                  <th class="text-left py-3 px-4 font-semibold text-gray-700">Fecha de postulación</th>
+                  <th class="text-left py-3 px-4 font-semibold text-gray-700">Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let applicant of applicants" 
+                    class="border-b border-gray-100 hover:bg-gray-50 cursor-pointer applicant-row"
+                    [class.highlighted]="highlightedApplicantId === applicant.id"
+                    [class.fade-stopped]="stoppedFadeRows.has(applicant.id)"
+                    [class.bg-blue-50]="selectedApplicant?.id === applicant.id"
+                    (mouseenter)="stopFadeOnHover($event, applicant.id)"
+                    (click)="selectApplicant(applicant)">
+                  <td class="py-3 px-4">
+                    <div class="font-medium text-gray-900">{{ applicant.studentName }}</div>
+                    <div class="text-sm text-gray-600">{{ applicant.studentCareer }}</div>
+                  </td>
+                  <td class="py-3 px-4 text-sm text-gray-600">{{ formatDate(applicant.applicationDate) }}</td>
+                  <td class="py-3 px-4">
+                    <span class="px-2 py-1 rounded-full text-xs font-semibold"
+                          [ngClass]="getApplicationStatusClass(applicant.status)">
+                      {{ getApplicationStatusText(applicant.status) }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
+
+      <!-- Right Panel - Applicant Details -->
+      <div class="lg:col-span-1">
+        <div class="bg-white rounded-lg shadow-md p-6">
+          <div *ngIf="!selectedApplicant" class="text-center py-8">
+            <div class="text-blue-500 mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <p class="text-gray-500">Seleccione un postulante para ver los detalles</p>
+          </div>
+
+          <div *ngIf="selectedApplicant" class="space-y-4">
+            <div class="mb-4">
+              <h3 class="text-lg font-semibold text-blue-800">Información del Postulante</h3>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="pt-4 border-t border-gray-200 space-y-2 mt-4">
+              <button 
+                (click)="showApplicantDetailsModal = true"
+                class="w-full px-4 py-2 rounded transition flex items-center gap-2 text-gray-700 hover:text-gray-900">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2.5" fill="none"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01" />
+                </svg>
+                Ver detalles del postulante
+              </button>
+              <button 
+                (click)="openInterviewDetailsModal(selectedApplicant)"
+                *ngIf="hasInterviewScheduled(selectedApplicant) || selectedApplicant.status === 'APROBADA' || selectedApplicant.status === 'RECHAZADA'"
+                class="w-full px-4 py-2 rounded transition flex items-center gap-2 text-gray-700 hover:text-gray-900">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Detalles Entrevista
+              </button>
+              <button 
+                (click)="openReviewModal(selectedApplicant, 'ENTREVISTA')"
+                *ngIf="selectedApplicant.status === 'PENDIENTE'"
+                class="w-full px-4 py-2 rounded transition flex items-center gap-2 text-gray-700 hover:text-gray-900">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Programar Entrevista
+              </button>
+              <button 
+                (click)="selectedApplicant.status === 'APROBADA' || selectedApplicant.status === 'RECHAZADA' ? showEvaluationDetailsModal = true : showEvaluationModal = true"
+                *ngIf="selectedApplicant.status === 'PENDIENTE' || selectedApplicant.status === 'ENTREVISTA' || selectedApplicant.status === 'APROBADA' || selectedApplicant.status === 'RECHAZADA'"
+                class="w-full px-4 py-2 rounded transition flex items-center gap-2 text-gray-700 hover:text-gray-900">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Evaluación
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vista de Ofertas (solo se muestra cuando NO se están viendo postulantes) -->
+  <div *ngIf="!viewingApplicants" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <!-- Header -->
+      <div class="mb-8 flex items-start justify-between">
+        <div>
+          <h1 class="text-3xl font-bold text-gray-900">Mis Ofertas de Pasantía</h1>
+          <p class="mt-2 text-gray-600">Gestiona todas las ofertas de pasantía de tu organización</p>
+        </div>
       <button
         (click)="toggleViewMode()"
         class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
@@ -585,148 +723,6 @@
   </div>
 </div>
 
-<!-- Modal de postulantes -->
-<div *ngIf="viewingApplicants" class="fixed inset-0 z-50 flex items-center sm:items-start justify-center sm:pt-6 bg-black/60 bg-opacity-30">
-  <div class="bg-white rounded-lg shadow-lg w-full max-w-5xl p-6 relative animate-fade-in max-h-[95vh] h-[90vh] overflow-y-auto">
-    <button (click)="closeApplicantsModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-700">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-      </svg>
-    </button>
-    
-    <h2 class="text-xl font-bold mb-4 text-blue-900">Postulantes para: {{ viewingApplicants.title }}</h2>
-    
-    <!-- Loading State -->
-    <div *ngIf="applicantsLoading" class="flex justify-center items-center py-8">
-      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      <span class="ml-2 text-gray-600">Cargando postulantes...</span>
-    </div>
-    
-    <!-- Error State -->
-    <div *ngIf="applicantsError" class="bg-red-50 border border-red-200 rounded-md p-4 mb-4">
-      <div class="flex">
-        <div class="flex-shrink-0">
-          <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-          </svg>
-        </div>
-        <div class="ml-3">
-          <p class="text-sm text-red-800">{{ applicantsError }}</p>
-        </div>
-      </div>
-    </div>
-    
-    <!-- No Applicants State -->
-    <div *ngIf="!applicantsLoading && !applicantsError && applicants.length === 0" class="text-center py-8">
-      <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m9-4a4 4 0 11-8 0 4 4 0 018 0z" />
-      </svg>
-      <h3 class="mt-2 text-sm font-medium text-gray-900">No hay postulantes</h3>
-      <p class="mt-1 text-sm text-gray-500">Aún no se han postulado estudiantes a esta oferta.</p>
-    </div>
-    
-    <!-- Applicants List -->
-    <div *ngIf="!applicantsLoading && !applicantsError && applicants.length > 0" class="space-y-4">
-      <div class="bg-gray-50 rounded-lg p-4 mb-4">
-        <div class="flex items-center justify-between">
-          <span class="text-sm font-medium text-gray-700">Total de postulantes:</span>
-          <span class="bg-blue-100 text-blue-800 text-sm font-semibold px-2 py-1 rounded-full">
-            {{ applicants.length }}
-          </span>
-        </div>
-      </div>
-      
-      <div class="grid gap-4">
-        <div *ngFor="let applicant of applicants" 
-             class="fade-applicant-row bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
-             [class.highlighted]="highlightedApplicantId === applicant.id"
-             [class.fade-stopped]="stoppedFadeRows.has(applicant.id)"
-             (mouseenter)="stopFadeOnHover($event, applicant.id)">
-          <div class="flex items-start justify-between">
-            <div class="flex-1">
-              <div class="flex items-center gap-3 mb-2">
-                <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                  <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                </div>
-                <div>
-                  <h4 class="font-semibold text-gray-900">{{ applicant.studentName }}</h4>
-                  <p class="text-sm text-gray-600">{{ applicant.studentCareer }}</p>
-                </div>
-              </div>
-              
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
-                <div>
-                  <span class="text-sm font-medium text-gray-700">Fecha de postulación:</span>
-                  <p class="text-sm text-gray-600">{{ formatDate(applicant.applicationDate) }}</p>
-                </div>
-                <div>
-                  <span class="text-sm font-medium text-gray-700">Estado:</span>
-                  <span class="ml-2 px-2 py-1 rounded-full text-xs font-semibold"
-                        [ngClass]="getApplicationStatusClass(applicant.status)">
-                    {{ getApplicationStatusText(applicant.status) }}
-                  </span>
-                  <span *ngIf="applicant.interviewAttendanceConfirmed !== null && applicant.interviewAttendanceConfirmed !== undefined"
-                        class="ml-2 px-2 py-1 rounded-full text-xs font-semibold"
-                        [ngClass]="applicant.interviewAttendanceConfirmed ? 'bg-green-500 text-white' : 'bg-red-500 text-white'">
-                    {{ applicant.interviewAttendanceConfirmed ? '✓ Asistirá' : '✗ No asistirá' }}
-                  </span>
-                </div>
-              </div>
-              
-              <div *ngIf="applicant.coverLetter" class="mt-3">
-                <span class="text-sm font-medium text-gray-700">Nota de postulación:</span>
-                <p class="text-sm text-gray-600 mt-1 bg-gray-50 p-2 rounded">{{ applicant.coverLetter }}</p>
-              </div>
-              
-              <div class="mt-3 flex gap-2 flex-wrap">
-                <button 
-                  *ngIf="applicant.cvFilePath"
-                  (click)="viewCV(applicant.id)"
-                  class="bg-blue-100 text-blue-700 px-3 py-1 rounded text-sm hover:bg-blue-200 transition flex items-center gap-1">
-                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
-                  Ver CV
-                </button>
-                <button 
-                  (click)="openInterviewDetailsModal(applicant)"
-                  *ngIf="hasInterviewScheduled(applicant)"
-                  class="bg-purple-100 text-purple-700 px-3 py-1 rounded text-sm hover:bg-purple-200 transition flex items-center gap-1">
-                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  Detalles Entrevista
-                </button>
-                <button 
-                  (click)="openReviewModal(applicant, 'ENTREVISTA')"
-                  *ngIf="applicant.status === 'PENDIENTE'"
-                  class="bg-blue-100 text-blue-700 px-3 py-1 rounded text-sm hover:bg-blue-200 transition">
-                  Programar Entrevista
-                </button>
-                <button 
-                  (click)="openReviewModal(applicant, 'ACEPTADA')"
-                  *ngIf="applicant.status === 'PENDIENTE' || applicant.status === 'ENTREVISTA'"
-                  class="bg-green-100 text-green-700 px-3 py-1 rounded text-sm hover:bg-green-200 transition">
-                  Aceptar
-                </button>
-                <button 
-                  (click)="openReviewModal(applicant, 'RECHAZADA')"
-                  *ngIf="applicant.status === 'PENDIENTE' || applicant.status === 'ENTREVISTA'"
-                  class="bg-red-100 text-red-700 px-3 py-1 rounded text-sm hover:bg-red-200 transition">
-                  Rechazar
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
 <!-- Modal de revisión de postulación -->
 <div *ngIf="reviewingApplication" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 bg-opacity-30">
   <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative animate-fade-in max-h-[90vh] overflow-y-auto">
@@ -737,7 +733,7 @@
     </button>
     
     <h2 class="text-xl font-bold mb-4 text-blue-900">
-      {{ reviewAction === 'ACEPTADA' ? 'Aceptar' : reviewAction === 'RECHAZADA' ? 'Rechazar' : 'Programar Entrevista' }} Postulación
+      {{ reviewAction === 'APROBADA' ? 'Aceptar' : reviewAction === 'RECHAZADA' ? 'Rechazar' : 'Programar Entrevista' }} Postulación
     </h2>
     
     <div class="mb-4">
@@ -779,16 +775,31 @@
           <input type="text" [(ngModel)]="interviewAddress" name="interviewAddress" placeholder="Ej: Av. Siempre Viva 742, Piso 3, Sala A" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
         </div>
       </div>
-      <div class="mb-4">
+      <!-- Nota para entrevista -->
+      <div class="mb-4" *ngIf="reviewAction === 'ENTREVISTA'">
         <label class="block text-sm font-medium text-gray-700 mb-2">
           Nota para el estudiante:
+        </label>
+        <textarea 
+          [(ngModel)]="interviewNotes"
+          name="interviewNotes"
+          rows="4"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+          placeholder="Mensaje adicional para la entrevista (opcional)...">
+        </textarea>
+      </div>
+      
+      <!-- Nota de evaluación (solo para aprobar/rechazar) -->
+      <div class="mb-4" *ngIf="reviewAction === 'APROBADA' || reviewAction === 'RECHAZADA'">
+        <label class="block text-sm font-medium text-gray-700 mb-2">
+          Nota de evaluación:
         </label>
         <textarea 
           [(ngModel)]="reviewNotes"
           name="reviewNotes"
           rows="4"
           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-          [placeholder]="reviewAction === 'ACEPTADA' ? 'Explica por qué fue aceptado el estudiante...' : reviewAction === 'RECHAZADA' ? 'Explica por qué fue rechazado el estudiante...' : 'Mensaje adicional para la entrevista (opcional)...'"
+          [placeholder]="reviewAction === 'APROBADA' ? 'Explica por qué fue aceptado el estudiante...' : 'Explica por qué fue rechazado el estudiante...'"
           required>
         </textarea>
       </div>
@@ -804,10 +815,10 @@
         <button 
           type="submit"
           [disabled]="reviewLoading"
-          [ngClass]="reviewAction === 'ACEPTADA' ? 'bg-green-600 hover:bg-green-700 focus:ring-green-500' : reviewAction === 'RECHAZADA' ? 'bg-red-600 hover:bg-red-700 focus:ring-red-500' : 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500'"
+          [ngClass]="reviewAction === 'APROBADA' ? 'bg-green-600 hover:bg-green-700 focus:ring-green-500' : reviewAction === 'RECHAZADA' ? 'bg-red-600 hover:bg-red-700 focus:ring-red-500' : 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500'"
           class="flex-1 px-4 py-2 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition">
           <span *ngIf="!reviewLoading">
-            {{ reviewAction === 'ACEPTADA' ? 'Aceptar' : reviewAction === 'RECHAZADA' ? 'Rechazar' : 'Programar Entrevista' }}
+            {{ reviewAction === 'APROBADA' ? 'Aceptar' : reviewAction === 'RECHAZADA' ? 'Rechazar' : 'Programar Entrevista' }}
           </span>
           <span *ngIf="reviewLoading" class="flex items-center justify-center">
             <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
@@ -838,15 +849,6 @@
     
     <h2 class="text-xl font-bold mb-4 text-blue-900">Detalles de la Entrevista</h2>
     
-    <div class="mb-4">
-      <p class="text-sm text-gray-600 mb-2">
-        <strong>Estudiante:</strong> {{ showingInterviewDetails.studentName }}
-      </p>
-      <p class="text-sm text-gray-600">
-        <strong>Oferta:</strong> {{ showingInterviewDetails.internshipOfferTitle }}
-      </p>
-    </div>
-    
     <div class="space-y-4">
       <!-- Fecha y Hora -->
       <div *ngIf="showingInterviewDetails.interviewDateTime" class="bg-blue-50 p-4 rounded-lg">
@@ -874,10 +876,28 @@
         <p class="text-gray-700">{{ showingInterviewDetails.interviewAddress }}</p>
       </div>
 
+      <!-- Confirmación de Asistencia -->
+      <div class="bg-gray-50 p-4 rounded-lg">
+        <h3 class="font-semibold text-gray-900 mb-2">Confirmación de Asistencia</h3>
+        <div class="flex items-center gap-2">
+          <span *ngIf="showingInterviewDetails.interviewAttendanceConfirmed === true" class="px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800">
+            Asistirá
+          </span>
+          <span *ngIf="showingInterviewDetails.interviewAttendanceConfirmed === false" class="px-3 py-1 rounded-full text-sm font-semibold bg-red-100 text-red-800">
+            No asistirá
+          </span>
+          <span *ngIf="showingInterviewDetails.interviewAttendanceConfirmed === null || showingInterviewDetails.interviewAttendanceConfirmed === undefined" class="px-3 py-1 rounded-full text-sm font-semibold bg-yellow-100 text-yellow-800">
+            Pendiente de confirmación
+          </span>
+        </div>
+      </div>
+
       <!-- Notas -->
-      <div *ngIf="showingInterviewDetails.reviewNotes" class="bg-gray-50 p-4 rounded-lg">
-        <h3 class="font-semibold text-gray-900 mb-2">Notas</h3>
-        <p class="text-gray-700">{{ showingInterviewDetails.reviewNotes }}</p>
+      <div *ngIf="showingInterviewDetails.interviewNotes" class="bg-gray-50 p-6 rounded-lg">
+        <h3 class="font-semibold text-gray-900 mb-3 text-lg">Nota para el estudiante</h3>
+        <div class="bg-white p-4 rounded border border-gray-200 max-h-64 overflow-y-auto">
+          <p class="text-gray-700 text-base leading-relaxed whitespace-pre-wrap">{{ showingInterviewDetails.interviewNotes }}</p>
+        </div>
       </div>
     </div>
     
@@ -887,6 +907,184 @@
         class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition">
         Cerrar
       </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Detalles del Postulante -->
+<div *ngIf="showApplicantDetailsModal && selectedApplicant" 
+     class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+     (click)="showApplicantDetailsModal = false">
+  <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
+       (click)="$event.stopPropagation()">
+    <div class="p-6">
+      <!-- Header -->
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-gray-900">Detalles del Postulante</h2>
+        <button 
+          (click)="showApplicantDetailsModal = false"
+          class="text-gray-400 hover:text-gray-600 transition">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Content -->
+      <div class="space-y-6">
+        <!-- Nota de postulación -->
+        <div *ngIf="selectedApplicant.coverLetter">
+          <h3 class="font-semibold text-gray-900 mb-2 text-lg">Nota de postulación</h3>
+          <div class="bg-gray-50 p-4 rounded border border-gray-200">
+            <p class="text-gray-700 whitespace-pre-wrap">{{ selectedApplicant.coverLetter }}</p>
+          </div>
+        </div>
+        <div *ngIf="!selectedApplicant.coverLetter" class="bg-gray-50 p-4 rounded border border-gray-200">
+          <p class="text-gray-500 italic">No hay nota de postulación disponible</p>
+        </div>
+
+        <!-- Botón Ver CV -->
+        <div class="flex justify-center">
+          <button 
+            *ngIf="selectedApplicant.cvFilePath"
+            (click)="viewCV(selectedApplicant.id)"
+            class="px-6 py-3 rounded transition flex items-center justify-center gap-2 bg-blue-100 text-blue-700 hover:bg-blue-200 font-semibold">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+            Ver CV
+          </button>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="mt-6 flex justify-end">
+        <button 
+          (click)="showApplicantDetailsModal = false"
+          class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition">
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Evaluación -->
+<div *ngIf="showEvaluationModal && selectedApplicant" 
+     class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+     (click)="showEvaluationModal = false">
+  <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4"
+       (click)="$event.stopPropagation()">
+    <div class="p-6">
+      <!-- Header -->
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-gray-900">Evaluación</h2>
+        <button 
+          (click)="showEvaluationModal = false"
+          class="text-gray-400 hover:text-gray-600 transition">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Content -->
+      <div class="space-y-4 mb-6">
+        <p class="text-gray-700">Seleccione una acción para evaluar al postulante:</p>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex gap-3">
+        <button 
+          (click)="showEvaluationModal = false; openReviewModal(selectedApplicant, 'APROBADA')"
+          class="flex-1 px-4 py-3 rounded transition bg-green-100 text-green-700 hover:bg-green-200 font-semibold">
+          Aceptar
+        </button>
+        <button 
+          (click)="showEvaluationModal = false; openReviewModal(selectedApplicant, 'RECHAZADA')"
+          class="flex-1 px-4 py-3 rounded transition bg-red-100 text-red-700 hover:bg-red-200 font-semibold">
+          Rechazar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Detalles de Evaluación -->
+<div *ngIf="showEvaluationDetailsModal && selectedApplicant && (selectedApplicant.status === 'APROBADA' || selectedApplicant.status === 'RECHAZADA')" 
+     class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+     (click)="showEvaluationDetailsModal = false">
+  <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
+       (click)="$event.stopPropagation()">
+    <div class="p-6">
+      <!-- Header -->
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-gray-900">Detalles de Evaluación</h2>
+        <button 
+          (click)="showEvaluationDetailsModal = false"
+          class="text-gray-400 hover:text-gray-600 transition">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Content -->
+      <div class="space-y-6">
+        <!-- Status -->
+        <div class="flex justify-end mb-4">
+          <span class="px-3 py-1 rounded-full text-sm font-semibold"
+                [ngClass]="getApplicationStatusClass(selectedApplicant.status)">
+            {{ getApplicationStatusText(selectedApplicant.status) }}
+          </span>
+        </div>
+
+        <!-- Review Date -->
+        <div class="bg-blue-50 p-4 rounded-lg" *ngIf="selectedApplicant.reviewDate">
+          <h3 class="font-semibold text-gray-900 mb-2">Fecha de Revisión</h3>
+          <p class="text-gray-700">{{ formatDate(selectedApplicant.reviewDate) }}</p>
+        </div>
+        <div class="bg-gray-50 p-4 rounded-lg" *ngIf="!selectedApplicant.reviewDate">
+          <h3 class="font-semibold text-gray-900 mb-2">Fecha de Revisión</h3>
+          <p class="text-gray-500 italic">Aún no ha sido revisada</p>
+        </div>
+
+        <!-- Evaluation Notes -->
+        <div class="bg-gray-50 p-4 rounded-lg">
+          <h3 class="font-semibold text-gray-900 mb-2">Nota de Evaluación</h3>
+          <div class="text-gray-700 max-h-48 overflow-y-auto">
+            <p *ngIf="selectedApplicant.reviewNotes; else noReviewNotes">
+              {{ selectedApplicant.reviewNotes }}
+            </p>
+            <ng-template #noReviewNotes>
+              <p class="text-gray-500 italic">No hay notas de evaluación disponibles</p>
+            </ng-template>
+          </div>
+        </div>
+
+        <!-- Status Result -->
+        <div class="bg-gray-50 p-4 rounded-lg">
+          <h3 class="font-semibold text-gray-900 mb-2">Resultado</h3>
+          <div class="flex items-center gap-2">
+            <span *ngIf="selectedApplicant.status === 'APROBADA'" class="px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800">
+              Aprobado
+            </span>
+            <span *ngIf="selectedApplicant.status === 'RECHAZADA'" class="px-3 py-1 rounded-full text-sm font-semibold bg-red-100 text-red-800">
+              Reprobado
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="mt-6 flex justify-end">
+        <button 
+          (click)="showEvaluationDetailsModal = false"
+          class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition">
+          Cerrar
+        </button>
+      </div>
     </div>
   </div>
 </div>

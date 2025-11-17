@@ -1,4 +1,4 @@
-import { Component, HostListener, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit, ViewChild } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../shared/services/auth.service';
 import { HideIfClaimsNotMetDirective } from '../../directives/hide-if-claims-not-met.directive';
@@ -41,6 +41,7 @@ export class MainLayoutComponent implements OnInit {
   profileInitials = '?';
   showProfileMenu = false;
   showHelpMenu = false;
+  @ViewChild(NotificationBellComponent) notificationBell?: NotificationBellComponent;
 
   constructor(private router: Router,
     public authService: AuthService,
@@ -70,11 +71,15 @@ export class MainLayoutComponent implements OnInit {
 
   toggleProfileMenu(event: MouseEvent) {
     event.stopPropagation();
+    this.showHelpMenu = false;
+    this.notificationBell?.closeDropdown();
     this.showProfileMenu = !this.showProfileMenu;
   }
 
   toggleHelpMenu(event: MouseEvent) {
     event.stopPropagation();
+    this.showProfileMenu = false;
+    this.notificationBell?.closeDropdown();
     this.showHelpMenu = !this.showHelpMenu;
   }
 
@@ -95,6 +100,13 @@ export class MainLayoutComponent implements OnInit {
   logoutFromMenu() {
     this.showProfileMenu = false;
     this.onLogout();
+  }
+
+  onNotificationsToggle(isOpen: boolean) {
+    if (isOpen) {
+      this.showProfileMenu = false;
+      this.showHelpMenu = false;
+    }
   }
 
   private loadProfilePhoto() {

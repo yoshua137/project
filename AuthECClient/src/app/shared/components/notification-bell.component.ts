@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NotificationService, Notification } from '../services/notification.service';
 import { Subscription } from 'rxjs';
@@ -43,110 +43,215 @@ import { Router } from '@angular/router';
       <!-- Dropdown de notificaciones -->
       <div
         *ngIf="showDropdown"
-        class="absolute right-0 mt-2 w-80 md:w-96 bg-white rounded-lg shadow-xl z-50 max-h-96 overflow-hidden flex flex-col"
+        class="notification-dropdown absolute right-0 mt-3 w-80 md:w-96 bg-white rounded-2xl shadow-2xl border border-blue-50 z-50 overflow-hidden flex flex-col"
         (click)="$event.stopPropagation()"
       >
-        <!-- Header del dropdown -->
-        <div class="flex items-center justify-between p-4 border-b bg-blue-50">
-          <h3 class="text-lg font-bold text-gray-800">Notificaciones</h3>
-          <div class="flex items-center gap-2">
+        <div class="dropdown-header">
+          <div>
+            <p class="menu-title">Notificaciones</p>
+            <p class="menu-subtitle">Últimas novedades del sistema</p>
+          </div>
+          <div class="header-actions">
             <button
               *ngIf="unreadCount > 0"
               (click)="markAllAsRead()"
-              class="text-sm text-blue-600 hover:text-blue-800 font-medium"
+              class="link-button"
             >
-              Marcar todas como leídas
+              Marcar todas
             </button>
             <button
               (click)="refresh()"
-              class="text-sm text-blue-600 hover:text-blue-800 font-medium"
+              class="icon-button"
               title="Actualizar"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                />
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
             </button>
           </div>
         </div>
 
-        <!-- Lista de notificaciones -->
-        <div class="overflow-y-auto flex-1">
-          <div *ngIf="notifications.length === 0" class="p-4 text-center text-gray-500">
+        <div class="notification-list">
+          <div *ngIf="notifications.length === 0" class="empty-state">
             No hay notificaciones
           </div>
-          <div
+          <article
             *ngFor="let notification of notifications"
-            class="p-4 border-b hover:bg-gray-50 transition cursor-pointer"
-            [class.bg-blue-50]="!notification.isRead"
+            class="notification-item"
+            [class.unread]="!notification.isRead"
             (click)="handleNotificationClick(notification)"
           >
-            <div class="flex items-start justify-between gap-2">
-              <div class="flex-1">
-                <div class="flex items-center gap-2 mb-1">
-                  <h4
-                    class="font-semibold text-gray-800"
-                    [class.font-bold]="!notification.isRead"
-                  >
-                    {{ notification.title }}
-                  </h4>
-                  <span
-                    *ngIf="!notification.isRead"
-                    class="h-2 w-2 bg-blue-600 rounded-full"
-                  ></span>
-                </div>
-                <p class="text-sm text-gray-600 mb-2">{{ notification.message }}</p>
-                <p class="text-xs text-gray-400">
-                  {{ formatDate(notification.createdAt) }}
-                </p>
+            <div class="item-text">
+              <div class="item-title">
+                <h4>{{ notification.title }}</h4>
+                <span *ngIf="!notification.isRead" class="status-dot"></span>
               </div>
-              <div class="flex flex-col gap-1">
-                <button
-                  *ngIf="!notification.isRead"
-                  (click)="markAsRead(notification.id); $event.stopPropagation()"
-                  class="text-xs text-blue-600 hover:text-blue-800"
-                  title="Marcar como leída"
-                >
-                  ✓
-                </button>
-                <button
-                  (click)="deleteNotification(notification.id); $event.stopPropagation()"
-                  class="text-xs text-red-600 hover:text-red-800"
-                  title="Eliminar"
-                >
-                  ×
-                </button>
-              </div>
+              <p class="item-message">{{ notification.message }}</p>
+              <p class="item-date">{{ formatDate(notification.createdAt) }}</p>
             </div>
-          </div>
+            <div class="item-actions">
+              <button
+                *ngIf="!notification.isRead"
+                class="action-btn confirm"
+                title="Marcar como leída"
+                (click)="markAsRead(notification.id); $event.stopPropagation()"
+              >✓</button>
+              <button
+                class="action-btn remove"
+                title="Eliminar"
+                (click)="deleteNotification(notification.id); $event.stopPropagation()"
+              >×</button>
+            </div>
+          </article>
         </div>
       </div>
     </div>
   `,
   styles: [`
-    /* Estilos para el scrollbar del dropdown */
-    .overflow-y-auto::-webkit-scrollbar {
+    .notification-dropdown {
+      max-height: 22rem;
+    }
+
+    .dropdown-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .menu-title {
+      margin: 0;
+      font-weight: 700;
+      font-size: 1rem;
+      color: #0f172a;
+    }
+
+    .menu-subtitle {
+      margin: 0.1rem 0 0;
+      font-size: 0.8rem;
+      color: #64748b;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .link-button {
+      border: none;
+      background: transparent;
+      color: #2563eb;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .icon-button {
+      border: none;
+      background: #eff6ff;
+      color: #2563eb;
+      border-radius: 999px;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .notification-list {
+      overflow-y: auto;
+    }
+
+    .notification-item {
+      display: flex;
+      gap: 0.75rem;
+      padding: 0.95rem 1.25rem;
+      border-bottom: 1px solid #f1f5f9;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    .notification-item.unread {
+      background: #eff6ff;
+    }
+
+    .notification-item:hover {
+      background: #f8fafc;
+    }
+
+    .item-text h4 {
+      margin: 0;
+      font-size: 0.95rem;
+      color: #0f172a;
+    }
+
+    .item-message {
+      margin: 0.2rem 0;
+      color: #475569;
+      font-size: 0.85rem;
+    }
+
+    .item-date {
+      margin: 0;
+      color: #94a3b8;
+      font-size: 0.75rem;
+    }
+
+    .item-title {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #2563eb;
+    }
+
+    .item-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .action-btn {
+      width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      border: none;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .action-btn.confirm {
+      background: #e0f2fe;
+      color: #0369a1;
+    }
+
+    .action-btn.remove {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    .empty-state {
+      padding: 1.5rem;
+      text-align: center;
+      color: #94a3b8;
+    }
+
+    .notification-list::-webkit-scrollbar {
       width: 6px;
     }
-    .overflow-y-auto::-webkit-scrollbar-track {
-      background: #f1f1f1;
-    }
-    .overflow-y-auto::-webkit-scrollbar-thumb {
-      background: #888;
+
+    .notification-list::-webkit-scrollbar-thumb {
+      background: #cbd5f5;
       border-radius: 3px;
-    }
-    .overflow-y-auto::-webkit-scrollbar-thumb:hover {
-      background: #555;
     }
   `]
 })
@@ -155,6 +260,9 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
   unreadCount = 0;
   showDropdown = false;
   private subscriptions: Subscription[] = [];
+  private documentHandler = (event: MouseEvent) => this.closeDropdownOnClickOutside(event);
+
+  @Output() dropdownChange = new EventEmitter<boolean>();
 
   constructor(
     private notificationService: NotificationService,
@@ -182,17 +290,18 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
     this.notificationService.refresh();
 
     // Cerrar dropdown al hacer clic fuera
-    document.addEventListener('click', this.closeDropdownOnClickOutside.bind(this));
+    document.addEventListener('click', this.documentHandler);
   }
 
   ngOnDestroy(): void {
     // Limpiar suscripciones
     this.subscriptions.forEach(sub => sub.unsubscribe());
-    document.removeEventListener('click', this.closeDropdownOnClickOutside.bind(this));
+    document.removeEventListener('click', this.documentHandler);
   }
 
   toggleDropdown(): void {
     this.showDropdown = !this.showDropdown;
+    this.dropdownChange.emit(this.showDropdown);
     if (this.showDropdown) {
       this.notificationService.refresh();
     }
@@ -203,6 +312,14 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
     const notificationBell = target.closest('app-notification-bell');
     if (!notificationBell) {
       this.showDropdown = false;
+      this.dropdownChange.emit(false);
+    }
+  }
+
+  closeDropdown(): void {
+    if (this.showDropdown) {
+      this.showDropdown = false;
+      this.dropdownChange.emit(false);
     }
   }
 

@@ -3,7 +3,7 @@
     Crear cuenta de {{ 
       registrationForm.get('role')?.value === 'Student' ? 'Estudiante' : 
       registrationForm.get('role')?.value === 'Organization' ? 'Organización' :
-      registrationForm.get('role')?.value === 'Teacher' ? 'Profesor' :
+      registrationForm.get('role')?.value === 'Teacher' ? 'Docente' :
       registrationForm.get('role')?.value === 'Director' ? 'Director' : 'Usuario'
     }}
   </h2>
@@ -13,7 +13,7 @@
 </div>
 <div *ngIf="shouldShowInstitutionalButton" class="mb-4 p-3 rounded-lg bg-blue-50 border border-blue-100 text-sm text-blue-900">
   <p class="mb-2">
-    Para crear una cuenta de {{ registrationForm.get('role')?.value === 'Teacher' ? 'Profesor' : 'Director' }}, primero debes validar tu correo institucional &#64;ucb.edu.bo.
+    Para crear una cuenta de {{ registrationForm.get('role')?.value === 'Teacher' ? 'Docente' : 'Director' }}, primero debes validar tu correo institucional &#64;ucb.edu.bo.
   </p>
   <button type="button" (click)="onValidateInstitutionalAccount()"
     class="px-4 py-2 font-semibold text-white bg-blue-ucb rounded-md hover:bg-blue-900 transition-all duration-200 ease-in-out">
@@ -71,6 +71,19 @@
       <div class="error-feedback" *ngIf="hasDisplayableError('fullName')">
         <div *ngIf="fullName.errors?.['required']">
           El nombre completo es requerido.
+        </div>
+      </div>
+    </div>
+    <div class="mb-3">
+      <input type="text" placeholder="Código de curso (6 dígitos)" formControlName="courseCode"
+        maxlength="6"
+        class="w-full px-3 py-2 leading-tight text-gray-700 bg-gray-200 border rounded shadow-inner appearance-none focus:outline-none focus:shadow-outline">
+      <div class="error-feedback" *ngIf="hasDisplayableError('courseCode')">
+        <div *ngIf="courseCode.errors?.['required']">
+          El código del curso es requerido.
+        </div>
+        <div *ngIf="!courseCode.errors?.['required'] && courseCode.errors?.['pattern']">
+          El código debe tener 6 dígitos numéricos.
         </div>
       </div>
     </div>

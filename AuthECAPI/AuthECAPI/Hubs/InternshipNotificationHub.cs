@@ -36,6 +36,10 @@ namespace AuthECAPI.Hubs
                 {
                     await Groups.AddToGroupAsync(Context.ConnectionId, "directors");
                 }
+                else if (role == "Teacher")
+                {
+                    await Groups.AddToGroupAsync(Context.ConnectionId, "teachers");
+                }
             }
 
             await base.OnConnectedAsync();
@@ -64,6 +68,10 @@ namespace AuthECAPI.Hubs
                 else if (role == "Director")
                 {
                     await Groups.RemoveFromGroupAsync(Context.ConnectionId, "directors");
+                }
+                else if (role == "Teacher")
+                {
+                    await Groups.RemoveFromGroupAsync(Context.ConnectionId, "teachers");
                 }
             }
 

@@ -24,7 +24,7 @@
                 (mouseenter)="stopFadeOnHover(req.id)">
               <td class="py-2 px-4">{{ req.directorName }}</td>
               <td class="py-2 px-4">{{ req.directorDepartment }}</td>
-              <td class="py-2 px-4">{{ req.requestDate | date:'short' }}</td>
+              <td class="py-2 px-4">{{ req.requestDate | date:'dd/MM/yyyy, HH:mm' }}</td>
               <td class="py-2 px-4">
                 <span [ngClass]="getStatusColor(req.status)" class="px-2 py-1 rounded text-xs font-semibold">
                   {{ req.status === 'Accepted' ? 'Aceptado' : req.status === 'Rejected' ? 'Rechazado' : req.status }}
