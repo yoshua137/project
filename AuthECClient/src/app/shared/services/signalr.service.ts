@@ -72,6 +72,14 @@ export interface StudentAcceptanceConfirmedNotification {
   confirmedDate: string;
 }
 
+export interface DirectorApprovalUpdatedNotification {
+  applicationId: number;
+  status: string;
+  studentName?: string;
+  organizationName?: string;
+  offerTitle: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -86,6 +94,7 @@ export class SignalRService {
   private studentEnrolled$ = new BehaviorSubject<StudentEnrolledNotification | null>(null);
   private studentApplicationUpdated$ = new BehaviorSubject<StudentApplicationUpdatedNotification | null>(null);
   private studentAcceptanceConfirmed$ = new BehaviorSubject<StudentAcceptanceConfirmedNotification | null>(null);
+  private directorApprovalUpdated$ = new BehaviorSubject<DirectorApprovalUpdatedNotification | null>(null);
 
   constructor(private authService: AuthService) {}
 
@@ -151,6 +160,10 @@ export class SignalRService {
 
     this.hubConnection.on('StudentAcceptanceConfirmed', (data: StudentAcceptanceConfirmedNotification) => {
       this.studentAcceptanceConfirmed$.next(data);
+    });
+
+    this.hubConnection.on('DirectorApprovalUpdated', (data: DirectorApprovalUpdatedNotification) => {
+      this.directorApprovalUpdated$.next(data);
     });
 
     // Manejar cambios de estado de conexión
@@ -254,6 +267,13 @@ export class SignalRService {
   }
 
   /**
+   * Observable para cuando el director aprueba/rechaza una carta de aceptación (para estudiantes y organizaciones)
+   */
+  onDirectorApprovalUpdated(): Observable<DirectorApprovalUpdatedNotification | null> {
+    return this.directorApprovalUpdated$.asObservable();
+  }
+
+  /**
    * Limpia las notificaciones actuales
    */
   clearNotifications(): void {
@@ -265,6 +285,7 @@ export class SignalRService {
     this.studentEnrolled$.next(null);
     this.studentApplicationUpdated$.next(null);
     this.studentAcceptanceConfirmed$.next(null);
+    this.directorApprovalUpdated$.next(null);
   }
 }
 

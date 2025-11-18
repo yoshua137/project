@@ -34,6 +34,7 @@ interface InternshipApplication {
   acceptanceDate?: string;
   studentAcceptanceConfirmed?: boolean | null;
   studentAcceptanceConfirmedDate?: string;
+  evaluationStatus?: string;
 }
 
 @Component({
@@ -157,7 +158,7 @@ interface InternshipApplication {
                   </div>
 
                   <!-- Warning message if student confirmed but organization hasn't consolidated -->
-                  <div *ngIf="selectedApplication.studentAcceptanceConfirmed && !selectedApplication.acceptanceLetterFilePath" 
+                  <div *ngIf="selectedApplication.studentAcceptanceConfirmed && !selectedApplication.acceptanceLetterFilePath && selectedApplication.status !== 'REVISION'" 
                        class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded mb-4">
                     <div class="flex items-center gap-2">
                       <svg class="w-5 h-5 text-yellow-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -165,6 +166,19 @@ interface InternshipApplication {
                       </svg>
                       <p class="text-yellow-800 font-semibold">
                         La organización debe enviar una carta de aceptación al director de carrera.
+                      </p>
+                    </div>
+                  </div>
+
+                  <!-- Warning message if status is REVISION (director reviewing) -->
+                  <div *ngIf="selectedApplication.status === 'REVISION' && selectedApplication.acceptanceLetterFilePath" 
+                       class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded mb-4">
+                    <div class="flex items-center gap-2">
+                      <svg class="w-5 h-5 text-yellow-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                      <p class="text-yellow-800 font-semibold">
+                        El director revisará la carta de aceptación y el proceso de postulación del estudiante. Se enviará una confirmación para verificar si está de acuerdo con la carta de aceptación.
                       </p>
                     </div>
                   </div>
@@ -200,35 +214,43 @@ interface InternshipApplication {
                         <button 
                           (click)="showEvaluationDetails()"
                           class="flex-1 px-4 py-2 rounded transition flex items-start gap-2 text-gray-700 hover:text-gray-900 text-left">
-                          <svg *ngIf="selectedApplication.status === 'APROBADA' || selectedApplication.status === 'RECHAZADA'" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                          <svg *ngIf="getEvaluationStatus(selectedApplication) === 'APROBADA' || getEvaluationStatus(selectedApplication) === 'RECHAZADA'" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
-                          <svg *ngIf="selectedApplication.status === 'PENDIENTE' || selectedApplication.status === 'ENTREVISTA'" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                          <svg *ngIf="!getEvaluationStatus(selectedApplication) && (selectedApplication.status === 'PENDIENTE' || selectedApplication.status === 'ENTREVISTA')" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
                           <span class="break-words">Ver Detalles de Evaluación</span>
                         </button>
-                        <span *ngIf="selectedApplication.status === 'APROBADA'" class="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800 whitespace-nowrap">
+                        <span *ngIf="getEvaluationStatus(selectedApplication) === 'APROBADA'" class="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800 whitespace-nowrap">
                           Aprobada
                         </span>
-                        <span *ngIf="selectedApplication.status === 'RECHAZADA'" class="px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800 whitespace-nowrap">
+                        <span *ngIf="getEvaluationStatus(selectedApplication) === 'RECHAZADA'" class="px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800 whitespace-nowrap">
                           Reprobada
                         </span>
                       </div>
                       <button 
                         (click)="selectedApplication.studentAcceptanceConfirmed ? showAcceptanceDetails() : openConfirmAcceptanceModal()"
                         class="w-full px-4 py-2 rounded transition flex items-center gap-2 text-gray-700 hover:text-gray-900">
-                        <svg *ngIf="selectedApplication.status !== 'APROBADA'" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                          <path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        <!-- Amarillo: Estado REVISION (director revisando) - PRIORIDAD ALTA -->
+                        <svg *ngIf="selectedApplication.status === 'REVISION' && selectedApplication.acceptanceLetterFilePath" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                         </svg>
+                        <!-- Verde: Aceptación completa (confirmada por estudiante, carta guardada, y no está en REVISION) -->
+                        <svg *ngIf="selectedApplication.status !== 'REVISION' && selectedApplication.studentAcceptanceConfirmed && selectedApplication.acceptanceLetterFilePath" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <!-- Amarillo: Estudiante confirmó pero organización no ha consolidado -->
+                        <svg *ngIf="selectedApplication.status !== 'REVISION' && selectedApplication.studentAcceptanceConfirmed && !selectedApplication.acceptanceLetterFilePath" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        <!-- Amarillo: Estado APROBADA pero estudiante no ha confirmado -->
                         <svg *ngIf="selectedApplication.status === 'APROBADA' && !selectedApplication.studentAcceptanceConfirmed" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                           <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                         </svg>
-                        <svg *ngIf="selectedApplication.studentAcceptanceConfirmed && !selectedApplication.acceptanceLetterFilePath" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                        </svg>
-                        <svg *ngIf="selectedApplication.studentAcceptanceConfirmed && selectedApplication.acceptanceLetterFilePath" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        <!-- Rojo: Otros casos (no aprobada, no confirmada, etc.) -->
+                        <svg *ngIf="selectedApplication.status !== 'APROBADA' && selectedApplication.status !== 'REVISION' && !selectedApplication.studentAcceptanceConfirmed" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                         {{ selectedApplication.studentAcceptanceConfirmed ? 'Detalles Aceptación' : 'Consolidar Aceptación' }}
                       </button>
@@ -344,8 +366,8 @@ interface InternshipApplication {
 
         <!-- Content -->
         <div class="p-6" *ngIf="selectedApplication">
-          <!-- Si está pendiente o en proceso de entrevista, mostrar mensaje con X -->
-          <div *ngIf="selectedApplication.status === 'PENDIENTE' || selectedApplication.status === 'ENTREVISTA'" class="flex flex-col items-center justify-center py-12">
+          <!-- Si no hay evaluación, mostrar mensaje con X -->
+          <div *ngIf="!getEvaluationStatus(selectedApplication)" class="flex flex-col items-center justify-center py-12">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-red-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
               <path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
@@ -355,12 +377,12 @@ interface InternshipApplication {
           </div>
 
           <!-- Si está aprobada o rechazada, mostrar detalles de evaluación -->
-          <div *ngIf="selectedApplication.status === 'APROBADA' || selectedApplication.status === 'RECHAZADA'" class="space-y-4">
+          <div *ngIf="getEvaluationStatus(selectedApplication) === 'APROBADA' || getEvaluationStatus(selectedApplication) === 'RECHAZADA'" class="space-y-4">
             <!-- Status -->
             <div class="flex justify-end mb-4">
               <span class="px-3 py-1 rounded-full text-sm font-semibold"
-                    [ngClass]="getStatusClass(selectedApplication.status)">
-                {{ getStatusText(selectedApplication.status) }}
+                    [ngClass]="getEvaluationStatus(selectedApplication) === 'APROBADA' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
+                {{ getEvaluationStatus(selectedApplication) === 'APROBADA' ? 'Aprobada' : 'Reprobada' }}
               </span>
             </div>
 
@@ -391,10 +413,10 @@ interface InternshipApplication {
             <div class="bg-gray-50 p-4 rounded-lg">
               <h3 class="font-semibold text-gray-900 mb-2">Resultado</h3>
               <div class="flex items-center gap-2">
-                <span *ngIf="selectedApplication.status === 'APROBADA'" class="px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800">
+                <span *ngIf="getEvaluationStatus(selectedApplication) === 'APROBADA'" class="px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800">
                   Aprobado
                 </span>
-                <span *ngIf="selectedApplication.status === 'RECHAZADA'" class="px-3 py-1 rounded-full text-sm font-semibold bg-red-100 text-red-800">
+                <span *ngIf="getEvaluationStatus(selectedApplication) === 'RECHAZADA'" class="px-3 py-1 rounded-full text-sm font-semibold bg-red-100 text-red-800">
                   Reprobado
                 </span>
               </div>
@@ -594,7 +616,7 @@ interface InternshipApplication {
             </div>
 
             <!-- Warning message if student confirmed but organization hasn't consolidated -->
-            <div *ngIf="selectedApplication.studentAcceptanceConfirmed && !selectedApplication.acceptanceLetterFilePath" 
+            <div *ngIf="selectedApplication.studentAcceptanceConfirmed && !selectedApplication.acceptanceLetterFilePath && selectedApplication.status !== 'REVISION'" 
                  class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
               <div class="flex items-center gap-2">
                 <svg class="w-5 h-5 text-yellow-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -602,6 +624,19 @@ interface InternshipApplication {
                 </svg>
                 <p class="text-yellow-800 font-semibold">
                   La organización debe enviar una carta de aceptación al director de carrera.
+                </p>
+              </div>
+            </div>
+
+            <!-- Warning message if status is REVISION (director reviewing) -->
+            <div *ngIf="selectedApplication.status === 'REVISION' && selectedApplication.acceptanceLetterFilePath" 
+                 class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
+              <div class="flex items-center gap-2">
+                <svg class="w-5 h-5 text-yellow-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <p class="text-yellow-800 font-semibold">
+                  El director revisará la carta de aceptación y el proceso de postulación del estudiante. Se enviará una confirmación para verificar si está de acuerdo con la carta de aceptación.
                 </p>
               </div>
             </div>
@@ -765,7 +800,32 @@ export class MyApplicationsComponent implements OnInit, OnDestroy {
       }
     });
 
-    this.subscriptions.push(interviewSub, statusSub);
+    // Escuchar cuando el director aprueba/rechaza una carta de aceptación
+    const directorApprovalSub = this.signalRService.onDirectorApprovalUpdated().subscribe((notification: any) => {
+      if (notification) {
+        // Recargar la aplicación para obtener todos los campos actualizados
+        this.loadApplications().then(() => {
+          // Mantener la selección después de recargar
+          if (this.selectedApplication) {
+            const updatedApp = this.applications.find(a => a.id === this.selectedApplication!.id);
+            if (updatedApp) {
+              this.selectedApplication = updatedApp;
+            }
+          }
+        });
+        
+        const statusText = notification.status === 'Aceptado' ? 'aceptada' : 'rechazada';
+        this.toastr.info(
+          `El director ha ${statusText} la carta de aceptación para "${notification.offerTitle}"`,
+          'Carta de Aceptación Revisada',
+          { timeOut: 5000 }
+        );
+        
+        this.signalRService.clearNotifications();
+      }
+    });
+
+    this.subscriptions.push(interviewSub, statusSub, directorApprovalSub);
   }
 
   loadApplications(): Promise<void> {
@@ -866,6 +926,8 @@ export class MyApplicationsComponent implements OnInit, OnDestroy {
         return 'bg-green-100 text-green-800';
       case 'RECHAZADA':
         return 'bg-red-100 text-red-800';
+      case 'REVISION':
+        return 'bg-purple-100 text-purple-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -881,9 +943,17 @@ export class MyApplicationsComponent implements OnInit, OnDestroy {
         return 'Aprobada';
       case 'RECHAZADA':
         return 'Rechazada';
+      case 'REVISION':
+        return 'Revisión';
       default:
         return status;
     }
+  }
+
+  getEvaluationStatus(application: InternshipApplication | null): string | null {
+    if (!application) return null;
+    // Usar evaluationStatus directamente, que es independiente del Status principal
+    return application.evaluationStatus || null;
   }
 
   showApplicationDetails(application: InternshipApplication): void {

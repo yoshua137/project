@@ -48,5 +48,16 @@ namespace AuthECAPI.Models
         // Confirmación del estudiante de realizar la pasantía
         public bool? StudentAcceptanceConfirmed { get; set; }
         public DateTime? StudentAcceptanceConfirmedDate { get; set; }
+        
+        // Estado de evaluación (APROBADA o RECHAZADA) - independiente del Status principal
+        public string? EvaluationStatus { get; set; }
+        
+        // Aprobación del director
+        /// <summary>
+        /// Estado de aprobación del director: 'Aceptado', 'Rechazado', o null (pendiente)
+        /// </summary>
+        public string? DirectorApprovalStatus { get; set; }
+        public DateTime? DirectorApprovalDate { get; set; }
+        public string? DirectorApprovalNotes { get; set; }
     }
 } 

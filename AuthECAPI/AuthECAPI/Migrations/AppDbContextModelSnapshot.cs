@@ -189,6 +189,18 @@ namespace AuthECAPI.Migrations
                     b.Property<string>("CoverLetter")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime?>("DirectorApprovalDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DirectorApprovalNotes")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DirectorApprovalStatus")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("EvaluationStatus")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("InternshipOfferId")
                         .HasColumnType("int");
 

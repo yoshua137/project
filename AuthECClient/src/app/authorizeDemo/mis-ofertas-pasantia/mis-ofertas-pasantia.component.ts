@@ -50,6 +50,7 @@ interface InternshipApplication {
   acceptanceDate?: string;
   studentAcceptanceConfirmed?: boolean | null;
   studentAcceptanceConfirmedDate?: string;
+  evaluationStatus?: string;
 }
 
 @Component({
@@ -103,6 +104,8 @@ export class MisOfertasPasantiaComponent implements OnInit {
   private pendingHighlightApplicantId: number | null = null;
   viewMode: 'grid' | 'list' = 'grid';
   expandedOffers = new Set<number>();
+  private processedAttendanceNotifications = new Set<number>();
+  private processedAcceptanceNotifications = new Set<number>();
   
   // Propiedades para el modal de revisión
   reviewingApplication: InternshipApplication | null = null;
@@ -160,19 +163,38 @@ export class MisOfertasPasantiaComponent implements OnInit {
     // Escuchar cuando un estudiante confirma asistencia
     const attendanceSub = this.signalRService.onAttendanceConfirmed().subscribe((notification: any) => {
       if (notification) {
+        // Evitar procesar la misma notificación dos veces
+        const notificationKey = notification.applicationId;
+        if (this.processedAttendanceNotifications.has(notificationKey)) {
+          return;
+        }
+        this.processedAttendanceNotifications.add(notificationKey);
+        
+        // Limpiar después de 5 segundos para permitir nuevas notificaciones del mismo tipo
+        setTimeout(() => {
+          this.processedAttendanceNotifications.delete(notificationKey);
+        }, 5000);
+        
         // Si estamos viendo los postulantes de una oferta, actualizar la lista
         if (this.viewingApplicants) {
           const applicant = this.applicants.find(a => a.id === notification.applicationId);
           if (applicant) {
             applicant.interviewAttendanceConfirmed = notification.willAttend;
             
-            this.toastr.info(
-              `${notification.studentName} ${notification.willAttend ? 'asistirá' : 'NO asistirá'} a la entrevista para "${notification.offerTitle}"`,
-              'Confirmación de Asistencia',
-              { timeOut: 5000 }
-            );
+            // Si el postulante seleccionado es el mismo, actualizar también
+            if (this.selectedApplicant && this.selectedApplicant.id === notification.applicationId) {
+              this.selectedApplicant.interviewAttendanceConfirmed = notification.willAttend;
+            }
           }
         }
+        
+        // Mostrar toastr solo una vez
+        this.toastr.info(
+          `${notification.studentName} ${notification.willAttend ? 'asistirá' : 'NO asistirá'} a la entrevista para "${notification.offerTitle}"`,
+          'Confirmación de Asistencia',
+          { timeOut: 5000 }
+        );
+        
         this.signalRService.clearNotifications();
       }
     });
@@ -180,6 +202,18 @@ export class MisOfertasPasantiaComponent implements OnInit {
     // Escuchar cuando un estudiante confirma su aceptación
     const acceptanceConfirmedSub = this.signalRService.onStudentAcceptanceConfirmed().subscribe((notification: any) => {
       if (notification) {
+        // Evitar procesar la misma notificación dos veces
+        const notificationKey = notification.applicationId;
+        if (this.processedAcceptanceNotifications.has(notificationKey)) {
+          return;
+        }
+        this.processedAcceptanceNotifications.add(notificationKey);
+        
+        // Limpiar después de 5 segundos para permitir nuevas notificaciones del mismo tipo
+        setTimeout(() => {
+          this.processedAcceptanceNotifications.delete(notificationKey);
+        }, 5000);
+        
         // Si estamos viendo los postulantes de una oferta, actualizar la lista
         if (this.viewingApplicants) {
           const applicant = this.applicants.find(a => a.id === notification.applicationId);
@@ -196,6 +230,7 @@ export class MisOfertasPasantiaComponent implements OnInit {
           }
         }
         
+        // Mostrar toastr solo una vez
         this.toastr.success(
           `${notification.studentName} ha confirmado su aceptación para la oferta "${notification.offerTitle}"`,
           'Aceptación Confirmada',
@@ -206,8 +241,37 @@ export class MisOfertasPasantiaComponent implements OnInit {
       }
     });
 
+    // Escuchar cuando el director aprueba/rechaza una carta de aceptación
+    const directorApprovalSub = this.signalRService.onDirectorApprovalUpdated().subscribe((notification: any) => {
+      if (notification) {
+        // Si estamos viendo los postulantes de una oferta, actualizar la lista
+        if (this.viewingApplicants) {
+          this.loadApplicants(this.viewingApplicants.id);
+          // Mantener la selección después de recargar (con un pequeño delay para que se actualice la lista)
+          setTimeout(() => {
+            if (this.selectedApplicant) {
+              const updatedApplicant = this.applicants.find(a => a.id === this.selectedApplicant!.id);
+              if (updatedApplicant) {
+                this.selectedApplicant = updatedApplicant;
+              }
+            }
+          }, 500);
+        }
+        
+        const statusText = notification.status === 'Aceptado' ? 'aceptada' : 'rechazada';
+        this.toastr.info(
+          `El director ha ${statusText} la carta de aceptación para "${notification.offerTitle}"`,
+          'Carta de Aceptación Revisada',
+          { timeOut: 5000 }
+        );
+        
+        this.signalRService.clearNotifications();
+      }
+    });
+    
     this.subscriptions.push(attendanceSub);
     this.subscriptions.push(acceptanceConfirmedSub);
+    this.subscriptions.push(directorApprovalSub);
   }
 
   loadMyOffers(): void {
@@ -713,6 +777,10 @@ export class MisOfertasPasantiaComponent implements OnInit {
             applicant.status = this.reviewAction;
             applicant.reviewDate = new Date().toISOString();
             applicant.reviewNotes = this.reviewNotes;
+            // Guardar evaluationStatus cuando se aprueba o rechaza
+            if (this.reviewAction === 'APROBADA' || this.reviewAction === 'RECHAZADA') {
+              applicant.evaluationStatus = this.reviewAction;
+            }
             // Actualizar campos de entrevista si se programó
             if (this.reviewAction === 'ENTREVISTA') {
               applicant.interviewDateTime = interviewDateTimeIso || undefined;
@@ -724,6 +792,13 @@ export class MisOfertasPasantiaComponent implements OnInit {
             // Si el postulante seleccionado es el que se actualizó, actualizar también selectedApplicant
             if (this.selectedApplicant?.id === applicant.id) {
               this.selectedApplicant = { ...applicant };
+            }
+          }
+          // Si se programó una entrevista, mostrar toastr de confirmación
+          if (this.reviewAction === 'ENTREVISTA') {
+            if (this.reviewingApplication) {
+              const message = `Se programó la entrevista para el estudiante ${this.reviewingApplication.studentName}`;
+              this.toastr.success(message, 'Entrevista Programada', { timeOut: 5000 });
             }
           }
           // Si se aprobó o reprobó, mostrar toastr de confirmación
@@ -776,6 +851,12 @@ export class MisOfertasPasantiaComponent implements OnInit {
            (typeof applicant.interviewAttendanceConfirmed === 'number' && applicant.interviewAttendanceConfirmed === 1);
   }
 
+  getEvaluationStatus(applicant: InternshipApplication | null): string | null {
+    if (!applicant) return null;
+    // Usar evaluationStatus directamente, que es independiente del Status principal
+    return applicant.evaluationStatus || null;
+  }
+
   handleEvaluationClick(): void {
     if (!this.selectedApplicant) return;
 
@@ -795,7 +876,8 @@ export class MisOfertasPasantiaComponent implements OnInit {
     }
 
     // Si ya tiene evaluación (aprobado o rechazado), mostrar detalles de evaluación
-    if (this.selectedApplicant.status === 'APROBADA' || this.selectedApplicant.status === 'RECHAZADA') {
+    const evaluationStatus = this.getEvaluationStatus(this.selectedApplicant);
+    if (evaluationStatus === 'APROBADA' || evaluationStatus === 'RECHAZADA') {
       this.showEvaluationDetailsModal = true;
     } else {
       // Si está en ENTREVISTA y tiene entrevista programada y confirmada, mostrar modal de evaluación
@@ -895,6 +977,9 @@ export class MisOfertasPasantiaComponent implements OnInit {
     this.consolidatingAcceptance = true;
     this.consolidateError = '';
 
+    // Guardar evaluationStatus antes de actualizar (se mantiene independiente del status)
+    const currentEvaluationStatus = this.selectedApplicant.evaluationStatus;
+
     const formData = new FormData();
     formData.append('acceptanceLetter', this.acceptanceLetterFile);
     if (this.acceptanceNotes) {
@@ -912,6 +997,8 @@ export class MisOfertasPasantiaComponent implements OnInit {
           this.selectedApplicant.acceptanceNotes = response.acceptanceNotes;
           this.selectedApplicant.acceptanceDate = response.acceptanceDate;
           this.selectedApplicant.status = response.status || 'REVISION';
+          // Mantener evaluationStatus (no se modifica al consolidar)
+          this.selectedApplicant.evaluationStatus = currentEvaluationStatus;
         }
         
         // Actualizar en la lista de postulantes
@@ -921,6 +1008,8 @@ export class MisOfertasPasantiaComponent implements OnInit {
           applicant.acceptanceNotes = response.acceptanceNotes;
           applicant.acceptanceDate = response.acceptanceDate;
           applicant.status = response.status || 'REVISION';
+          // Mantener evaluationStatus (no se modifica al consolidar)
+          applicant.evaluationStatus = currentEvaluationStatus;
         }
 
         this.toastr.success('Aceptación consolidada correctamente', 'Éxito');

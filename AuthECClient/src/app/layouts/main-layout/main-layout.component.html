@@ -116,6 +116,11 @@
           routerLink="/agreement-review" routerLinkActive="active-nav-link"
           [routerLinkActiveOptions]="{ exact: true }">Revisar Convenios</a>
       </li>
+      <li class="nav-item" [appHideIfClaimsNotMet]="claimReq.directorAgreementReviewer">
+        <a class="nav-link text-white px-3 py-1 transition relative"
+          routerLink="/cartas-aceptacion" routerLinkActive="active-nav-link"
+          [routerLinkActiveOptions]="{ exact: true }">Cartas de Aceptación</a>
+      </li>
       <li class="nav-item" [appHideIfClaimsNotMet]="claimReq.organizationAgreementList">
         <a class="nav-link text-white px-3 py-1 transition relative"
           routerLink="/mis-convenios" routerLinkActive="active-nav-link"

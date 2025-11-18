@@ -193,7 +193,11 @@ namespace AuthECAPI.Controllers
                     AcceptanceNotes = application.AcceptanceNotes,
                     AcceptanceDate = application.AcceptanceDate,
                     StudentAcceptanceConfirmed = application.StudentAcceptanceConfirmed,
-                    StudentAcceptanceConfirmedDate = application.StudentAcceptanceConfirmedDate
+                    StudentAcceptanceConfirmedDate = application.StudentAcceptanceConfirmedDate,
+                    EvaluationStatus = application.EvaluationStatus,
+                    DirectorApprovalStatus = application.DirectorApprovalStatus,
+                    DirectorApprovalDate = application.DirectorApprovalDate,
+                    DirectorApprovalNotes = application.DirectorApprovalNotes
                 };
 
                 return CreatedAtAction(nameof(CreateApplication), new { id = applicationResponse.Id }, applicationResponse);
@@ -251,7 +255,11 @@ namespace AuthECAPI.Controllers
                         AcceptanceNotes = ia.AcceptanceNotes,
                         AcceptanceDate = ia.AcceptanceDate,
                         StudentAcceptanceConfirmed = ia.StudentAcceptanceConfirmed,
-                        StudentAcceptanceConfirmedDate = ia.StudentAcceptanceConfirmedDate
+                        StudentAcceptanceConfirmedDate = ia.StudentAcceptanceConfirmedDate,
+                        EvaluationStatus = ia.EvaluationStatus,
+                        DirectorApprovalStatus = ia.DirectorApprovalStatus,
+                        DirectorApprovalDate = ia.DirectorApprovalDate,
+                        DirectorApprovalNotes = ia.DirectorApprovalNotes
                     })
                     .ToListAsync();
 
@@ -319,7 +327,11 @@ namespace AuthECAPI.Controllers
                         AcceptanceNotes = ia.AcceptanceNotes,
                         AcceptanceDate = ia.AcceptanceDate,
                         StudentAcceptanceConfirmed = ia.StudentAcceptanceConfirmed,
-                        StudentAcceptanceConfirmedDate = ia.StudentAcceptanceConfirmedDate
+                        StudentAcceptanceConfirmedDate = ia.StudentAcceptanceConfirmedDate,
+                        EvaluationStatus = ia.EvaluationStatus,
+                        DirectorApprovalStatus = ia.DirectorApprovalStatus,
+                        DirectorApprovalDate = ia.DirectorApprovalDate,
+                        DirectorApprovalNotes = ia.DirectorApprovalNotes
                     })
                     .ToListAsync();
 
@@ -376,6 +388,8 @@ namespace AuthECAPI.Controllers
                 {
                     // ReviewNotes solo se usa para evaluación (aprobación/rechazo)
                     application.ReviewNotes = reviewRequest.ReviewNotes;
+                    // Guardar el estado de evaluación independientemente del Status principal
+                    application.EvaluationStatus = reviewRequest.Status;
                 }
                 
                 if (reviewRequest.VirtualMeetingLink != null)
@@ -512,15 +526,17 @@ namespace AuthECAPI.Controllers
 
         // GET: api/InternshipApplication/{id}/cv
         [HttpGet("{id}/cv")]
-        [Authorize(Roles = "Organization")]
+        [Authorize(Roles = "Organization,Director")]
         public async Task<IActionResult> DownloadCV(int id)
         {
             try
             {
                 var userId = User.Claims.First(c => c.Type == "userID").Value;
+                var userRole = User.Claims.FirstOrDefault(c => c.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role")?.Value;
 
                 var application = await _context.InternshipApplications
                     .Include(ia => ia.InternshipOffer)
+                    .ThenInclude(io => io.Organization)
                     .FirstOrDefaultAsync(ia => ia.Id == id);
 
                 if (application == null)
@@ -528,10 +544,27 @@ namespace AuthECAPI.Controllers
                     return NotFound("No se encontró la aplicación");
                 }
 
-                // Verificar que la oferta pertenece a la organización del usuario
-                if (application.InternshipOffer.OrganizationId != userId)
+                // Verificar permisos según el rol
+                if (userRole == "Organization")
                 {
-                    return Forbid("No tienes permisos para descargar este CV");
+                    // Verificar que la oferta pertenece a la organización del usuario
+                    if (application.InternshipOffer.OrganizationId != userId)
+                    {
+                        return Forbid("No tienes permisos para descargar este CV");
+                    }
+                }
+                else if (userRole == "Director")
+                {
+                    // Verificar que el director está asignado a la organización
+                    var isDirectorAssigned = await _context.AgreementRequests
+                        .AnyAsync(ar => ar.DirectorId == userId 
+                            && ar.OrganizationId == application.InternshipOffer.OrganizationId 
+                            && ar.Status == "Accepted");
+                    
+                    if (!isDirectorAssigned)
+                    {
+                        return Forbid("No tienes permisos para descargar este CV");
+                    }
                 }
 
                 if (string.IsNullOrEmpty(application.CVFilePath))
@@ -777,7 +810,7 @@ namespace AuthECAPI.Controllers
 
         // GET: api/InternshipApplication/{id}/acceptance-letter
         [HttpGet("{id}/acceptance-letter")]
-        [Authorize(Roles = "Organization,Student")]
+        [Authorize(Roles = "Organization,Student,Director")]
         public async Task<IActionResult> DownloadAcceptanceLetter(int id)
         {
             try
@@ -806,6 +839,19 @@ namespace AuthECAPI.Controllers
                 else if (userRole == "Organization")
                 {
                     if (application.InternshipOffer.OrganizationId != userId)
+                    {
+                        return Forbid("No tienes permisos para descargar esta carta de aceptación");
+                    }
+                }
+                else if (userRole == "Director")
+                {
+                    // Verificar que el director está asignado a la organización
+                    var isDirectorAssigned = await _context.AgreementRequests
+                        .AnyAsync(ar => ar.DirectorId == userId 
+                            && ar.OrganizationId == application.InternshipOffer.OrganizationId 
+                            && ar.Status == "Accepted");
+                    
+                    if (!isDirectorAssigned)
                     {
                         return Forbid("No tienes permisos para descargar esta carta de aceptación");
                     }
@@ -909,6 +955,204 @@ namespace AuthECAPI.Controllers
                 return StatusCode(500, $"Error interno del servidor: {ex.Message}");
             }
         }
+
+        // GET: api/InternshipApplication/director/acceptance-letters
+        [HttpGet("director/acceptance-letters")]
+        [Authorize(Roles = "Director")]
+        public async Task<ActionResult<IEnumerable<InternshipApplicationResponse>>> GetAcceptanceLettersForDirector()
+        {
+            try
+            {
+                var directorId = User.Claims.First(c => c.Type == "userID").Value;
+
+                // Obtener las organizaciones asignadas a este director a través de AgreementRequest
+                var organizationIds = await _context.AgreementRequests
+                    .Where(ar => ar.DirectorId == directorId && ar.Status == "Accepted")
+                    .Select(ar => ar.OrganizationId)
+                    .Distinct()
+                    .ToListAsync();
+
+                if (!organizationIds.Any())
+                {
+                    return Ok(new List<InternshipApplicationResponse>());
+                }
+
+                // Obtener las aplicaciones con carta de aceptación que pertenezcan a las organizaciones asignadas
+                // Incluir tanto las pendientes (DirectorApprovalStatus == null) como las ya revisadas
+                var applications = await _context.InternshipApplications
+                    .Include(ia => ia.InternshipOffer)
+                    .ThenInclude(io => io.Organization)
+                    .ThenInclude(o => o.AppUser)
+                    .Include(ia => ia.Student)
+                    .ThenInclude(s => s.AppUser)
+                    .Where(ia => ia.AcceptanceLetterFilePath != null
+                        && organizationIds.Contains(ia.InternshipOffer.OrganizationId))
+                    .OrderByDescending(ia => ia.AcceptanceDate)
+                    .Select(ia => new InternshipApplicationResponse
+                    {
+                        Id = ia.Id,
+                        InternshipOfferId = ia.InternshipOfferId,
+                        InternshipOfferTitle = ia.InternshipOffer.Title ?? "",
+                        OrganizationName = ia.InternshipOffer.Organization.AppUser != null ? ia.InternshipOffer.Organization.AppUser.FullName : "",
+                        StudentId = ia.StudentId,
+                        StudentName = ia.Student.AppUser != null ? ia.Student.AppUser.FullName : "",
+                        StudentCareer = ia.Student.AppUser != null ? ia.Student.AppUser.Career ?? "" : "",
+                        ApplicationDate = ia.ApplicationDate,
+                        Status = ia.Status,
+                        CoverLetter = ia.CoverLetter,
+                        CVFilePath = ia.CVFilePath,
+                        ReviewDate = ia.ReviewDate,
+                        ReviewNotes = ia.ReviewNotes,
+                        VirtualMeetingLink = ia.VirtualMeetingLink,
+                        InterviewDateTime = ia.InterviewDateTime,
+                        InterviewMode = ia.InterviewMode,
+                        InterviewLink = ia.InterviewLink,
+                        InterviewAddress = ia.InterviewAddress,
+                        InterviewNotes = ia.InterviewNotes,
+                        InterviewAttendanceConfirmed = ia.InterviewAttendanceConfirmed,
+                        AcceptanceLetterFilePath = ia.AcceptanceLetterFilePath,
+                        AcceptanceNotes = ia.AcceptanceNotes,
+                        AcceptanceDate = ia.AcceptanceDate,
+                        StudentAcceptanceConfirmed = ia.StudentAcceptanceConfirmed,
+                        StudentAcceptanceConfirmedDate = ia.StudentAcceptanceConfirmedDate,
+                        EvaluationStatus = ia.EvaluationStatus,
+                        DirectorApprovalStatus = ia.DirectorApprovalStatus,
+                        DirectorApprovalDate = ia.DirectorApprovalDate,
+                        DirectorApprovalNotes = ia.DirectorApprovalNotes
+                    })
+                    .ToListAsync();
+
+                return Ok(applications);
+            }
+            catch (InvalidOperationException)
+            {
+                return Unauthorized("Token inválido o malformado. No se encontró el claim 'userID'.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error interno del servidor: {ex.Message}");
+            }
+        }
+
+        // PUT: api/InternshipApplication/{id}/director-approval
+        [HttpPut("{id}/director-approval")]
+        [Authorize(Roles = "Director")]
+        public async Task<IActionResult> ApproveOrRejectAcceptanceLetter(int id, [FromBody] DirectorApprovalRequest request)
+        {
+            try
+            {
+                var directorId = User.Claims.First(c => c.Type == "userID").Value;
+
+                var application = await _context.InternshipApplications
+                    .Include(ia => ia.InternshipOffer)
+                    .ThenInclude(io => io.Organization)
+                    .ThenInclude(o => o.AppUser)
+                    .Include(ia => ia.Student)
+                    .ThenInclude(s => s.AppUser)
+                    .FirstOrDefaultAsync(ia => ia.Id == id);
+
+                if (application == null)
+                {
+                    return NotFound("No se encontró la aplicación");
+                }
+
+                // Verificar que el director está asignado a la organización
+                var isDirectorAssigned = await _context.AgreementRequests
+                    .AnyAsync(ar => ar.DirectorId == directorId 
+                        && ar.OrganizationId == application.InternshipOffer.OrganizationId 
+                        && ar.Status == "Accepted");
+
+                if (!isDirectorAssigned)
+                {
+                    return Forbid("No tienes permisos para revisar esta carta de aceptación");
+                }
+
+                // Verificar que el estado es REVISION y no ha sido aprobado/rechazado antes
+                if (application.Status != "REVISION")
+                {
+                    return BadRequest("Solo se pueden revisar cartas de aceptación con estado 'REVISION'");
+                }
+
+                if (application.DirectorApprovalStatus != null)
+                {
+                    return BadRequest("Esta carta de aceptación ya ha sido revisada");
+                }
+
+                // Actualizar la aprobación del director
+                application.DirectorApprovalStatus = request.Status;
+                application.DirectorApprovalDate = await _cloudTimeService.GetCloudTimeAsync();
+                application.DirectorApprovalNotes = request.Notes;
+
+                // Si el director acepta, el estado debe ser "APROBADA" (aceptado por el director)
+                // Si el director rechaza, mantener "REVISION" para que la organización pueda corregir
+                if (request.Status == "Aceptado")
+                {
+                    application.Status = "APROBADA";
+                }
+                // Si es "Rechazado", mantener "REVISION" para que la organización pueda enviar una nueva carta
+
+                await _context.SaveChangesAsync();
+
+                // Obtener IDs de usuarios relacionados para notificaciones
+                var organizationId = application.InternshipOffer.OrganizationId;
+                var studentId = application.StudentId;
+
+                // Crear notificaciones
+                var statusText = request.Status == "Aceptado" ? "aceptada" : "rechazada";
+                
+                // Notificación para la organización
+                await _notificationService.CreateNotificationAsync(
+                    organizationId,
+                    $"Carta de Aceptación {request.Status}",
+                    $"El director ha {statusText} la carta de aceptación para el estudiante {application.Student.AppUser?.FullName} en la oferta '{application.InternshipOffer.Title}'.",
+                    "DIRECTOR_APPROVAL",
+                    application.Id,
+                    "InternshipApplication"
+                );
+
+                // Notificación para el estudiante
+                await _notificationService.CreateNotificationAsync(
+                    studentId,
+                    $"Carta de Aceptación {request.Status}",
+                    $"El director ha {statusText} la carta de aceptación para tu postulación a la oferta '{application.InternshipOffer.Title}'.",
+                    "DIRECTOR_APPROVAL",
+                    application.Id,
+                    "InternshipApplication"
+                );
+
+                // Enviar notificaciones SignalR
+                await _hubContext.Clients.Group($"user_{organizationId}").SendAsync("DirectorApprovalUpdated", new
+                {
+                    applicationId = application.Id,
+                    status = request.Status,
+                    studentName = application.Student.AppUser?.FullName,
+                    offerTitle = application.InternshipOffer.Title
+                });
+
+                await _hubContext.Clients.Group($"user_{studentId}").SendAsync("DirectorApprovalUpdated", new
+                {
+                    applicationId = application.Id,
+                    status = request.Status,
+                    organizationName = application.InternshipOffer.Organization.AppUser?.FullName,
+                    offerTitle = application.InternshipOffer.Title
+                });
+
+                return Ok(new
+                {
+                    message = $"Carta de aceptación {statusText} exitosamente",
+                    status = application.Status,
+                    directorApprovalStatus = application.DirectorApprovalStatus
+                });
+            }
+            catch (InvalidOperationException)
+            {
+                return Unauthorized("Token inválido o malformado. No se encontró el claim 'userID'.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error interno del servidor: {ex.Message}");
+            }
+        }
     }
 
     public class ReviewApplicationRequest
@@ -945,5 +1189,14 @@ namespace AuthECAPI.Controllers
         public IFormFile AcceptanceLetter { get; set; }
         
         public string? AcceptanceNotes { get; set; }
+    }
+
+    public class DirectorApprovalRequest
+    {
+        [Required]
+        [RegularExpression("Aceptado|Rechazado", ErrorMessage = "Status solo puede ser 'Aceptado' o 'Rechazado'")]
+        public string Status { get; set; }
+        
+        public string? Notes { get; set; }
     }
 } 

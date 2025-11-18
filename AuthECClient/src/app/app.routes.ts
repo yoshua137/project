@@ -25,6 +25,7 @@ import { MyApplicationsComponent } from './authorizeDemo/ver-ofertas-pasantia/my
 import { ProfileComponent } from './profile/profile.component';
 import { TeacherCoursesComponent } from './teacher/courses/teacher-courses.component';
 import { TeacherCourseDetailComponent } from './teacher/courses/teacher-course-detail.component';
+import { DirectorAcceptanceLettersComponent } from './authorizeDemo/director-acceptance-letters/director-acceptance-letters.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/user/login', pathMatch: 'full' },
@@ -80,6 +81,10 @@ export const routes: Routes = [
       },
       {
         path: 'agreement-review', component: AgreementReviewComponent,
+        data: { claimReq: claimReq.directorAgreementReviewer }
+      },
+      {
+        path: 'cartas-aceptacion', component: DirectorAcceptanceLettersComponent,
         data: { claimReq: claimReq.directorAgreementReviewer }
       },
       {

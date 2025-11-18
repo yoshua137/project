@@ -29,5 +29,9 @@ namespace AuthECAPI.Models
         public DateTime? AcceptanceDate { get; set; }
         public bool? StudentAcceptanceConfirmed { get; set; }
         public DateTime? StudentAcceptanceConfirmedDate { get; set; }
+        public string? EvaluationStatus { get; set; }
+        public string? DirectorApprovalStatus { get; set; }
+        public DateTime? DirectorApprovalDate { get; set; }
+        public string? DirectorApprovalNotes { get; set; }
     }
 } 
