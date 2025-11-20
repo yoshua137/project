@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { ToastrService } from 'ngx-toastr';
 import { AuthService } from '../../shared/services/auth.service';
@@ -55,6 +56,10 @@ export class DirectorAcceptanceLettersComponent implements OnInit, OnDestroy {
   approvalNotes = '';
   approvalDecision: 'Aceptado' | 'Rechazado' | null = null;
   viewMode: 'pending' | 'reviewed' | 'all' = 'pending';
+  showApplicationDetailsModal = false;
+  showInterviewDetailsModal = false;
+  showEvaluationDetailsModal = false;
+  showAcceptanceDetailsModal = false;
   
   private signalRSubscriptions: Subscription[] = [];
 
@@ -62,12 +67,32 @@ export class DirectorAcceptanceLettersComponent implements OnInit, OnDestroy {
     private http: HttpClient,
     private toastr: ToastrService,
     private authService: AuthService,
-    private signalRService: SignalRService
+    private signalRService: SignalRService,
+    private route: ActivatedRoute,
+    private router: Router
   ) {}
 
   async ngOnInit() {
     await this.signalRService.startConnection();
-    this.loadAcceptanceLetters();
+    
+    // Procesar query params para highlightLetter
+    this.route.queryParams.subscribe(params => {
+      if (params['highlightLetter']) {
+        const letterId = +params['highlightLetter'];
+        // Cargar las cartas y luego seleccionar la carta correspondiente
+        this.loadAcceptanceLetters(() => {
+          const letter = this.acceptanceLetters.find(l => l.id === letterId);
+          if (letter) {
+            this.selectLetter(letter);
+            // Limpiar query params
+            this.router.navigate([], { relativeTo: this.route, queryParams: {}, replaceUrl: true });
+          }
+        });
+      } else {
+        this.loadAcceptanceLetters();
+      }
+    });
+    
     this.setupSignalRListeners();
   }
 
@@ -83,18 +108,37 @@ export class DirectorAcceptanceLettersComponent implements OnInit, OnDestroy {
       }
     });
     this.signalRSubscriptions.push(statusSub);
+
+    // Escuchar cuando se recibe una nueva carta de aceptación
+    const acceptanceLetterSub = this.signalRService.onAcceptanceLetterReceived().subscribe((notification) => {
+      if (notification) {
+        this.toastr.success(
+          `Nueva carta de aceptación recibida para ${notification.studentName} en la oferta "${notification.offerTitle}"`,
+          'Nueva Carta de Aceptación',
+          { timeOut: 5000 }
+        );
+        this.loadAcceptanceLetters();
+      }
+    });
+    this.signalRSubscriptions.push(acceptanceLetterSub);
   }
 
-  loadAcceptanceLetters() {
+  loadAcceptanceLetters(callback?: () => void) {
     this.loading = true;
     this.http.get<AcceptanceLetter[]>(`${environment.apiBaseUrl}/InternshipApplication/director/acceptance-letters`).subscribe({
       next: (letters) => {
         this.acceptanceLetters = letters;
         this.loading = false;
+        if (callback) {
+          callback();
+        }
       },
       error: (err) => {
         this.toastr.error('Error al cargar las cartas de aceptación', 'Error');
         this.loading = false;
+        if (callback) {
+          callback();
+        }
       }
     });
   }
@@ -139,7 +183,7 @@ export class DirectorAcceptanceLettersComponent implements OnInit, OnDestroy {
     this.http.put(`${environment.apiBaseUrl}/InternshipApplication/${this.selectedLetter.id}/director-approval`, request).subscribe({
       next: (response: any) => {
         this.toastr.success(
-          `Carta de aceptación ${this.approvalDecision === 'Aceptado' ? 'aceptada' : 'rechazada'} correctamente`,
+          `Carta de aceptación ${this.approvalDecision === 'Aceptado' ? 'con visto bueno otorgado' : 'rechazada'} correctamente`,
           'Revisión Completada'
         );
         this.selectedLetter = null;
@@ -284,6 +328,38 @@ export class DirectorAcceptanceLettersComponent implements OnInit, OnDestroy {
     } else {
       return this.acceptanceLetters;
     }
+  }
+
+  openApplicationDetailsModal() {
+    this.showApplicationDetailsModal = true;
+  }
+
+  closeApplicationDetailsModal() {
+    this.showApplicationDetailsModal = false;
+  }
+
+  openInterviewDetailsModal() {
+    this.showInterviewDetailsModal = true;
+  }
+
+  closeInterviewDetailsModal() {
+    this.showInterviewDetailsModal = false;
+  }
+
+  openEvaluationDetailsModal() {
+    this.showEvaluationDetailsModal = true;
+  }
+
+  closeEvaluationDetailsModal() {
+    this.showEvaluationDetailsModal = false;
+  }
+
+  openAcceptanceDetailsModal() {
+    this.showAcceptanceDetailsModal = true;
+  }
+
+  closeAcceptanceDetailsModal() {
+    this.showAcceptanceDetailsModal = false;
   }
 }
 

@@ -6,7 +6,8 @@ import { InternshipInfoModalComponent } from './internship-info-modal.component'
 import { ToastrService } from 'ngx-toastr';
 import { SignalRService } from '../../shared/services/signalr.service';
 import { Subscription } from 'rxjs';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router, NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs/operators';
 
 interface InternshipApplication {
   id: number;
@@ -35,6 +36,9 @@ interface InternshipApplication {
   studentAcceptanceConfirmed?: boolean | null;
   studentAcceptanceConfirmedDate?: string;
   evaluationStatus?: string;
+  directorApprovalStatus?: string;
+  directorApprovalDate?: string;
+  directorApprovalNotes?: string;
 }
 
 @Component({
@@ -129,6 +133,19 @@ interface InternshipApplication {
                 <div *ngIf="selectedApplication" class="space-y-4">
                   <div class="mb-4">
                     <h3 class="text-lg font-semibold text-blue-800">Información de la Postulación</h3>
+                  </div>
+
+                  <!-- Success message when director approves acceptance letter -->
+                  <div *ngIf="selectedApplication.directorApprovalStatus === 'Aceptado' && selectedApplication.status === 'Aceptado'" 
+                       class="bg-green-50 border-l-4 border-green-400 p-4 rounded mb-4">
+                    <div class="flex items-center gap-2">
+                      <svg class="w-5 h-5 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <p class="text-green-800 font-semibold">
+                        La carta de aceptación fue aprobada por el director. El proceso de postulación ha finalizado exitosamente. Nuestro sistema ya cumplió su objetivo. ¡Le deseamos éxito en su pasantía!
+                      </p>
+                    </div>
                   </div>
 
                   <!-- Warning message if interview scheduled but not confirmed -->
@@ -611,10 +628,6 @@ interface InternshipApplication {
         <!-- Content -->
         <div class="p-6">
           <div class="space-y-4">
-            <div class="bg-green-50 border-l-4 border-green-400 p-4 rounded">
-              <p class="text-green-800 font-semibold">✓ Aceptación confirmada</p>
-            </div>
-
             <!-- Warning message if student confirmed but organization hasn't consolidated -->
             <div *ngIf="selectedApplication.studentAcceptanceConfirmed && !selectedApplication.acceptanceLetterFilePath && selectedApplication.status !== 'REVISION'" 
                  class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
@@ -644,6 +657,18 @@ interface InternshipApplication {
             <div class="bg-blue-50 p-4 rounded-lg" *ngIf="selectedApplication.studentAcceptanceConfirmedDate">
               <h3 class="font-semibold text-gray-900 mb-2">Fecha de Confirmación</h3>
               <p class="text-gray-700">{{ formatDate(selectedApplication.studentAcceptanceConfirmedDate) }}</p>
+              
+              <!-- Mensaje de confirmación más específico -->
+              <div class="mt-4 bg-green-50 border-l-4 border-green-400 p-4 rounded">
+                <div class="flex items-center gap-2">
+                  <svg class="w-5 h-5 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <p class="text-green-800 font-semibold">
+                    Has confirmado tu aceptación de la oferta de pasantía.
+                  </p>
+                </div>
+              </div>
             </div>
 
             <div class="bg-gray-50 p-4 rounded-lg" *ngIf="selectedApplication.acceptanceNotes">
@@ -731,12 +756,31 @@ export class MyApplicationsComponent implements OnInit, OnDestroy {
     private http: HttpClient,
     private toastr: ToastrService,
     private signalRService: SignalRService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private router: Router
   ) {}
 
   async ngOnInit(): Promise<void> {
     await this.signalRService.startConnection();
-    this.observeHighlightQueryParam();
+    
+    // Procesar query params iniciales
+    this.processHighlightQueryParam(this.route.snapshot.queryParams);
+    
+    // Suscribirse a cambios en query params
+    const queryParamsSub = this.route.queryParams.subscribe(params => {
+      this.processHighlightQueryParam(params);
+    });
+    this.subscriptions.push(queryParamsSub);
+    
+    // También escuchar eventos de navegación para detectar cambios en la misma ruta
+    const navigationSub = this.router.events
+      .pipe(filter(event => event instanceof NavigationEnd))
+      .subscribe(() => {
+        const params = this.route.snapshot.queryParams;
+        this.processHighlightQueryParam(params);
+      });
+    this.subscriptions.push(navigationSub);
+    
     this.loadApplications();
     this.setupSignalRListeners();
   }
@@ -803,18 +847,28 @@ export class MyApplicationsComponent implements OnInit, OnDestroy {
     // Escuchar cuando el director aprueba/rechaza una carta de aceptación
     const directorApprovalSub = this.signalRService.onDirectorApprovalUpdated().subscribe((notification: any) => {
       if (notification) {
-        // Recargar la aplicación para obtener todos los campos actualizados
-        this.loadApplications().then(() => {
-          // Mantener la selección después de recargar
-          if (this.selectedApplication) {
-            const updatedApp = this.applications.find(a => a.id === this.selectedApplication!.id);
-            if (updatedApp) {
-              this.selectedApplication = updatedApp;
-            }
+        // Actualizar el estado de la aplicación directamente en la lista
+        const application = this.applications.find(a => a.id === notification.applicationId);
+        if (application) {
+          // Actualizar el directorApprovalStatus
+          application.directorApprovalStatus = notification.status;
+          
+          // Actualizar el status de la aplicación según la decisión del director
+          // Cuando el director aprueba, el status cambia a "Aceptado"
+          // Cuando el director rechaza, el status cambia a "RECHAZADA"
+          if (notification.status === 'Aceptado') {
+            application.status = 'Aceptado';
+          } else if (notification.status === 'Rechazado') {
+            application.status = 'RECHAZADA';
           }
-        });
+          
+          // Si la aplicación está seleccionada, actualizar también
+          if (this.selectedApplication && this.selectedApplication.id === application.id) {
+            this.selectedApplication = { ...application };
+          }
+        }
         
-        const statusText = notification.status === 'Aceptado' ? 'aceptada' : 'rechazada';
+        const statusText = notification.status === 'Aceptado' ? 'dado visto bueno a' : 'rechazado';
         this.toastr.info(
           `El director ha ${statusText} la carta de aceptación para "${notification.offerTitle}"`,
           'Carta de Aceptación Revisada',
@@ -851,13 +905,25 @@ export class MyApplicationsComponent implements OnInit, OnDestroy {
     });
   }
 
-  private observeHighlightQueryParam(): void {
-    this.route.queryParamMap.subscribe(params => {
-      const highlightParam = params.get('highlightApplication');
-      this.pendingHighlightApplicationId = highlightParam ? +highlightParam : null;
-      this.pendingShowInterview = params.get('showInterview') === 'true';
-      this.applyHighlightIfNeeded();
-    });
+  private processHighlightQueryParam(params: any): void {
+    const highlightParam = params['highlightApplication'];
+    const showInterviewParam = params['showInterview'] === 'true';
+    
+    if (highlightParam) {
+      const applicationId = +highlightParam;
+      // Solo procesar si es un ID diferente al que ya estamos procesando
+      if (this.pendingHighlightApplicationId !== applicationId) {
+        this.pendingHighlightApplicationId = applicationId;
+        this.pendingShowInterview = showInterviewParam;
+        // Si las aplicaciones ya están cargadas, procesar inmediatamente
+        if (this.applications.length > 0) {
+          this.applyHighlightIfNeeded();
+        }
+      }
+    } else {
+      this.pendingHighlightApplicationId = null;
+      this.pendingShowInterview = false;
+    }
   }
 
   private applyHighlightIfNeeded(): void {
@@ -873,6 +939,9 @@ export class MyApplicationsComponent implements OnInit, OnDestroy {
     this.highlightedApplicationId = target.id;
     this.selectApplication(target);
     this.scrollToHighlightedRow(target.id);
+
+    // Limpiar query params después de procesar
+    this.router.navigate([], { relativeTo: this.route, queryParams: {}, replaceUrl: true });
 
     if (this.highlightTimeoutId) {
       clearTimeout(this.highlightTimeoutId);
@@ -924,6 +993,8 @@ export class MyApplicationsComponent implements OnInit, OnDestroy {
         return 'bg-blue-100 text-blue-800';
       case 'APROBADA':
         return 'bg-green-100 text-green-800';
+      case 'Aceptado':
+        return 'bg-green-100 text-green-800';
       case 'RECHAZADA':
         return 'bg-red-100 text-red-800';
       case 'REVISION':
@@ -941,6 +1012,8 @@ export class MyApplicationsComponent implements OnInit, OnDestroy {
         return 'Entrevista';
       case 'APROBADA':
         return 'Aprobada';
+      case 'Aceptado':
+        return 'Aceptado';
       case 'RECHAZADA':
         return 'Rechazada';
       case 'REVISION':

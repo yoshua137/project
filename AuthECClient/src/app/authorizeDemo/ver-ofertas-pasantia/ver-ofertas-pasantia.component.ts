@@ -114,9 +114,7 @@ export class VerOfertasPasantiaComponent implements OnInit {
   }
 
   onApplicationSubmitted(): void {
-    if (this.selectedOffer) {
-      this.toastr.success(`Aplicación enviada exitosamente a "${this.selectedOffer.title}"`, 'Éxito');
-    }
+    // El toastr ya se muestra en el modal, no es necesario duplicarlo aquí
     this.closeApplyModal();
     // Refresh the page to reload all data from server
     setTimeout(() => {

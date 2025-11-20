@@ -80,6 +80,14 @@ export interface DirectorApprovalUpdatedNotification {
   offerTitle: string;
 }
 
+export interface AcceptanceLetterReceivedNotification {
+  applicationId: number;
+  studentName: string;
+  offerTitle: string;
+  organizationName?: string;
+  acceptanceDate: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -95,6 +103,7 @@ export class SignalRService {
   private studentApplicationUpdated$ = new BehaviorSubject<StudentApplicationUpdatedNotification | null>(null);
   private studentAcceptanceConfirmed$ = new BehaviorSubject<StudentAcceptanceConfirmedNotification | null>(null);
   private directorApprovalUpdated$ = new BehaviorSubject<DirectorApprovalUpdatedNotification | null>(null);
+  private acceptanceLetterReceived$ = new BehaviorSubject<AcceptanceLetterReceivedNotification | null>(null);
 
   constructor(private authService: AuthService) {}
 
@@ -164,6 +173,10 @@ export class SignalRService {
 
     this.hubConnection.on('DirectorApprovalUpdated', (data: DirectorApprovalUpdatedNotification) => {
       this.directorApprovalUpdated$.next(data);
+    });
+
+    this.hubConnection.on('AcceptanceLetterReceived', (data: AcceptanceLetterReceivedNotification) => {
+      this.acceptanceLetterReceived$.next(data);
     });
 
     // Manejar cambios de estado de conexión
@@ -273,6 +286,10 @@ export class SignalRService {
     return this.directorApprovalUpdated$.asObservable();
   }
 
+  onAcceptanceLetterReceived(): Observable<AcceptanceLetterReceivedNotification | null> {
+    return this.acceptanceLetterReceived$.asObservable();
+  }
+
   /**
    * Limpia las notificaciones actuales
    */
@@ -286,6 +303,7 @@ export class SignalRService {
     this.studentApplicationUpdated$.next(null);
     this.studentAcceptanceConfirmed$.next(null);
     this.directorApprovalUpdated$.next(null);
+    this.acceptanceLetterReceived$.next(null);
   }
 }
 

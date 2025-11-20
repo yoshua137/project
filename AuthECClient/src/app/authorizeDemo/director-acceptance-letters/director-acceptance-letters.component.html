@@ -45,13 +45,10 @@
           <table class="min-w-full text-sm text-left">
             <thead>
               <tr class="bg-blue-50">
-                <th class="py-2 px-4 font-semibold">Estudiante</th>
                 <th class="py-2 px-4 font-semibold">Organización</th>
+                <th class="py-2 px-4 font-semibold">Aspirante a pasantía</th>
                 <th class="py-2 px-4 font-semibold">Oferta</th>
-                <th class="py-2 px-4 font-semibold">Fecha de Aceptación</th>
-                <th class="py-2 px-4 font-semibold">Estado</th>
                 <th class="py-2 px-4 font-semibold">Decisión Director</th>
-                <th class="py-2 px-4 font-semibold">Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -60,18 +57,14 @@
                   style="cursor: pointer;"
                   (click)="selectLetter(letter)">
                 <td class="py-2 px-4">
+                  <strong>{{ letter.organizationName }}</strong>
+                </td>
+                <td class="py-2 px-4">
                   <strong>{{ letter.studentName }}</strong>
                   <br>
                   <span class="text-xs text-gray-500">{{ letter.studentCareer }}</span>
                 </td>
-                <td class="py-2 px-4">{{ letter.organizationName }}</td>
                 <td class="py-2 px-4">{{ letter.internshipOfferTitle }}</td>
-                <td class="py-2 px-4">{{ formatDate(letter.acceptanceDate) }}</td>
-                <td class="py-2 px-4">
-                  <span class="px-2 py-1 rounded text-xs font-semibold" [ngClass]="getStatusClass(letter.status)">
-                    {{ getStatusText(letter.status) }}
-                  </span>
-                </td>
                 <td class="py-2 px-4">
                   <span *ngIf="letter.directorApprovalStatus" 
                         class="px-2 py-1 rounded text-xs font-semibold" 
@@ -81,16 +74,6 @@
                   <span *ngIf="!letter.directorApprovalStatus" class="text-gray-400 text-xs">
                     Pendiente
                   </span>
-                </td>
-                <td class="py-2 px-4 flex gap-2">
-                  <button class="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition text-xs font-semibold flex items-center gap-1" 
-                          (click)="selectLetter(letter); $event.stopPropagation()">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                    Ver
-                  </button>
                 </td>
               </tr>
             </tbody>
@@ -125,37 +108,45 @@
           </div>
         </div>
 
-        <!-- Proceso de Postulación -->
+        <!-- Información de la Postulación -->
         <div class="mb-4">
-          <h6 class="font-semibold text-gray-700 mb-2">Proceso de Postulación</h6>
-          <div class="bg-gray-50 p-3 rounded space-y-2">
-            <p><strong>Estado:</strong> 
-              <span class="px-2 py-1 rounded text-xs font-semibold" [ngClass]="getStatusClass(selectedLetter.status)">
-                {{ getStatusText(selectedLetter.status) }}
+          <h6 class="font-semibold text-blue-800 mb-3">Información de la Postulación</h6>
+          <div class="space-y-2">
+            <!-- Detalles de Postulación -->
+            <div class="flex items-center gap-2 cursor-pointer hover:text-blue-600 transition" (click)="openApplicationDetailsModal()">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span class="text-gray-700">Detalles de Postulación</span>
+            </div>
+            
+            <!-- Ver Detalles de Entrevista -->
+            <div class="flex items-center gap-2 cursor-pointer hover:text-blue-600 transition" (click)="openInterviewDetailsModal()">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span class="text-gray-700">Ver Detalles de Entrevista</span>
+            </div>
+            
+            <!-- Ver Detalles de Evaluación -->
+            <div class="flex items-center gap-2 cursor-pointer hover:text-blue-600 transition" (click)="openEvaluationDetailsModal()">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span class="text-gray-700">Ver Detalles de Evaluación</span>
+              <span *ngIf="selectedLetter.evaluationStatus === 'APROBADA'" 
+                    class="px-2 py-1 rounded text-xs font-semibold bg-green-100 text-green-800">
+                Aprobada
               </span>
-            </p>
-            <p *ngIf="selectedLetter.evaluationStatus"><strong>Evaluación:</strong> 
-              <span class="px-2 py-1 rounded text-xs font-semibold" 
-                    [ngClass]="selectedLetter.evaluationStatus === 'APROBADA' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
-                {{ selectedLetter.evaluationStatus === 'APROBADA' ? 'Aprobada' : 'Rechazada' }}
-              </span>
-            </p>
-            <p *ngIf="selectedLetter.reviewDate"><strong>Fecha de Revisión:</strong> {{ formatDate(selectedLetter.reviewDate) }}</p>
-            <p *ngIf="selectedLetter.reviewNotes"><strong>Notas de Evaluación:</strong> {{ selectedLetter.reviewNotes }}</p>
-            <p *ngIf="selectedLetter.interviewDateTime"><strong>Fecha de Entrevista:</strong> {{ formatDate(selectedLetter.interviewDateTime) }}</p>
-            <p *ngIf="selectedLetter.interviewMode"><strong>Modalidad de Entrevista:</strong> {{ selectedLetter.interviewMode }}</p>
-            <p *ngIf="selectedLetter.interviewNotes"><strong>Notas de Entrevista:</strong> {{ selectedLetter.interviewNotes }}</p>
-            <p *ngIf="selectedLetter.interviewAttendanceConfirmed !== null && selectedLetter.interviewAttendanceConfirmed !== undefined">
-              <strong>Asistencia Confirmada:</strong> 
-              <span [ngClass]="selectedLetter.interviewAttendanceConfirmed ? 'text-green-600' : 'text-red-600'">
-                {{ selectedLetter.interviewAttendanceConfirmed ? 'Sí' : 'No' }}
-              </span>
-            </p>
-            <p *ngIf="selectedLetter.studentAcceptanceConfirmed"><strong>Estudiante Confirmó Aceptación:</strong> 
-              <span class="text-green-600">Sí</span>
-              <span *ngIf="selectedLetter.studentAcceptanceConfirmedDate"> ({{ formatDate(selectedLetter.studentAcceptanceConfirmedDate) }})</span>
-            </p>
-            <p *ngIf="selectedLetter.acceptanceDate"><strong>Fecha de Aceptación:</strong> {{ formatDate(selectedLetter.acceptanceDate) }}</p>
+            </div>
+            
+            <!-- Detalles Aceptación -->
+            <div class="flex items-center gap-2 cursor-pointer hover:text-blue-600 transition" (click)="openAcceptanceDetailsModal()">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span class="text-gray-700">Detalles Aceptación</span>
+            </div>
           </div>
         </div>
 
@@ -178,14 +169,6 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
               Ver CV del Estudiante
-            </button>
-            <button *ngIf="selectedLetter.coverLetter" 
-                    class="w-full px-3 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition text-sm font-semibold flex items-center justify-center gap-2"
-                    (click)="showCoverLetter()">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              Ver Nota de Postulación
             </button>
           </div>
         </div>
@@ -211,7 +194,7 @@
           <div class="flex flex-col gap-2">
             <button class="bg-green-600 text-white font-semibold py-2 px-4 rounded hover:bg-green-700 transition" 
                     (click)="openApprovalModal('Aceptado')">
-              Aceptar Carta
+              Dar Visto Bueno
             </button>
             <button class="bg-red-600 text-white font-semibold py-2 px-4 rounded hover:bg-red-700 transition" 
                     (click)="openApprovalModal('Rechazado')">
@@ -253,7 +236,7 @@
   <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
     <div class="flex justify-between items-center p-6 border-b border-gray-200">
       <h2 class="text-xl font-bold text-gray-900">
-        {{ approvalDecision === 'Aceptado' ? 'Aceptar' : 'Rechazar' }} Carta de Aceptación
+        {{ approvalDecision === 'Aceptado' ? 'Dar Visto Bueno' : 'Rechazar' }} Carta de Aceptación
       </h2>
       <button (click)="closeApprovalModal()" class="text-gray-400 hover:text-gray-600 transition">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -265,7 +248,7 @@
     <div class="p-6">
       <div class="mb-4">
         <p class="text-gray-700">
-          ¿Está seguro de que desea <strong>{{ approvalDecision === 'Aceptado' ? 'aceptar' : 'rechazar' }}</strong> la carta de aceptación para el estudiante 
+          ¿Está seguro de que desea <strong>{{ approvalDecision === 'Aceptado' ? 'dar visto bueno a' : 'rechazar' }}</strong> la carta de aceptación para el estudiante 
           <strong>{{ selectedLetter.studentName }}</strong>?
         </p>
       </div>
@@ -296,9 +279,199 @@
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
             </svg>
           </span>
-          {{ approving ? 'Procesando...' : (approvalDecision === 'Aceptado' ? 'Aceptar' : 'Rechazar') }}
+          {{ approving ? 'Procesando...' : (approvalDecision === 'Aceptado' ? 'Dar Visto Bueno' : 'Rechazar') }}
         </button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Detalles de Postulación -->
+<div *ngIf="showApplicationDetailsModal && selectedLetter" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div class="flex justify-between items-center p-6 border-b border-gray-200">
+      <h2 class="text-xl font-bold text-gray-900">Detalles de Postulación</h2>
+      <button (click)="closeApplicationDetailsModal()" class="text-gray-400 hover:text-gray-600 transition">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+    <div class="p-6">
+      <div class="space-y-4">
+        <div>
+          <strong class="text-gray-700">Estado de Postulación:</strong>
+          <p class="mt-1">
+            <span class="px-2 py-1 rounded text-xs font-semibold" [ngClass]="getStatusClass(selectedLetter.status)">
+              {{ getStatusText(selectedLetter.status) }}
+            </span>
+          </p>
+        </div>
+        <div>
+          <strong class="text-gray-700">Fecha de Postulación:</strong>
+          <p class="mt-1 text-gray-600">{{ formatDate(selectedLetter.applicationDate) }}</p>
+        </div>
+        <div *ngIf="selectedLetter.coverLetter">
+          <strong class="text-gray-700">Nota de Postulación:</strong>
+          <p class="mt-1 text-gray-600 bg-gray-50 p-3 rounded">{{ selectedLetter.coverLetter }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="flex justify-end p-6 border-t border-gray-200">
+      <button (click)="closeApplicationDetailsModal()" 
+              class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition">
+        Cerrar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Detalles de Entrevista -->
+<div *ngIf="showInterviewDetailsModal && selectedLetter" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div class="flex justify-between items-center p-6 border-b border-gray-200">
+      <h2 class="text-xl font-bold text-gray-900">Detalles de Entrevista</h2>
+      <button (click)="closeInterviewDetailsModal()" class="text-gray-400 hover:text-gray-600 transition">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+    <div class="p-6">
+      <div *ngIf="selectedLetter.interviewDateTime || selectedLetter.interviewMode || selectedLetter.interviewNotes" class="space-y-4">
+        <div *ngIf="selectedLetter.interviewDateTime">
+          <strong class="text-gray-700">Fecha de Entrevista:</strong>
+          <p class="mt-1 text-gray-600">{{ formatDate(selectedLetter.interviewDateTime) }}</p>
+        </div>
+        <div *ngIf="selectedLetter.interviewMode">
+          <strong class="text-gray-700">Modalidad de Entrevista:</strong>
+          <p class="mt-1 text-gray-600">{{ selectedLetter.interviewMode }}</p>
+        </div>
+        <div *ngIf="selectedLetter.interviewLink">
+          <strong class="text-gray-700">Enlace de Entrevista:</strong>
+          <p class="mt-1 text-gray-600">
+            <a [href]="selectedLetter.interviewLink" target="_blank" class="text-blue-600 hover:underline">
+              {{ selectedLetter.interviewLink }}
+            </a>
+          </p>
+        </div>
+        <div *ngIf="selectedLetter.interviewAddress">
+          <strong class="text-gray-700">Dirección de Entrevista:</strong>
+          <p class="mt-1 text-gray-600">{{ selectedLetter.interviewAddress }}</p>
+        </div>
+        <div *ngIf="selectedLetter.interviewNotes">
+          <strong class="text-gray-700">Notas de Entrevista:</strong>
+          <p class="mt-1 text-gray-600 bg-gray-50 p-3 rounded">{{ selectedLetter.interviewNotes }}</p>
+        </div>
+        <div *ngIf="selectedLetter.interviewAttendanceConfirmed !== null && selectedLetter.interviewAttendanceConfirmed !== undefined">
+          <strong class="text-gray-700">Asistencia Confirmada:</strong>
+          <p class="mt-1">
+            <span [ngClass]="selectedLetter.interviewAttendanceConfirmed ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold'">
+              {{ selectedLetter.interviewAttendanceConfirmed ? 'Sí' : 'No' }}
+            </span>
+          </p>
+        </div>
+      </div>
+      <div *ngIf="!selectedLetter.interviewDateTime && !selectedLetter.interviewMode && !selectedLetter.interviewNotes" 
+           class="text-center text-gray-400 py-8">
+        <p>No hay información de entrevista disponible</p>
+      </div>
+    </div>
+    <div class="flex justify-end p-6 border-t border-gray-200">
+      <button (click)="closeInterviewDetailsModal()" 
+              class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition">
+        Cerrar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Detalles de Evaluación -->
+<div *ngIf="showEvaluationDetailsModal && selectedLetter" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div class="flex justify-between items-center p-6 border-b border-gray-200">
+      <h2 class="text-xl font-bold text-gray-900">Detalles de Evaluación</h2>
+      <button (click)="closeEvaluationDetailsModal()" class="text-gray-400 hover:text-gray-600 transition">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+    <div class="p-6">
+      <div *ngIf="selectedLetter.evaluationStatus || selectedLetter.reviewDate || selectedLetter.reviewNotes" class="space-y-4">
+        <div *ngIf="selectedLetter.evaluationStatus">
+          <strong class="text-gray-700">Estado de Evaluación:</strong>
+          <p class="mt-1">
+            <span class="px-2 py-1 rounded text-xs font-semibold" 
+                  [ngClass]="selectedLetter.evaluationStatus === 'APROBADA' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
+              {{ selectedLetter.evaluationStatus === 'APROBADA' ? 'Aprobada' : 'Rechazada' }}
+            </span>
+          </p>
+        </div>
+        <div *ngIf="selectedLetter.reviewDate">
+          <strong class="text-gray-700">Fecha de Revisión:</strong>
+          <p class="mt-1 text-gray-600">{{ formatDate(selectedLetter.reviewDate) }}</p>
+        </div>
+        <div *ngIf="selectedLetter.reviewNotes">
+          <strong class="text-gray-700">Notas de Evaluación:</strong>
+          <p class="mt-1 text-gray-600 bg-gray-50 p-3 rounded">{{ selectedLetter.reviewNotes }}</p>
+        </div>
+      </div>
+      <div *ngIf="!selectedLetter.evaluationStatus && !selectedLetter.reviewDate && !selectedLetter.reviewNotes" 
+           class="text-center text-gray-400 py-8">
+        <p>No hay información de evaluación disponible</p>
+      </div>
+    </div>
+    <div class="flex justify-end p-6 border-t border-gray-200">
+      <button (click)="closeEvaluationDetailsModal()" 
+              class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition">
+        Cerrar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Detalles de Aceptación -->
+<div *ngIf="showAcceptanceDetailsModal && selectedLetter" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div class="flex justify-between items-center p-6 border-b border-gray-200">
+      <h2 class="text-xl font-bold text-gray-900">Detalles de Aceptación</h2>
+      <button (click)="closeAcceptanceDetailsModal()" class="text-gray-400 hover:text-gray-600 transition">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+    <div class="p-6">
+      <div *ngIf="selectedLetter.acceptanceDate || selectedLetter.acceptanceNotes || selectedLetter.studentAcceptanceConfirmed" class="space-y-4">
+        <div *ngIf="selectedLetter.acceptanceDate">
+          <strong class="text-gray-700">Fecha de Aceptación:</strong>
+          <p class="mt-1 text-gray-600">{{ formatDate(selectedLetter.acceptanceDate) }}</p>
+        </div>
+        <div *ngIf="selectedLetter.studentAcceptanceConfirmed !== null && selectedLetter.studentAcceptanceConfirmed !== undefined">
+          <strong class="text-gray-700">Estudiante Confirmó Aceptación:</strong>
+          <p class="mt-1">
+            <span class="text-green-600 font-semibold">Sí</span>
+            <span *ngIf="selectedLetter.studentAcceptanceConfirmedDate" class="text-gray-500 text-sm ml-2">
+              ({{ formatDate(selectedLetter.studentAcceptanceConfirmedDate) }})
+            </span>
+          </p>
+        </div>
+        <div *ngIf="selectedLetter.acceptanceNotes">
+          <strong class="text-gray-700">Notas de Aceptación:</strong>
+          <p class="mt-1 text-gray-600 bg-gray-50 p-3 rounded">{{ selectedLetter.acceptanceNotes }}</p>
+        </div>
+      </div>
+      <div *ngIf="!selectedLetter.acceptanceDate && !selectedLetter.acceptanceNotes && !selectedLetter.studentAcceptanceConfirmed" 
+           class="text-center text-gray-400 py-8">
+        <p>No hay información de aceptación disponible</p>
+      </div>
+    </div>
+    <div class="flex justify-end p-6 border-t border-gray-200">
+      <button (click)="closeAcceptanceDetailsModal()" 
+              class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition">
+        Cerrar
+      </button>
     </div>
   </div>
 </div>

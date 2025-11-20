@@ -682,6 +682,9 @@ namespace AuthECAPI.Controllers
                 var application = await _context.InternshipApplications
                     .Include(ia => ia.InternshipOffer)
                     .ThenInclude(io => io.Organization)
+                    .ThenInclude(o => o.AppUser)
+                    .Include(ia => ia.Student)
+                    .ThenInclude(s => s.AppUser)
                     .FirstOrDefaultAsync(ia => ia.Id == id);
 
                 if (application == null)
@@ -740,6 +743,41 @@ namespace AuthECAPI.Controllers
                 application.Status = "REVISION";
 
                 await _context.SaveChangesAsync();
+
+                // Obtener el director asignado a través del AgreementRequest
+                var agreementRequest = await _context.AgreementRequests
+                    .Include(ar => ar.Director)
+                    .ThenInclude(d => d.AppUser)
+                    .Where(ar => ar.OrganizationId == userId && ar.Status == "Accepted")
+                    .OrderByDescending(ar => ar.ReviewDate)
+                    .FirstOrDefaultAsync();
+
+                // Crear notificación para el director si existe un convenio activo
+                if (agreementRequest != null && agreementRequest.DirectorId != null)
+                {
+                    var directorId = agreementRequest.DirectorId;
+                    var studentName = application.Student.AppUser?.FullName ?? "Un estudiante";
+                    var offerTitle = application.InternshipOffer.Title;
+
+                    await _notificationService.CreateNotificationAsync(
+                        directorId,
+                        "Nueva Carta de Aceptación para Revisar",
+                        $"La organización ha enviado una carta de aceptación para el estudiante {studentName} en la oferta '{offerTitle}'. Por favor, revise la carta.",
+                        "ACCEPTANCE_LETTER_RECEIVED",
+                        application.Id,
+                        "InternshipApplication"
+                    );
+
+                    // Enviar notificación SignalR al director
+                    await _hubContext.Clients.Group($"user_{directorId}").SendAsync("AcceptanceLetterReceived", new
+                    {
+                        applicationId = application.Id,
+                        studentName = studentName,
+                        offerTitle = offerTitle,
+                        organizationName = application.InternshipOffer.Organization.AppUser?.FullName,
+                        acceptanceDate = application.AcceptanceDate
+                    });
+                }
 
                 return Ok(new 
                 { 
@@ -1083,13 +1121,15 @@ namespace AuthECAPI.Controllers
                 application.DirectorApprovalDate = await _cloudTimeService.GetCloudTimeAsync();
                 application.DirectorApprovalNotes = request.Notes;
 
-                // Si el director acepta, el estado debe ser "APROBADA" (aceptado por el director)
-                // Si el director rechaza, mantener "REVISION" para que la organización pueda corregir
+                // Actualizar el status según la decisión del director
                 if (request.Status == "Aceptado")
                 {
-                    application.Status = "APROBADA";
+                    application.Status = "Aceptado";
                 }
-                // Si es "Rechazado", mantener "REVISION" para que la organización pueda enviar una nueva carta
+                else if (request.Status == "Rechazado")
+                {
+                    application.Status = "RECHAZADA";
+                }
 
                 await _context.SaveChangesAsync();
 
@@ -1098,12 +1138,13 @@ namespace AuthECAPI.Controllers
                 var studentId = application.StudentId;
 
                 // Crear notificaciones
-                var statusText = request.Status == "Aceptado" ? "aceptada" : "rechazada";
+                var statusText = request.Status == "Aceptado" ? "dado visto bueno a" : "rechazado";
+                var notificationTitle = request.Status == "Aceptado" ? "Carta de Aceptación con Visto Bueno" : "Carta Rechazada";
                 
                 // Notificación para la organización
                 await _notificationService.CreateNotificationAsync(
                     organizationId,
-                    $"Carta de Aceptación {request.Status}",
+                    notificationTitle,
                     $"El director ha {statusText} la carta de aceptación para el estudiante {application.Student.AppUser?.FullName} en la oferta '{application.InternshipOffer.Title}'.",
                     "DIRECTOR_APPROVAL",
                     application.Id,
@@ -1113,7 +1154,7 @@ namespace AuthECAPI.Controllers
                 // Notificación para el estudiante
                 await _notificationService.CreateNotificationAsync(
                     studentId,
-                    $"Carta de Aceptación {request.Status}",
+                    notificationTitle,
                     $"El director ha {statusText} la carta de aceptación para tu postulación a la oferta '{application.InternshipOffer.Title}'.",
                     "DIRECTOR_APPROVAL",
                     application.Id,

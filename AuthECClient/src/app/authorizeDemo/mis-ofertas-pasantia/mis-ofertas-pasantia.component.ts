@@ -6,7 +6,8 @@ import { FormsModule } from '@angular/forms';
 import { SignalRService } from '../../shared/services/signalr.service';
 import { Subscription, firstValueFrom } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs/operators';
 
 interface InternshipOffer {
   id: number;
@@ -51,6 +52,9 @@ interface InternshipApplication {
   studentAcceptanceConfirmed?: boolean | null;
   studentAcceptanceConfirmedDate?: string;
   evaluationStatus?: string;
+  directorApprovalStatus?: string;
+  directorApprovalDate?: string;
+  directorApprovalNotes?: string;
 }
 
 @Component({
@@ -146,13 +150,41 @@ export class MisOfertasPasantiaComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     await this.signalRService.startConnection();
-    this.route.queryParams.subscribe(params => {
-      if (params['highlightApplicant']) {
-        this.pendingHighlightApplicantId = +params['highlightApplicant'];
-      }
+    
+    // Procesar query params iniciales
+    this.processQueryParams(this.route.snapshot.queryParams);
+    
+    // Suscribirse a cambios en query params (incluyendo cuando ya estás en la misma ruta)
+    const queryParamsSub = this.route.queryParams.subscribe(async params => {
+      await this.processQueryParams(params);
     });
+    this.subscriptions.push(queryParamsSub);
+    
+    // También escuchar eventos de navegación para detectar cambios en la misma ruta
+    const navigationSub = this.router.events
+      .pipe(filter(event => event instanceof NavigationEnd))
+      .subscribe(async () => {
+        const params = this.route.snapshot.queryParams;
+        await this.processQueryParams(params);
+      });
+    this.subscriptions.push(navigationSub);
+    
     this.loadMyOffers();
     this.setupSignalRListeners();
+  }
+
+  private async processQueryParams(params: any): Promise<void> {
+    if (params['highlightApplicant']) {
+      const applicantId = +params['highlightApplicant'];
+      // Solo procesar si es un ID diferente al que ya estamos procesando
+      if (this.pendingHighlightApplicantId !== applicantId) {
+        this.pendingHighlightApplicantId = applicantId;
+        // Si las ofertas ya están cargadas, procesar inmediatamente
+        if (this.offers.length > 0) {
+          await this.processHighlightApplicant(applicantId);
+        }
+      }
+    }
   }
 
   ngOnDestroy(): void {
@@ -242,6 +274,7 @@ export class MisOfertasPasantiaComponent implements OnInit {
     });
 
     // Escuchar cuando el director aprueba/rechaza una carta de aceptación
+    // Escuchar cuando el director aprueba/rechaza una carta de aceptación
     const directorApprovalSub = this.signalRService.onDirectorApprovalUpdated().subscribe((notification: any) => {
       if (notification) {
         // Si estamos viendo los postulantes de una oferta, actualizar la lista
@@ -258,7 +291,7 @@ export class MisOfertasPasantiaComponent implements OnInit {
           }, 500);
         }
         
-        const statusText = notification.status === 'Aceptado' ? 'aceptada' : 'rechazada';
+        const statusText = notification.status === 'Aceptado' ? 'dado visto bueno a' : 'rechazado';
         this.toastr.info(
           `El director ha ${statusText} la carta de aceptación para "${notification.offerTitle}"`,
           'Carta de Aceptación Revisada',
@@ -552,9 +585,13 @@ export class MisOfertasPasantiaComponent implements OnInit {
               this.selectedApplicant = updatedApp;
             }
           }
-          // Si venimos de notificación, destacar al postulante
+          // Si venimos de notificación, destacar y seleccionar al postulante
           if (this.pendingHighlightApplicantId && this.applicants.some(a => a.id === this.pendingHighlightApplicantId)) {
-            this.highlightApplicant(this.pendingHighlightApplicantId);
+            const applicantToSelect = this.applicants.find(a => a.id === this.pendingHighlightApplicantId);
+            if (applicantToSelect) {
+              this.selectApplicant(applicantToSelect);
+              this.highlightApplicant(this.pendingHighlightApplicantId);
+            }
             // limpiar query params
             this.router.navigate([], { relativeTo: this.route, queryParams: {}, replaceUrl: true });
             this.pendingHighlightApplicantId = null;
@@ -619,6 +656,15 @@ export class MisOfertasPasantiaComponent implements OnInit {
       }
     }
     return null;
+  }
+
+  private async processHighlightApplicant(applicantId: number): Promise<void> {
+    const offer = await this.findOfferByApplicantId(applicantId);
+    if (offer) {
+      this.openApplicantsModal(offer);
+      // Limpiar query params después de procesar
+      this.router.navigate([], { relativeTo: this.route, queryParams: {}, replaceUrl: true });
+    }
   }
 
   private highlightApplicant(applicantId: number): void {

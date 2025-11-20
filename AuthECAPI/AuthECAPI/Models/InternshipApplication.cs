@@ -18,10 +18,10 @@ namespace AuthECAPI.Models
         public DateTime ApplicationDate { get; set; }
         
         /// <summary>
-        /// Estado de la aplicación: 'PENDIENTE', 'ENTREVISTA', 'APROBADA', 'RECHAZADA', 'REVISION'
+        /// Estado de la aplicación: 'PENDIENTE', 'ENTREVISTA', 'APROBADA', 'RECHAZADA', 'REVISION', 'Aceptado'
         /// </summary>
         [Required]
-        [RegularExpression("PENDIENTE|ENTREVISTA|APROBADA|RECHAZADA|REVISION", ErrorMessage = "Status solo puede ser 'PENDIENTE', 'ENTREVISTA', 'APROBADA', 'RECHAZADA' o 'REVISION'")]
+        [RegularExpression("PENDIENTE|ENTREVISTA|APROBADA|RECHAZADA|REVISION|Aceptado", ErrorMessage = "Status solo puede ser 'PENDIENTE', 'ENTREVISTA', 'APROBADA', 'RECHAZADA', 'REVISION' o 'Aceptado'")]
         public string Status { get; set; } = "PENDIENTE";
 
         public string? CoverLetter { get; set; }

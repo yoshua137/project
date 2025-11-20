@@ -77,6 +77,18 @@ export class NotificationService {
         this.refresh();
       }
     });
+
+    this.signalRService.onStudentAcceptanceConfirmed().subscribe((notification) => {
+      if (notification) {
+        this.refresh();
+      }
+    });
+
+    this.signalRService.onAcceptanceLetterReceived().subscribe((notification) => {
+      if (notification) {
+        this.refresh();
+      }
+    });
   }
 
   // Cargar notificaciones

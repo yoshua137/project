@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NotificationService, Notification } from '../services/notification.service';
+import { AuthService } from '../services/auth.service';
 import { Subscription } from 'rxjs';
 import { Router } from '@angular/router';
 
@@ -266,7 +267,8 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
 
   constructor(
     private notificationService: NotificationService,
-    private router: Router
+    private router: Router,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -372,8 +374,14 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
       case 'APPLICATION_RECEIVED':
       case 'ATTENDANCE_CONFIRMED':
         if (relatedEntityType === 'InternshipApplication') {
-          this.router.navigate(['/mis-ofertas-pasantia'], {
-            queryParams: { highlightApplicant: relatedEntityId }
+          // Usar navigateByUrl para forzar la actualización incluso si ya estás en la misma ruta
+          this.router.navigateByUrl(`/mis-ofertas-pasantia?highlightApplicant=${relatedEntityId}`, {
+            skipLocationChange: false
+          }).then(() => {
+            // Forzar detección de cambios si es necesario
+            setTimeout(() => {
+              // El observable de queryParams debería detectar el cambio
+            }, 100);
           });
         }
         break;
@@ -398,6 +406,47 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
           this.router.navigate(['/mis-aplicaciones'], {
             queryParams: { highlightApplication: relatedEntityId, showInterview: true }
           });
+        }
+        break;
+      case 'STUDENT_ACCEPTANCE_CONFIRMED':
+        if (relatedEntityType === 'InternshipApplication' && relatedEntityId) {
+          // Redirigir a la página de ofertas de la organización para ver el postulante
+          this.router.navigateByUrl(`/mis-ofertas-pasantia?highlightApplicant=${relatedEntityId}`, {
+            skipLocationChange: false
+          });
+        }
+        break;
+      case 'ACCEPTANCE_LETTER_RECEIVED':
+        if (relatedEntityType === 'InternshipApplication' && relatedEntityId) {
+          // Redirigir a la página de cartas de aceptación del director
+          this.router.navigate(['/cartas-aceptacion'], {
+            queryParams: { highlightLetter: relatedEntityId }
+          });
+        }
+        break;
+      case 'AGREEMENT_REQUEST_RECEIVED':
+        if (relatedEntityType === 'AgreementRequest') {
+          // Redirigir al director a la página de revisión de convenios
+          this.router.navigate(['/agreement-review'], {
+            queryParams: { highlightAgreement: relatedEntityId }
+          });
+        }
+        break;
+      case 'DIRECTOR_APPROVAL':
+        if (relatedEntityType === 'InternshipApplication' && relatedEntityId) {
+          // Verificar el rol del usuario para redirigir correctamente
+          const userRole = this.authService.getClaims()?.role;
+          if (userRole === 'Student') {
+            // Redirigir al estudiante a sus aplicaciones
+            this.router.navigateByUrl(`/mis-aplicaciones?highlightApplication=${relatedEntityId}`, {
+              skipLocationChange: false
+            });
+          } else if (userRole === 'Organization') {
+            // Redirigir a la organización a sus ofertas para ver el postulante
+            this.router.navigateByUrl(`/mis-ofertas-pasantia?highlightApplicant=${relatedEntityId}`, {
+              skipLocationChange: false
+            });
+          }
         }
         break;
       case 'AGREEMENT_APPROVED':

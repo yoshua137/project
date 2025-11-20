@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { ToastrService } from 'ngx-toastr';
 import { AuthService } from '../../shared/services/auth.service';
@@ -43,24 +44,49 @@ export class AgreementReviewComponent implements OnInit {
   constructor(
     private http: HttpClient,
     private toastr: ToastrService,
-    private authService: AuthService
+    private authService: AuthService,
+    private route: ActivatedRoute,
+    private router: Router
   ) {}
 
   ngOnInit() {
     this.currentUserId = this.authService.getClaims().userID;
-    this.loadAgreementRequests();
+    
+    // Procesar query params para highlightAgreement
+    this.route.queryParams.subscribe(params => {
+      if (params['highlightAgreement']) {
+        const agreementId = +params['highlightAgreement'];
+        // Cargar los convenios y luego seleccionar el convenio correspondiente
+        this.loadAgreementRequests(() => {
+          const agreement = this.agreementRequests.find(a => a.id === agreementId);
+          if (agreement) {
+            this.selectRequest(agreement);
+            // Limpiar query params
+            this.router.navigate([], { relativeTo: this.route, queryParams: {}, replaceUrl: true });
+          }
+        });
+      } else {
+        this.loadAgreementRequests();
+      }
+    });
   }
 
-  loadAgreementRequests() {
+  loadAgreementRequests(callback?: () => void) {
     this.loading = true;
     this.http.get<AgreementRequest[]>(`${environment.apiBaseUrl}/AgreementRequest/director/${this.currentUserId}`).subscribe({
       next: (requests) => {
         this.agreementRequests = requests;
         this.loading = false;
+        if (callback) {
+          callback();
+        }
       },
       error: (err) => {
         this.toastr.error('Error al cargar las solicitudes de convenio', 'Error');
         this.loading = false;
+        if (callback) {
+          callback();
+        }
       }
     });
   }
