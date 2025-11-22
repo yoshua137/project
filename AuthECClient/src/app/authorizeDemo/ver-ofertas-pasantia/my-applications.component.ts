@@ -132,7 +132,7 @@ interface InternshipApplication {
 
                 <div *ngIf="selectedApplication" class="space-y-4">
                   <div class="mb-4">
-                    <h3 class="text-lg font-semibold text-blue-800">Información de la Postulación</h3>
+                    <h3 class="text-lg font-semibold text-blue-800">Proceso de Postulación y Aceptación</h3>
                   </div>
 
                   <!-- Success message when director approves acceptance letter -->
@@ -143,7 +143,7 @@ interface InternshipApplication {
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                       <p class="text-green-800 font-semibold">
-                        La carta de aceptación fue aprobada por el director. El proceso de postulación ha finalizado exitosamente. Nuestro sistema ya cumplió su objetivo. ¡Le deseamos éxito en su pasantía!
+                      El director dio el visto bueno a la carta de aceptación. El proceso de postulación ha finalizado exitosamente. Nuestro sistema ya cumplió su objetivo. ¡Le deseamos éxito en su pasantía!
                       </p>
                     </div>
                   </div>
@@ -225,7 +225,7 @@ interface InternshipApplication {
                         <svg *ngIf="!hasInterviewScheduled(selectedApplication)" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                           <path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        Ver Detalles de Entrevista
+                        Detalles de Entrevista
                       </button>
                       <div class="flex items-center gap-2 w-full">
                         <button 
@@ -237,7 +237,7 @@ interface InternshipApplication {
                           <svg *ngIf="!getEvaluationStatus(selectedApplication) && (selectedApplication.status === 'PENDIENTE' || selectedApplication.status === 'ENTREVISTA')" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
-                          <span class="break-words">Ver Detalles de Evaluación</span>
+                          <span class="break-words">Detalles de Evaluación</span>
                         </button>
                         <span *ngIf="getEvaluationStatus(selectedApplication) === 'APROBADA'" class="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800 whitespace-nowrap">
                           Aprobada

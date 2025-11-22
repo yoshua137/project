@@ -192,8 +192,27 @@ namespace AuthECAPI.Controllers
                             id = a.Id,
                             status = a.Status,
                             applicationDate = a.ApplicationDate,
+                            offerId = a.InternshipOfferId,
                             offerTitle = a.InternshipOffer.Title,
-                            organizationName = a.InternshipOffer.Organization.AppUser.FullName
+                            organizationName = a.InternshipOffer.Organization.AppUser.FullName,
+                            coverLetter = a.CoverLetter,
+                            reviewDate = a.ReviewDate,
+                            reviewNotes = a.ReviewNotes,
+                            evaluationStatus = a.EvaluationStatus,
+                            interviewDateTime = a.InterviewDateTime,
+                            interviewMode = a.InterviewMode,
+                            interviewLink = a.InterviewLink,
+                            interviewAddress = a.InterviewAddress,
+                            interviewNotes = a.InterviewNotes,
+                            interviewAttendanceConfirmed = a.InterviewAttendanceConfirmed,
+                            virtualMeetingLink = a.VirtualMeetingLink,
+                            acceptanceDate = a.AcceptanceDate,
+                            acceptanceNotes = a.AcceptanceNotes,
+                            studentAcceptanceConfirmed = a.StudentAcceptanceConfirmed,
+                            studentAcceptanceConfirmedDate = a.StudentAcceptanceConfirmedDate,
+                            directorApprovalStatus = a.DirectorApprovalStatus,
+                            directorApprovalDate = a.DirectorApprovalDate,
+                            directorApprovalNotes = a.DirectorApprovalNotes
                         })
                         .ToList()
                 })

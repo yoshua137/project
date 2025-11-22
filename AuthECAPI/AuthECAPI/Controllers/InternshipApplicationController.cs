@@ -526,7 +526,7 @@ namespace AuthECAPI.Controllers
 
         // GET: api/InternshipApplication/{id}/cv
         [HttpGet("{id}/cv")]
-        [Authorize(Roles = "Organization,Director")]
+        [Authorize(Roles = "Organization,Director,Teacher")]
         public async Task<IActionResult> DownloadCV(int id)
         {
             try
@@ -562,6 +562,23 @@ namespace AuthECAPI.Controllers
                             && ar.Status == "Accepted");
                     
                     if (!isDirectorAssigned)
+                    {
+                        return Forbid("No tienes permisos para descargar este CV");
+                    }
+                }
+                else if (userRole == "Teacher")
+                {
+                    // Verificar que el profesor tiene al estudiante en uno de sus cursos
+                    var isTeacherOfStudent = await _context.StudentCourses
+                        .Where(sc => sc.StudentId == application.StudentId)
+                        .Select(sc => sc.CourseId)
+                        .Join(_context.TeacherCourses,
+                            courseId => courseId,
+                            tc => tc.Id,
+                            (courseId, tc) => tc.TeacherId)
+                        .AnyAsync(teacherId => teacherId == userId);
+                    
+                    if (!isTeacherOfStudent)
                     {
                         return Forbid("No tienes permisos para descargar este CV");
                     }

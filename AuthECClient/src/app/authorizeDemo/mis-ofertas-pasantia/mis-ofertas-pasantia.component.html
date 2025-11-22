@@ -54,14 +54,19 @@
                     [class.highlighted]="highlightedApplicantId === applicant.id"
                     [class.fade-stopped]="stoppedFadeRows.has(applicant.id)"
                     [class.bg-blue-50]="selectedApplicant?.id === applicant.id"
+                    [class.border-l-4]="applicant.status === 'Aceptado'"
+                    [class.border-green-500]="applicant.status === 'Aceptado'"
                     (mouseenter)="stopFadeOnHover($event, applicant.id)"
                     (click)="selectApplicant(applicant)">
-                  <td class="py-3 px-4">
+                  <td class="py-3 px-4"
+                      [class.bg-green-50]="applicant.status === 'Aceptado'">
                     <div class="font-medium text-gray-900">{{ applicant.studentName }}</div>
                     <div class="text-sm text-gray-600">{{ applicant.studentCareer }}</div>
                   </td>
-                  <td class="py-3 px-4 text-sm text-gray-600">{{ formatDate(applicant.applicationDate) }}</td>
-                  <td class="py-3 px-4">
+                  <td class="py-3 px-4 text-sm text-gray-600"
+                      [class.bg-green-50]="applicant.status === 'Aceptado'">{{ formatDate(applicant.applicationDate) }}</td>
+                  <td class="py-3 px-4"
+                      [class.bg-green-50]="applicant.status === 'Aceptado'">
                     <span class="px-2 py-1 rounded-full text-xs font-semibold"
                           [ngClass]="getApplicationStatusClass(applicant.status)">
                       {{ getApplicationStatusText(applicant.status) }}
@@ -88,7 +93,7 @@
 
           <div *ngIf="selectedApplicant" class="space-y-4">
             <div class="mb-4">
-              <h3 class="text-lg font-semibold text-blue-800">Información del Postulante</h3>
+              <h3 class="text-lg font-semibold text-blue-800">Proceso de Postulación y Aceptación</h3>
             </div>
 
             <!-- Success message when director approves acceptance letter -->
@@ -99,7 +104,7 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <p class="text-green-800 font-semibold">
-                  La carta de aceptación fue aprobada por el director. El proceso de postulación ha finalizado exitosamente. Nuestro sistema ya cumplió su objetivo. ¡Le deseamos éxito en su pasantía!
+                  El director dio el visto bueno a la carta de aceptación. El proceso de postulación ha finalizado exitosamente. Nuestro sistema ya cumplió su objetivo. ¡Le deseamos éxito en su pasantía!
                 </p>
               </div>
             </div>
@@ -165,7 +170,7 @@
                   <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2.5" fill="none"/>
                   <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01" />
                 </svg>
-                Ver detalles del postulante
+                Detalles de postulación
               </button>
               <button 
                 (click)="openInterviewDetailsModal(selectedApplicant)"
@@ -1038,7 +1043,7 @@
     <div class="p-6">
       <!-- Header -->
       <div class="flex items-center justify-between mb-6">
-        <h2 class="text-2xl font-bold text-gray-900">Detalles del Postulante</h2>
+        <h2 class="text-2xl font-bold text-gray-900">Detalles de postulación</h2>
         <button 
           (click)="showApplicantDetailsModal = false"
           class="text-gray-400 hover:text-gray-600 transition">
